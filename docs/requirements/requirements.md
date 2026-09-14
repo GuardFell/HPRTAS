@@ -1,0 +1,55 @@
+# Requirements
+
+> Every requirement must be traceable to a source: a pathway stage, a stated business rule
+> (BR-###), or a documented assumption (AS-###). Keep the IDs stable once assigned.
+>
+> Convention: `FR-###` functional, `NFR-###` non-functional, `BR-###` business rule
+> (`docs/case-study-summary.md` section 5), `AS-###` assumption (section 10).
+
+## Functional requirements
+
+| ID | Requirement | Source | Type (Must / Should / Could) | Where implemented | Where tested | Status |
+|---|---|---|---|---|---|---|
+| FR-001 |  |  |  |  |  |  |
+| FR-002 |  |  |  |  |  |  |
+| FR-003 |  |  |  |  |  |  |
+| FR-004 |  |  |  |  |  |  |
+| FR-005 |  |  |  |  |  |  |
+| FR-006 |  |  |  |  |  |  |
+| FR-007 |  |  |  |  |  |  |
+| FR-008 |  |  |  |  |  |  |
+| FR-009 |  |  |  |  |  |  |
+| FR-010 |  |  |  |  |  |  |
+| FR-011 |  |  |  |  |  |  |
+| FR-012 |  |  |  |  |  |  |
+| FR-013 |  |  |  |  |  |  |
+| FR-014 |  |  |  |  |  |  |
+| FR-015 |  |  |  |  |  |  |
+
+## Non-functional requirements
+
+| ID | Requirement | Source | Category | How it will be demonstrated | Status |
+|---|---|---|---|---|---|
+| NFR-001 |  |  |  |  |  |
+| NFR-002 |  |  |  |  |  |
+| NFR-003 |  |  |  |  |  |
+| NFR-004 |  |  |  |  |  |
+| NFR-005 |  |  |  |  |  |
+| NFR-006 |  |  |  |  |  |
+| NFR-007 |  |  |  |  |  |
+| NFR-008 |  |  |  |  |  |
+| NFR-009 |  |  |  |  |  |
+| NFR-010 |  |  |  |  |  |
+
+## Traceability: strategic model to operational model to implementation
+
+| Requirement | Strategic model element | Operational model element | Implementation | Test | Status (Supported / Partially supported / Unsupported) | Justification or gap |
+|---|---|---|---|---|---|---|
+|  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |
+|  |  |  |  |  |  |  |

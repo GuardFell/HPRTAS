@@ -1,0 +1,33 @@
+# Line ending and binary handling - keeps the repository consistent whoever commits.
+* text=auto
+*.md      text
+*.txt     text
+*.bpmn    text
+*.dmn     text
+*.form    text
+*.xml     text
+*.json    text
+*.yml     text
+*.yaml    text
+*.properties text
+*.java    text
+*.js      text
+*.ts      text
+*.html    text
+*.css     text
+*.sql     text
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+*.ps1     text eol=crlf
+*.sh      text eol=lf
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.ico     binary
+*.pdf     binary
+*.zip     binary
+*.jar     binary
+*.docx    binary
+*.pptx    binary
+*.xlsx    binary

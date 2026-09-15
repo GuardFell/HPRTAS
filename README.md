@@ -46,6 +46,7 @@ Sprint goals and sprint dates are recorded in `docs/backlog/sprint-backlogs.md`.
 | `forms/` | Camunda Forms and their task bindings |
 | `workers/` | External worker code, dependencies, configuration |
 | `tests/` | Test plan and test evidence |
+| `Enterprise Architecture/` | Portfolio deliverable: description of the enterprise and its information systems, and the Zachman Framework of Information Systems Architecture |
 
 ## Running the project
 

@@ -2,6 +2,7 @@
 
 > **Agile Workshop, Part 3.** The full list of work required for the project: modelling,
 > implementation, testing, review and evidence. Keep the list prioritised and the status current.
+> Estimates are story points on the scale agreed in `docs/planning/project-plan.md`.
 
 ## Rules
 
@@ -27,3 +28,10 @@
 | PB-013 |  |  |  |  |  |  |  |  |  |  |  |
 | PB-014 |  |  |  |  |  |  |  |  |  |  |  |
 | PB-015 |  |  |  |  |  |  |  |  |  |  |  |
+| PB-016 |  |  |  |  |  |  |  |  |  |  |  |
+| PB-019 |  |  |  |  |  |  |  |  |  |  |  |
+| PB-020 |  |  |  |  |  |  |  |  |  |  |  |
+| PB-021 |  |  |  |  |  |  |  |  |  |  |  |
+| PB-022 |  |  |  |  |  |  |  |  |  |  |  |
+| PB-023 |  |  |  |  |  |  |  |  |  |  |  |
+| PB-024 |  |  |  |  |  |  |  |  |  |  |  |

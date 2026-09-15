@@ -14,8 +14,8 @@ activities in the operational model.
 
 | Option | Start command | Notes |
 |---|---|---|
-| Java | | |
-| Node.js | | |
+|  |  |  |
+|  |  |  |
 
 **Decision:**  · **Reason:**
 
@@ -23,8 +23,6 @@ activities in the operational model.
 
 | Worker | Job type | Triggered activity | Input variables | Output variables | Simulated? |
 |---|---|---|---|---|---|
-|  |  |  |  |  |  |
-|  |  |  |  |  |  |
 |  |  |  |  |  |  |
 |  |  |  |  |  |  |
 |  |  |  |  |  |  |
@@ -38,13 +36,11 @@ activities in the operational model.
 |  |  |  |  |
 |  |  |  |  |
 |  |  |  |  |
-|  |  |  |  |
 
 ## Failure handling
 
 | Failure | Detection | Behaviour | Evidence |
 |---|---|---|---|
-|  |  |  |  |
 |  |  |  |  |
 |  |  |  |  |
 |  |  |  |  |

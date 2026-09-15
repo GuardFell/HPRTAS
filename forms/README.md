@@ -20,6 +20,8 @@ Camunda Forms (`.form`) connected to the relevant user tasks.
 |  |  |  |  |  |  |
 |  |  |  |  |  |  |
 |  |  |  |  |  |  |
+|  |  |  |  |  |  |
+|  |  |  |  |  |  |
 
 ## Design decisions
 
@@ -29,3 +31,9 @@ Camunda Forms (`.form`) connected to the relevant user tasks.
 |  |  |  |
 |  |  |  |
 |  |  |  |
+|  |  |  |
+
+## Testing
+
+Forms are tested as part of the scenarios in `tests/test-plan.md` (TC-01 to TC-10, TC-13 to
+TC-16, TC-20); evidence is stored in `tests/evidence/`.

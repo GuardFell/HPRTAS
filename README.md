@@ -1,73 +1,71 @@
 # Hospital Patient Referral, Treatment and Administration System (HPRTAS)
 
-> **Table frameworks only - the group fills in the content.**
-> Do not submit anything the group cannot explain. Fill the tables as the project runs rather
-> than at the deadline: review marks assess the increment available at that review.
-
-The work comes from `Agile Workshop.docx` (Parts 1-8), the case study, and the assessment
-specifications.
+> Group project repository for the hospital patient administration system. The content is filled
+> in by the group as the project runs.
 
 ## Group members
 
-| Name | Student ID | Primary role | Second-owner coverage for | Contribution evidence |
+| Name | Student ID | Primary role (role slot used in all owner columns) | Second-owner coverage for | Contribution evidence |
 |---|---|---|---|---|
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
+|  |  | M1 - Coordinator; operational and strategic BPMN modelling; deployment configuration | Worker integration; requirements | `models/`, `docs/agile/contribution-matrix.md` |
+|  |  | M2 - Requirements and business rules; variable contract; i* SD and SR models | Financial and correspondence modelling; acceptance criteria | `docs/requirements/`, `models/socio-technical/`, `docs/agile/contribution-matrix.md` |
+|  |  | M3 - External workers; simulated services; failure handling; configuration management | BPMN integration; forms variable exchange | `workers/`, `README.md`, `docs/agile/contribution-matrix.md` |
+|  |  | M4 - Camunda Forms and task bindings; accessibility; demonstration | Testing; requirements | `forms/`, `docs/agile/contribution-matrix.md` |
+|  |  | M5 - Test plan and execution; acceptance criteria; planned versus actual | Requirements; forms | `tests/`, `docs/planning/`, `docs/agile/contribution-matrix.md` |
 
-Every activity has a **first owner** (leads delivery) and a **second owner** (keeps sufficiently
-up to date to continue if the first owner cannot).
+Replace M1-M5 with the real names. Every activity has a **first owner** (leads delivery) and a
+**second owner** (sufficiently up to date to continue if the first owner cannot).
 
-## Key dates and assessed focus
+## Key dates
 
-| Date | Activity | Assessed focus | Evidence location |
-|---|---|---|---|
-| | Standup 1 (SU1) | Individual progress, next actions, blockers, ownership | `docs/agile/standups.md` |
-| before 28 Sep 2026 | Sprint Review 1 (SR1) | Initial executable BPMN increment, configuration management evidence, project plan | `reviews/SR1/` |
-| | Standup 2 (SU2) | Individual progress, follow-up actions, handover, initial workers and forms | `docs/agile/standups.md` |
-| by 28 Sep 2026 | Sprint Review 2 (SR2) | Integrated workflow increment: operational model, external workers, forms | `reviews/SR2/` |
-| 28 Sep 2026 | Initial release submission | Portfolio / coursework artefacts | identified repository version |
-| | Standup 3 (SU3) | Individual progress, next actions, blockers, ownership | `docs/agile/standups.md` |
-| before 22 Oct 2026 | Sprint Review 3 (SR3) | Prioritised feedback actions, implemented improvements, revised sprint plan | `reviews/SR3/` |
-| | Standup 4 (SU4) | Individual progress, follow-up actions, handover | `docs/agile/standups.md` |
-| by 22 Oct 2026 | Sprint Review 4 (SR4) | Validated improvements, feedback responses, planned vs actual progress | `reviews/SR4/` |
-| 22 Oct 2026 | Presentation submission | Slides, updated solution, feedback record, planning evidence | `presentation/` |
+| Date | Milestone | Version tag |
+|---|---|---|
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+
+Sprint goals and sprint dates are recorded in `docs/backlog/sprint-backlogs.md`.
 
 ## Repository structure
 
 | Path | What goes here |
 |---|---|
-| `docs/case-study-summary.md` | Workshop Part 1: shared understanding of the case |
+| `docs/case-study-summary.md` | Shared understanding of the case: participants, process, rules, exceptions, assumptions |
 | `docs/requirements/` | Functional and non-functional requirements, business rules, traceability |
-| `docs/deliverables.md` | Workshop Part 2: what the group must produce |
-| `docs/backlog/` | Workshop Parts 3-6: product backlog, task breakdown, dependencies, sprint backlogs |
+| `docs/deliverables.md` | What the group must produce, with owners and dates |
+| `docs/backlog/` | Product backlog, task breakdown, dependencies, sprint backlogs |
 | `docs/planning/` | Scope, estimates, allocation, risks, timeline, planned vs actual |
-| `docs/agile/` | Definition of done, standups, sprint reviews, retrospectives, contribution matrix |
-| `docs/feedback/` | Feedback response record |
+| `docs/agile/` | Definition of done, contribution matrix |
 | `models/strategic/` | High-level business process models |
 | `models/socio-technical/` | i\* Strategic Dependency (SD) and Strategic Rationale (SR) models |
 | `models/operational/` | Executable operational BPMN models |
 | `forms/` | Camunda Forms and their task bindings |
 | `workers/` | External worker code, dependencies, configuration |
 | `tests/` | Test plan and test evidence |
-| `reviews/` | Snapshot of the increment at each sprint review |
-| `presentation/` | Slides and supporting material |
 
 ## Running the project
 
 | Item | Value |
 |---|---|
-| Camunda version | |
-| JDK version | |
-| Start the engine | |
-| Deploy a model | |
-| Start the workers | |
-| Open the engine UI | |
+|  |  |
+|  |  |
+|  |  |
+|  |  |
+|  |  |
+|  |  |
+|  |  |
+
+Start a process instance from Tasklist (Tasklist -> Processes), then complete the user tasks in
+order: referral submission, clinical review, appointment contact recording, treatment
+authorisation, funding and payment, clinic letter approval.
 
 ## How we work
 
-1. Every task has a first owner and a second owner.
+1. Every task has a first owner and a second owner (`docs/backlog/task-breakdown.md`).
 2. Work is done only when it meets the definition of done (`docs/agile/definition-of-done.md`).
-3. Integrate continuously. Commit messages name the item, e.g. `PB-012 add rejected referral path (TB-010)`.
+3. Integrate continuously. Commit messages name the item, for example `PB-006 add rejected referral path (TB-010)`.
+4. Releases are tagged `release-1.0` and `release-2.0`.

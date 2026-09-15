@@ -1,28 +1,31 @@
 # Dependency Mapping
 
-> **Agile Workshop, Part 5.** For each task identify: what must be completed first, which tasks
-> depend on it, who must be informed if it is delayed, and what the backup plan is.
+> **Agile Workshop, Part 5.** For each task: what must be completed first, which tasks depend on
+> it, who must be informed if it is delayed, and the backup plan.
 
 | Task ID | Must be completed first | Tasks depending on this | Who must be informed if delayed | Backup plan |
 |---|---|---|---|---|
+| TB-001 |  |  |  |  |
+| TB-002 |  |  |  |  |
+| TB-003 |  |  |  |  |
+| TB-007 |  |  |  |  |
+| TB-008 |  |  |  |  |
+| TB-009 |  |  |  |  |
+| TB-015 |  |  |  |  |
+| TB-016 |  |  |  |  |
+| TB-018 |  |  |  |  |
+| TB-021 |  |  |  |  |
+| TB-025 |  |  |  |  |
 |  |  |  |  |  |
 |  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
+| TB-042 |  |  |  |  |
 
 ## Critical path
 
-_Identify the chain of tasks that determines the earliest possible completion._
+```
+(to be completed by the group)
+```
 
-```
-TB-___ -> TB-___ -> TB-___ -> TB-___ -> TB-___ -> demonstration
-```
 
 ## External dependencies
 

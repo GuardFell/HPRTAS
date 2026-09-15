@@ -1,7 +1,8 @@
 # Case Study Summary
 
 > **Agile Workshop, Part 1, Task 1.** The shared understanding every task is built on.
-> The analysis sections require group discussion - record the agreed answer, not one person's view.
+> The analysis sections require group discussion - confirm this draft as a group and correct it
+> where the group disagrees.
 
 ## Where each Part 1 question is answered
 
@@ -20,9 +21,9 @@
 
 | # | Question | Group's answer |
 |---|---|---|
-| 1 | What kind of service is described, and who does it serve? | |
-| 2 | How is information transferred today, and what problems does that cause? | |
-| 3 | What is changing, and why? | |
+|  |  |  |
+|  |  |  |
+|  |  |  |
 
 ## 2. Main participants
 
@@ -38,12 +39,13 @@
 |  |  |  |
 |  |  |  |
 |  |  |  |
+|  |  |  |
+|  |  |  |
 
 ## 3. Main business process
 
 | Stage | Activity | Participants involved | Notes |
 |---|---|---|---|
-|  |  |  |  |
 |  |  |  |  |
 |  |  |  |  |
 |  |  |  |  |
@@ -84,6 +86,11 @@
 | BR-13 |  |  |
 | BR-14 |  |  |
 | BR-15 |  |  |
+| BR-16 |  |  |
+| BR-17 |  |  |
+| BR-18 |  |  |
+| BR-19 |  |  |
+| BR-20 |  |  |
 
 ## 6. Exceptions and alternative paths
 
@@ -104,6 +111,8 @@
 | EX-13 |  |  |
 | EX-14 |  |  |
 | EX-15 |  |  |
+| EX-16 |  |  |
+| EX-17 |  |  |
 
 ## 7. External systems and organisations
 
@@ -117,12 +126,12 @@
 |  |  |  |
 |  |  |  |
 |  |  |  |
+|  |  |  |
 
 ## 8. Information captured, stored, transferred or validated
 
 | Information object | What is captured | Controls / validation applied |
 |---|---|---|
-|  |  |  |
 |  |  |  |
 |  |  |  |
 |  |  |  |
@@ -147,6 +156,8 @@
 |  |  |  |
 |  |  |  |
 |  |  |  |
+|  |  |  |
+|  |  |  |
 
 ### 9.2 Non-functional requirements
 
@@ -162,6 +173,9 @@
 | NFR-008 |  |  |  |
 | NFR-009 |  |  |  |
 | NFR-010 |  |  |  |
+| NFR-011 |  |  |  |
+| NFR-012 |  |  |  |
+| NFR-013 |  |  |  |
 
 ## 10. Ambiguities and assumptions
 
@@ -175,6 +189,11 @@
 | AM-04 |  |  |
 | AM-05 |  |  |
 | AM-06 |  |  |
+| AM-07 |  |  |
+| AM-08 |  |  |
+| AM-09 |  |  |
+| AM-10 |  |  |
+| AM-11 |  |  |
 
 ### Group assumptions
 
@@ -188,9 +207,14 @@
 | AS-06 |  |  |  |
 | AS-07 |  |  |  |
 | AS-08 |  |  |  |
+| AS-09 |  |  |  |
+| AS-10 |  |  |  |
+| AS-11 |  |  |  |
+| AS-12 |  |  |  |
 
 ## Change log
 
 | Date | Change | By |
 |---|---|---|
-| | Initial version | |
+|  |  |  |
+|  |  |  |

@@ -1,8 +1,8 @@
 # Socio-Technical (i\*) Models
 
-i\* models of the system: **SD** (Strategic Dependency) and **SR** (Strategic Rationale).
-Model actors, goals, soft goals, tasks, resources and dependencies, and explain the modelling
-choices and assumptions, keeping the SD and SR models consistent.
+i\* models of the system: **SD** (Strategic Dependency) and **SR** (Strategic
+Rationale). Actors, goals, soft goals, tasks, resources and dependencies are modelled, and the
+modelling choices and assumptions are explained.
 
 ## Files
 
@@ -10,8 +10,21 @@ choices and assumptions, keeping the SD and SR models consistent.
 |---|---|---|---|
 |  |  |  |  |
 |  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
+
+## Actors, goals and soft goals
+
+| Actor | Hard goal | Soft goal |
+|---|---|---|
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |
 
 ## Modelling decisions
 
@@ -20,11 +33,10 @@ choices and assumptions, keeping the SD and SR models consistent.
 |  |  |  |
 |  |  |  |
 |  |  |  |
-|  |  |  |
 
 ## Consistency between SD and SR
 
 | Check | How it was verified |
 |---|---|
-| Every dependency in the SD appears in the SR | |
-| Every actor in the SR appears in the SD | |
+|  |  |
+|  |  |

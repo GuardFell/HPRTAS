@@ -1,22 +1,23 @@
 # Test Plan
 
-> Acceptance criteria must be **clear and measurable** and linked to a requirement or business
-> rule. Cover the main workflow, alternatives, exceptions and relevant non-functional
-> expectations. Test against an **identified version** of the solution.
+> Acceptance criteria must be clear and measurable and linked to a requirement or business rule.
+> Cover the main workflow, alternatives, exceptions and relevant non-functional expectations.
+> Test against an **identified version** of the solution.
 
 ## 1. Scope
 
 | Item | Detail |
 |---|---|
-| Version under test (commit or tag) | |
-| Components | |
-| Environment (engine, JDK, browser) | |
-| Test period | |
+|  |  |
+|  |  |
+|  |  |
+|  |  |
 
 ## 2. Out of scope
 
 | Item | Reason |
 |---|---|
+|  |  |
 |  |  |
 |  |  |
 |  |  |
@@ -52,24 +53,50 @@
 | TC-10 |  |  |  |  |  |  |  |  |
 | TC-11 |  |  |  |  |  |  |  |  |
 | TC-12 |  |  |  |  |  |  |  |  |
+| TC-13 |  |  |  |  |  |  |  |  |
+| TC-14 |  |  |  |  |  |  |  |  |
+| TC-15 |  |  |  |  |  |  |  |  |
+| TC-16 |  |  |  |  |  |  |  |  |
+| TC-17 |  |  |  |  |  |  |  |  |
+| TC-18 |  |  |  |  |  |  |  |  |
+| TC-19 |  |  |  |  |  |  |  |  |
+| TC-20 |  |  |  |  |  |  |  |  |
+| TC-21 |  |  |  |  |  |  |  |  |
 
 ## 5. Test execution record
 
+> Filled in when the tests are run - it is evidence of testing, not a plan.
+
 | TC ID | Date | Tester | Version tested | Result | Evidence path | Defect raised |
 |---|---|---|---|---|---|---|
-|  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |
+| TC-01 |  |  |  |  |  |  |
+| TC-02 |  |  |  |  |  |  |
+| TC-03 |  |  |  |  |  |  |
+| TC-04 |  |  |  |  |  |  |
+| TC-05 |  |  |  |  |  |  |
+| TC-06 |  |  |  |  |  |  |
+| TC-07 |  |  |  |  |  |  |
+| TC-08 |  |  |  |  |  |  |
+| TC-09 |  |  |  |  |  |  |
+| TC-10 |  |  |  |  |  |  |
+| TC-11 |  |  |  |  |  |  |
+| TC-12 |  |  |  |  |  |  |
+| TC-13 |  |  |  |  |  |  |
+| TC-14 |  |  |  |  |  |  |
+| TC-15 |  |  |  |  |  |  |
+| TC-16 |  |  |  |  |  |  |
+| TC-17 |  |  |  |  |  |  |
+| TC-18 |  |  |  |  |  |  |
+| TC-19 |  |  |  |  |  |  |
+| TC-20 |  |  |  |  |  |  |
+| TC-21 |  |  |  |  |  |  |
 
 ## 6. Defects and limitations
 
 | ID | Description | Severity | Status | Workaround | Backlog item raised |
 |---|---|---|---|---|---|
+|  |  |  |  |  |  |
+|  |  |  |  |  |  |
 |  |  |  |  |  |  |
 |  |  |  |  |  |  |
 |  |  |  |  |  |  |

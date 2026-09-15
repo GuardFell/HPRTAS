@@ -16,5 +16,12 @@ Executable BPMN models of the required business process.
 |---|---|---|---|
 |  |  |  |  |
 |  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
+
+## Design decisions
+
+| Decision | Rationale | Rule it satisfies |
+|---|---|---|
+|  |  |  |
+|  |  |  |
+|  |  |  |
+|  |  |  |

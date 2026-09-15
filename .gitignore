@@ -1,0 +1,39 @@
+# Operating system files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Office lock files (created while a document is open)
+~$*
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+
+# Node.js (external workers, if the Node SDK is used)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+.env
+.env.local
+
+# Java (external workers, if the Java SDK is used)
+target/
+*.class
+*.jar
+!**/maven-wrapper.jar
+
+# Camunda engine runtime data and logs - never commit runtime state
+camunda-data/
+*.mv.db
+*.trace.db
+zeebe-data/
+logs/
+*.log
+
+# Local scratch
+tmp/
+scratch/

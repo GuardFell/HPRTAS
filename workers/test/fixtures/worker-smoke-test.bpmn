@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Smoke-test fixture for the external workers.
+
+  This is not a deliverable model. It is a single linear process that calls each
+  worker once, so that the workers can be verified end to end against a running
+  engine without depending on the operational models being finished:
+
+    referral validation -> appointment availability -> treatment availability
+    -> payment -> correspondence
+
+  The error boundary event on "Check treatment availability" catches the
+  UNAUTHORISED_BOOKING_REQUEST business error the worker throws, which is how
+  the model path for BR-04 is shown to work rather than raising an incident.
+
+  Deployed by `npm run test:smoke`.
+-->
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  xmlns:zeebe="http://camunda.org/schema/zeebe/1.0"
+                  xmlns:modeler="http://camunda.org/schema/modeler/1.0"
+                  id="Definitions_WorkerSmokeTest"
+                  targetNamespace="http://bpmn.io/schema/bpmn"
+                  exporter="HPRTAS workers"
+                  exporterVersion="1.0.0"
+                  modeler:executionPlatform="Camunda Cloud"
+                  modeler:executionPlatformVersion="8.9.0">
+  <bpmn:error id="Error_NotAuthorised" name="NotAuthorised" errorCode="UNAUTHORISED_BOOKING_REQUEST" />
+
+  <bpmn:process id="worker-smoke-test" name="Worker smoke test" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_Smoke" name="Referral received">
+      <bpmn:outgoing>Flow_01</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <bpmn:serviceTask id="Task_ValidateReferral" name="Validate referral">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="validate-referral" retries="2" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_01</bpmn:incoming>
+      <bpmn:outgoing>Flow_02</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_AppointmentAvailability" name="Check appointment availability">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="check-appointment-availability" retries="2" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_02</bpmn:incoming>
+      <bpmn:outgoing>Flow_03</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_TreatmentAvailability" name="Check treatment availability">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="check-treatment-availability" retries="2" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_03</bpmn:incoming>
+      <bpmn:outgoing>Flow_04</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_ProcessPayment" name="Process payment">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="process-payment" retries="2" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_04</bpmn:incoming>
+      <bpmn:outgoing>Flow_05</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:serviceTask id="Task_SendCorrespondence" name="Send correspondence">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="send-correspondence" retries="2" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_05</bpmn:incoming>
+      <bpmn:outgoing>Flow_06</bpmn:outgoing>
+    </bpmn:serviceTask>
+
+    <bpmn:endEvent id="EndEvent_Completed" name="Completed">
+      <bpmn:incoming>Flow_06</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:boundaryEvent id="Boundary_NotAuthorised" name="Not authorised" attachedToRef="Task_TreatmentAvailability">
+      <bpmn:outgoing>Flow_07</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_1" errorRef="Error_NotAuthorised" />
+    </bpmn:boundaryEvent>
+
+    <bpmn:endEvent id="EndEvent_NotAuthorised" name="Referral returned for authorisation">
+      <bpmn:incoming>Flow_07</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_01" sourceRef="StartEvent_Smoke" targetRef="Task_ValidateReferral" />
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="Task_ValidateReferral" targetRef="Task_AppointmentAvailability" />
+    <bpmn:sequenceFlow id="Flow_03" sourceRef="Task_AppointmentAvailability" targetRef="Task_TreatmentAvailability" />
+    <bpmn:sequenceFlow id="Flow_04" sourceRef="Task_TreatmentAvailability" targetRef="Task_ProcessPayment" />
+    <bpmn:sequenceFlow id="Flow_05" sourceRef="Task_ProcessPayment" targetRef="Task_SendCorrespondence" />
+    <bpmn:sequenceFlow id="Flow_06" sourceRef="Task_SendCorrespondence" targetRef="EndEvent_Completed" />
+    <bpmn:sequenceFlow id="Flow_07" sourceRef="Boundary_NotAuthorised" targetRef="EndEvent_NotAuthorised" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Smoke">
+    <bpmndi:BPMNPlane id="BPMNPlane_Smoke" bpmnElement="worker-smoke-test">
+      <bpmndi:BPMNShape id="Shape_Start" bpmnElement="StartEvent_Smoke">
+        <dc:Bounds x="160" y="200" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="140" y="243" width="77" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_ValidateReferral" bpmnElement="Task_ValidateReferral">
+        <dc:Bounds x="240" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_AppointmentAvailability" bpmnElement="Task_AppointmentAvailability">
+        <dc:Bounds x="400" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_TreatmentAvailability" bpmnElement="Task_TreatmentAvailability">
+        <dc:Bounds x="560" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_ProcessPayment" bpmnElement="Task_ProcessPayment">
+        <dc:Bounds x="720" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_SendCorrespondence" bpmnElement="Task_SendCorrespondence">
+        <dc:Bounds x="880" y="178" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_Completed" bpmnElement="EndEvent_Completed">
+        <dc:Bounds x="1040" y="200" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="1027" y="243" width="63" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_NotAuthorised" bpmnElement="Boundary_NotAuthorised">
+        <dc:Bounds x="592" y="240" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="570" y="283" width="80" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Shape_EndNotAuthorised" bpmnElement="EndEvent_NotAuthorised">
+        <dc:Bounds x="592" y="360" width="36" height="36" />
+        <bpmndi:BPMNLabel><dc:Bounds x="540" y="403" width="140" height="14" /></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Edge_01" bpmnElement="Flow_01">
+        <di:waypoint x="196" y="218" />
+        <di:waypoint x="240" y="218" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_02" bpmnElement="Flow_02">
+        <di:waypoint x="340" y="218" />
+        <di:waypoint x="400" y="218" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_03" bpmnElement="Flow_03">
+        <di:waypoint x="500" y="218" />
+        <di:waypoint x="560" y="218" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_04" bpmnElement="Flow_04">
+        <di:waypoint x="660" y="218" />
+        <di:waypoint x="720" y="218" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_05" bpmnElement="Flow_05">
+        <di:waypoint x="820" y="218" />
+        <di:waypoint x="880" y="218" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_06" bpmnElement="Flow_06">
+        <di:waypoint x="980" y="218" />
+        <di:waypoint x="1040" y="218" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Edge_07" bpmnElement="Flow_07">
+        <di:waypoint x="610" y="276" />
+        <di:waypoint x="610" y="360" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

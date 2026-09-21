@@ -20,6 +20,14 @@ yarn-error.log*
 .env
 .env.local
 
+# Per-machine worker overrides (a copy of config/workers.default.json). The
+# agreed defaults are committed as workers/config/workers.default.json; this
+# file is for values that must not be shared, such as another gateway address.
+workers/config/workers.local.json
+
+# Worker logs captured through HPRTAS_LOG_FILE
+workers/logs/
+
 # Java (external workers, if the Java SDK is used)
 target/
 *.class

@@ -1,0 +1,61 @@
+{
+  "connection": {
+    "ZEEBE_GRPC_ADDRESS": "grpc://localhost:26500",
+    "CAMUNDA_AUTH_STRATEGY": "NONE"
+  },
+  "workers": {
+    "referral-validation": {
+      "taskType": "validate-referral",
+      "maxJobsToActivate": 8,
+      "timeoutMs": 15000
+    },
+    "appointment-availability": {
+      "taskType": "check-appointment-availability",
+      "maxJobsToActivate": 8,
+      "timeoutMs": 15000
+    },
+    "treatment-availability": {
+      "taskType": "check-treatment-availability",
+      "maxJobsToActivate": 8,
+      "timeoutMs": 15000
+    },
+    "payment-processing": {
+      "taskType": "process-payment",
+      "maxJobsToActivate": 4,
+      "timeoutMs": 20000
+    },
+    "correspondence-dispatch": {
+      "taskType": "send-correspondence",
+      "maxJobsToActivate": 8,
+      "timeoutMs": 15000
+    }
+  },
+  "simulatedServices": {
+    "scheduling": {
+      "outcome": null,
+      "latencyMs": 120,
+      "slotLeadDaysUrgent": 3,
+      "slotLeadDaysRoutine": 10,
+      "outsideWindowExtraDays": 21
+    },
+    "treatment": {
+      "outcome": null,
+      "latencyMs": 150
+    },
+    "payment": {
+      "outcome": null,
+      "latencyMs": 200,
+      "declineThreshold": 0
+    },
+    "correspondence": {
+      "outcome": null,
+      "latencyMs": 80
+    }
+  },
+  "businessCalendar": {
+    "urgentTelephoneContactDays": 14,
+    "clinicLetterDays": 7,
+    "pathwayMonitoringMonthDays": 31,
+    "higherManagementEscalationDays": 92
+  }
+}

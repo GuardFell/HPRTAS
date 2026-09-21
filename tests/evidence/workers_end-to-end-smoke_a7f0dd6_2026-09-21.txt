@@ -1,0 +1,75 @@
+External workers end-to-end smoke test
+==========================================================================================
+Version under test : a7f0dd6 ("Migrate to the core-N models, complete the refund worker and run
+                     the models end to end")
+Component          : workers/ - all six workers, including the new refund-processing worker, against
+                     the worker-smoke-test fixture
+Date               : 2026-09-21
+Tester             : automated, `cd workers && npm run test:smoke`
+Linked test case   : TC-01 (the normal path) and TC-06 (booking without clinical authorisation)
+Linked AC          : AC-01, AC-02
+Environment        : Camunda 8 Run 8.9.19, gRPC grpc://localhost:26500,
+                     Node.js 22 with @camunda8/sdk, Windows 11
+
+WHAT THIS RUN SHOWS
+-------------------
+Six workers now register on the gateway, one more than the run recorded at 813fea6: the refund job
+type was split out of process-payment. Both scenarios still pass, so adding the worker did not
+disturb the job types the fixture uses.
+
+The fixture is a single linear process that calls each of the referral-to-treatment workers once. It
+is deliberately not the delivered model: what it proves is that a worker registers, receives a job of
+its type, returns its result and lets the process continue, and that a business error is caught by
+the model's boundary event. The delivered models are covered by
+`operational-models_end-to-end_a7f0dd6_2026-09-21.txt`.
+
+LOG
+---
+Deployed worker-smoke-test version 1 (process definition key 2251799813702349)
+Registered 6 workers and they are polling.
+Scenario 1 - normal path
+  alternativeDate = null
+  appointmentDate = "2026-10-01"
+  appointmentReference = "TRT-2251799813727586:treatment-appointment"
+  appointmentWithinTwoWeeks = true
+  bookingStatus = "confirmed"
+  chargeAmount = 250
+  clinicalAuthorised = true
+  confirmationReceived = true
+  dispatchChannel = "post"
+  dispatchDate = "2026-09-21"
+  dispatchReference = "COR-1789978454485-1"
+  documentType = "new_patient_clinic_letter"
+  documentsComplete = true
+  duplicateAttempt = false
+  externalServiceAvailable = true
+  fundingRoute = "patient"
+  paidAmount = 250
+  paymentDate = "2026-09-21"
+  paymentReference = "PAY-SMOKE-001"
+  paymentStatus = "completed"
+  priority = "routine"
+  proposedTreatment = "FOLFOX cycle 1"
+  recipients = ["patient","GP"]
+  referringOrganisation = "St Mary GP Surgery"
+  requestedItems = []
+  requestedWindow = 14
+  requiresInvestigation = false
+  schedulingServiceOutcome = "available"
+  slotAvailable = true
+  specialResources = ["pharmacy","day unit"]
+  speciality = "Oncology"
+  transactionReference = "PSP-20260921-0001"
+  treatmentAppointmentDate = "2026-09-21"
+  treatmentRetryCount = 1
+  treatmentSlotAvailable = true
+  treatmentStartDate = "2026-10-01"
+  validationResult = "complete"
+  withinRequestedWindow = true
+  path: StartEvent_Smoke -> Task_ValidateReferral -> Task_AppointmentAvailability -> Task_TreatmentAvailability -> Task_ProcessPayment -> Task_SendCorrespondence -> EndEvent_Completed
+Scenario 1 passed.
+{"time":"2026-09-21T08:14:15.243Z","level":"warn","logger":"workers","message":"job ended with a business error","worker":"treatment-availability","taskType":"check-treatment-availability","jobKey":"2251799813727702","processInstanceKey":"2251799813727663","elementId":"Task_TreatmentAvailability","durationMs":0,"outcome":"businessError","errorCode":"UNAUTHORISED_BOOKING_REQUEST"}
+Scenario 2 - booking without clinical authorisation
+  path: StartEvent_Smoke -> Task_ValidateReferral -> Task_AppointmentAvailability -> Task_TreatmentAvailability -> Boundary_NotAuthorised -> EndEvent_NotAuthorised
+Scenario 2 passed: the BPMN error was caught by the boundary event, no appointment and no payment.
+Smoke test passed: the workers obtain work and return results end to end.

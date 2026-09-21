@@ -201,6 +201,9 @@ the four `core-N` models and the eight forms, starts the workers and runs five s
 
 Scenario 5 runs after scenario 2 deliberately: the refund it records is made against the payment
 reference scenario 2 settled with the provider, which is the only way to show the refund worker
-working against a real transaction rather than an assumed one. All three runs are recorded in
-`tests/evidence/`. Forms and role-based access are still out of scope here and are tested
-separately; see `../tests/test-plan.md`.
+working against a real transaction rather than an assumed one.
+
+Both engine runs are recorded in `tests/evidence/`, named after the commit they were run at:
+`workers_end-to-end-smoke_<commit>_2026-09-21.txt` and
+`operational-models_end-to-end_<commit>_2026-09-21.txt`. Forms and role-based access are still out
+of scope here and are tested separately; see `../tests/test-plan.md`.

@@ -30,7 +30,20 @@ Example: `TC-01_normal-referral-accepted_release-1.0_2026-09-25.png`
 | end to end | `workers_end-to-end-smoke_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (workers through the engine) |
 | normal path | `referral-to-appointment_normal-path_1b42bff_2026-09-21.txt` | 2026-09-21 | `1b42bff` | Pass (model and workers together, instance completed); one uncaught-error incident recorded inside the file |
 | error paths and urgent path | `error-paths-and-urgent-path_e852224_2026-09-21.txt` | 2026-09-21 | `e852224` | Pass (6 scenarios, no incident): four worker error paths, the urgent no-slot path, the normal path to completion and one declared-default branch |
-|  |  |  |  |  |
+| end to end | `workers_end-to-end-smoke_a7f0dd6_2026-09-21.txt` | 2026-09-21 | `a7f0dd6` | Pass (six workers through the engine, including the new refund worker) |
+| operational models end to end | `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` | 2026-09-21 | `a7f0dd6` | Pass (5 scenarios over the four `core-N` models: the normal referral path, authorisation and payment, the clinic letter, the follow-up and the refund; every instance reached an end event) |
+
+### Superseded items
+
+The two model-level items below were run against the operational models of the first edition
+(`referral-to-appointment.bpmn` and the other two files of that name set), which have since been
+replaced by the four `core-N` models. They are kept because they are the record of what was tested
+at those commits; `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` is the current one.
+
+| Test case | File | Date | Version | Result |
+|---|---|---|---|---|
+| normal path | `referral-to-appointment_normal-path_1b42bff_2026-09-21.txt` | 2026-09-21 | `1b42bff` | Pass (model and workers together, instance completed); one uncaught-error incident recorded inside the file |
+| error paths and urgent path | `error-paths-and-urgent-path_e852224_2026-09-21.txt` | 2026-09-21 | `e852224` | Pass (6 scenarios, no incident) |
 
 ### Scope of the items above
 

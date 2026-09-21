@@ -1,0 +1,109 @@
+The four operational models run against the external workers
+==========================================================================================
+Version under test : a7f0dd6 ("Migrate to the core-N models, complete the refund worker and run
+                     the models end to end")
+Component          : models/operational/core-1..4.bpmn and forms/*.form, with the six workers in
+                     workers/
+Date               : 2026-09-21
+Tester             : automated, `cd workers && npm run test:e2e`
+Linked test case   : the normal path, the alternative paths and the refund scenario at model level
+                     (TC-01 and the financial scenarios at worker level)
+Linked AC          : AC-01, AC-02, AC-10 (the acceptance criteria in ../test-plan.md are still a draft)
+Environment        : Camunda 8 Run 8.9.19, REST /v2/ on http://localhost:8080,
+                     gRPC grpc://localhost:26500, Node.js 22 with @camunda8/sdk, Windows 11
+
+WHAT THIS RUN SHOWS
+-------------------
+`workers_end-to-end-smoke_813fea6_2026-09-21.txt` ran the workers against a purpose-built linear
+fixture. This run uses the delivered models instead. Each scenario deploys the model and the forms,
+starts the real workers, starts an instance, completes every user task the way a Tasklist user
+completes it, and reads the path back from the Orchestration Cluster API. It is evidence that the
+four models and the workers work together.
+
+Scenario 5 is the refund. It is run after scenario 2 on purpose: the refund is recorded against the
+payment reference scenario 2 settled with the simulated provider, so it exercises the refund worker
+against a transaction that really exists rather than one the test assumed.
+
+METHOD
+------
+1. deploy models/operational/core-1..4.bpmn (application/xml) and forms/*.form (application/json)
+2. start the workers: `cd workers && npm start` (six workers registered on the gRPC gateway)
+3. for each scenario, start the instance - from `POST /v2/process-instances`, or for the
+   cancellation in scenario 5 from `POST /v2/messages/publication` on the message start event
+4. complete each open user task through `POST /v2/user-tasks/<key>/completion` with the variables a
+   validated form would supply
+5. read the final state and the path back from `/v2/process-instances/search` and
+   `/v2/element-instances/search`
+
+LOG
+---
+External workers against the four operational models
+==========================================================================
+Camunda 8 Run via http://localhost:8080, gRPC grpc://localhost:26500
+
+deployed core-1-referral-and-new-patient-appointment version 1
+deployed core-2-treatment-authorisation-funding-and-payment version 2
+deployed core-3-clinic-letter-and-pathway-escalation version 3
+deployed core-4-follow-up-cancellation-enquiry-and-refund version 3
+deployed form booking-request
+deployed form clinic-letter
+deployed form funding-route
+deployed form patient-contact
+deployed form payment
+deployed form referral-review
+deployed form refund
+deployed form treatment-booking
+
+registered 6 workers: referral-validation, appointment-availability, treatment-availability, payment-processing, correspondence-dispatch, refund-processing
+
+Scenario 1 - core-1, normal referral and new patient appointment
+  instance 2251799813727219
+  N_MS_CheckReferral               completed with {"documentsComplete":true,"referringOrganisation":"St Mary GP Surgery"}
+  N_C_ClinicalReview               completed with {"decision":"accepted"}
+  N_OB_PrepareRequest              completed with {"speciality":"Oncology","priority":"routine","requestedWindow":14,"recipients":["patient","GP"],"documentType":"new_patient_clinic_letter"}
+  N_OB_TelephonePatient            completed with {"contactOutcome":"contacted"}
+  final state: COMPLETED
+  path: N_MS_ReferralReceived -> N_MS_CheckReferral -> N_MS_ValidateReferral -> N_MS_DocumentsComplete -> N_C_ClinicalReview -> N_C_ReferralDecision -> N_OB_PrepareRequest -> N_OB_CheckAvailability -> N_OB_SlotAvailable -> N_OB_SendNotification -> N_OB_WithinTwoWeeks -> N_OB_TelephonePatient -> N_OB_ContactOutcome -> N_OB_AppointmentArranged
+
+Scenario 2 - core-2, treatment authorisation, funding, payment and review
+  instance 2251799813727294
+  N_CL_AssessPatient               completed with {"consentGiven":true}
+  N_CL_AuthoriseTreatment          completed with {"proposedTreatment":"FOLFOX cycle 1","treatmentStartDate":"2026-10-01","specialResources":["pharmacy","day unit"],"clinicalAuthorised":true,"authorisingClinician":"Dr Chen"}
+  N_TB_VerifyAuthorisation         completed with {}
+  N_F_DetermineFunding             completed with {"fundingRoute":"patient","fundingApprovalRequired":false,"paymentRequiredFromPatient":true}
+  N_F_CalculateCharge              completed with {"chargeAmount":250,"fundingRoute":"patient","paymentReference":"PAY-E2E-0001"}
+  N_TB_ConfirmAppointment          completed with {"recipients":["patient"],"documentType":"appointment_letter"}
+  N_OC_PreCycleReview              completed with {"fitToContinue":false}
+  N_CL_ModifyTreatment             completed with {"affectsCharge":true}
+  N_F_ReviewFinancialImpact        completed with {}
+  final state: COMPLETED
+  path: N_CL_PatientAttends -> N_CL_AssessPatient -> N_CL_ConsentDecision -> N_CL_AuthoriseTreatment -> N_TB_VerifyAuthorisation -> N_TB_CheckAvailability -> N_TB_AvailabilityDecision -> N_F_DetermineFunding -> N_F_FundingApprovalRequired -> N_F_PaymentRequired -> N_F_CalculateCharge -> N_F_ProcessPayment -> N_F_PaymentStatus -> N_TB_ConfirmAppointment -> N_TB_NotifyPatient -> N_OC_PreCycleReview -> N_OC_FitToContinue -> N_CL_ModifyTreatment -> N_F_ReviewFinancialImpact -> N_F_ImpactReviewed
+
+Scenario 3 - core-3, clinic letter prepared, approved and distributed
+  instance 2251799813727412
+  N_C_PrepareLetter                completed with {"consultationId":"CONS-E2E-0001","recipients":["patient","GP"],"documentType":"new_patient_clinic_letter"}
+  N_C_ApproveLetter                completed with {}
+  N_MS_ProcessLetter               completed with {"suspectedClinicalError":false}
+  N_MS_ConfirmRecipients           completed with {}
+  final state: COMPLETED
+  path: N_C_ConsultationDone -> N_C_PrepareLetter -> N_C_ApproveLetter -> N_MS_ProcessLetter -> N_MS_ErrorDecision -> N_MS_ConfirmRecipients -> N_MS_SendLetter -> N_MS_LetterDistributed
+
+Scenario 4 - core-4, follow-up requested and booked
+  instance 2251799813727457
+  N_OB_ArrangeFollowUp             completed with {"speciality":"Oncology","priority":"routine","requestedWindow":21,"recipients":["patient"],"documentType":"follow_up_clinic_letter"}
+  N_OB_ConfirmFollowUp             completed with {}
+  final state: COMPLETED
+  path: N_OB_FollowUpRequested -> N_OB_ArrangeFollowUp -> N_OB_CheckAvailability -> N_OB_WithinPeriod -> N_OB_ConfirmFollowUp -> N_OB_SendFollowUpLetter -> N_OB_FollowUpBooked
+
+Scenario 5 - core-4, paid appointment cancelled and refunded
+  instance 2251799813727502
+  N_OB_RecordCancellation          completed with {"paidAppointment":true,"offerAnotherAppointment":false,"pathwayReviewRequired":false}
+  N_F_RetentionDecision            completed with {"refundDecision":"full","paymentReference":"PAY-E2E-0001","refundReason":"cancelled"}
+  final state: COMPLETED
+  path: N_OB_CancellationReceived -> N_OB_RecordCancellation -> N_OB_AnotherAppointment -> N_F_PaidAffected -> N_F_RetentionDecision -> N_F_RefundDecision -> N_F_ProcessRefund -> N_F_RefundRecorded
+
+==========================================================================
+All four operational models ran against the real workers. Every service task
+in them was reached, every gateway routed on what the workers returned, and
+the refund in scenario 5 was recorded by the provider against the payment
+scenario 2 settled.

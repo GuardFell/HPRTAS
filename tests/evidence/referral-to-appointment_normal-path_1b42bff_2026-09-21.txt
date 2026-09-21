@@ -1,0 +1,133 @@
+referral-to-appointment - the normal path, operational model and external workers together
+==========================================================================================
+Version under test : 1b42bff ("PB-003 / PB-004 make the operational models runnable and bind the
+                     workers to them"). Re-deploying the three models from this commit returned the
+                     existing process definitions unchanged, so the definitions below are this
+                     commit's content.
+Component          : models/operational/referral-to-appointment.bpmn, version 2,
+                     process definition key 2251799813718251, with the five workers in workers/
+Date               : 2026-09-21
+Tester             : automated, scripted calls to the Orchestration Cluster API
+Linked test case   : the normal referral path (TC-01 at worker level; this is the same path at
+                     model level)
+Linked AC          : AC-01, AC-02 (the acceptance criteria in ../test-plan.md are still a draft)
+Environment        : Camunda 8 Run 8.9.19, gRPC gateway grpc://localhost:26500,
+                     Node.js with @camunda8/sdk, Windows 11
+
+WHAT THIS RUN ADDS OVER THE SMOKE TEST
+--------------------------------------
+`workers_end-to-end-smoke_813fea6_2026-09-21.txt` ran the workers against a purpose-built linear
+fixture. This run uses the delivered operational model instead: the jobs come from its service
+tasks, the gateways read what the workers return, and the user tasks are completed the way a
+Tasklist user completes them. It is evidence that the model and the workers work together, which is
+what the sprint goal asks for.
+
+METHOD
+------
+1. deploy the model:
+     curl -X POST "http://localhost:8080/v2/deployments" \
+          -F "resources=@models/operational/referral-to-appointment.bpmn;type=application/xml"
+   -> process definition `referral-to-appointment` version 2, key 2251799813718251
+2. start the workers: `cd workers && npm start` (five workers registered on the gRPC gateway)
+3. start an instance:
+     POST /v2/process-instances  {"processDefinitionId":"referral-to-appointment"}
+   -> instance 2251799813718619
+4. complete each open user task through `POST /v2/user-tasks/<key>/completion`, with the variables
+   a validated form would supply. `forms/` is empty, so the variables were passed with the
+   completion call instead of coming from a form.
+5. read the path, the final state and the incidents collection back from the engine.
+
+LOG
+---
+instance 2251799813718619
+
+  step 1  UserTask_CheckReferralDocuments   documentsComplete=true,
+                                            referringOrganisation="St Mary GP Surgery"        -> HTTP 204
+  step 2  UserTask_ClinicalReviewReferral   decision="accepted"                              -> HTTP 204
+  step 3  UserTask_PrepareBookingRequest    speciality="Oncology", priority="urgent",
+                                            requestedWindow=14, recipients=["patient","GP"],
+                                            documentType="new_patient_clinic_letter"          -> HTTP 204
+  step 4  UserTask_TelephoneContactPatient  contactOutcome="contacted"                       -> HTTP 204
+
+each user task carried the candidate group of its lane: medical-secretaries, consultants,
+outpatient-bookings.
+
+path taken, read back from the engine:
+
+  StartEvent_ReferralReceived                COMPLETED
+  UserTask_CheckReferralDocuments            COMPLETED
+  ServiceTask_ValidateReferral               COMPLETED
+  Gateway_DocumentsComplete                  COMPLETED
+  UserTask_ClinicalReviewReferral            COMPLETED
+  Gateway_ClinicalDecision                   COMPLETED
+  UserTask_PrepareBookingRequest             COMPLETED
+  ServiceTask_CheckAppointmentAvailability   COMPLETED
+  Gateway_SlotWithinWindow                   COMPLETED
+  ServiceTask_SendAppointmentNotification    COMPLETED
+  Gateway_WithinTwoWeeks                     COMPLETED
+  UserTask_TelephoneContactPatient           COMPLETED
+  Gateway_ContactOutcome                     COMPLETED
+  EndEvent_AppointmentArranged               COMPLETED
+
+job log, one line per job, filtered to this instance:
+
+  referral-validation       validate-referral              ServiceTask_ValidateReferral              completed   0 ms
+  appointment-availability  check-appointment-availability ServiceTask_CheckAppointmentAvailability  completed 126 ms
+  correspondence-dispatch   send-correspondence            ServiceTask_SendAppointmentNotification   completed  84 ms
+
+Three service tasks, three different workers. `Gateway_SlotWithinWindow` and
+`Gateway_WithinTwoWeeks` then read the variables those workers returned, which is what the two
+branches depend on.
+
+RESULT
+------
+PASS. Instance state COMPLETED at 2026-09-21T06:25:54Z. No open user task and no incident.
+
+A FAILURE FOUND IN THE SAME SESSION, RECORDED AS PLAINLY AS THE PASS
+--------------------------------------------------------------------
+An earlier instance of the same model, 2251799813718510, was driven the same way but without
+`recipients` and `documentType`. It raised this incident, which was still open in Operate when this
+record was written:
+
+  errorType    UNHANDLED_ERROR_EVENT
+  elementId    ServiceTask_SendAppointmentNotification
+  errorMessage Expected to throw an error event with the code 'INVALID_VARIABLE' with message
+               'the correspondence cannot be dispatched because the request is incomplete or
+               unusable: recipients is required but was not supplied; documentType is required but
+               was not supplied', but it was not caught. No error events are available in the scope.
+
+The correspondence worker raised the business error its contract documents, but
+`ServiceTask_SendAppointmentNotification` has no error catch event, so the process stopped instead
+of following an error path. The same code IS caught on `ServiceTask_CheckAppointmentAvailability`
+and on the payment task, so coverage is uneven. The service tasks that have no catch event for a
+code their worker can raise:
+
+  ServiceTask_SendAppointmentNotification   referral-to-appointment.bpmn
+  ServiceTask_DispatchClinicLetter          clinic-letter-and-pathway-monitoring.bpmn
+  ServiceTask_CheckFollowUpAvailability     clinic-letter-and-pathway-monitoring.bpmn
+  ServiceTask_ValidateReferral              INVALID_VARIABLE only; it does catch
+                                            MISSING_INFORMATION_NOT_SPECIFIED
+
+Where each of those error paths should lead is a business decision, so no catch event was added.
+
+LIMITATIONS OF THIS EVIDENCE
+----------------------------
+- The variables were injected with the completion call because `forms/` is empty. When the forms
+  exist they must supply the same variables, and this run has to be repeated without injection.
+- Role-based access was not exercised. The candidate groups were read back from the tasks, but no
+  user was authorised and no task was claimed through Tasklist, so the permission model is not
+  evidenced here.
+- One model, one scenario, one set of outcomes. `treatment-authorisation-and-booking` and
+  `clinic-letter-and-pathway-monitoring` were deployed and their first user tasks were created and
+  read back, but they were not driven to an end event.
+- The strategic model is not executable and was not deployed.
+
+Reproduce with:
+  camunda-runtime\start-camunda.bat                     (wait for /v2/topology to return 200)
+  curl -X POST "http://localhost:8080/v2/deployments" \
+       -F "resources=@models/operational/referral-to-appointment.bpmn;type=application/xml"
+  cd workers && npm install && npm start
+  curl -X POST http://localhost:8080/v2/process-instances \
+       -H "Content-Type: application/json" \
+       -d '{"processDefinitionId":"referral-to-appointment"}'
+  # then complete each open task from Tasklist, or through /v2/user-tasks/<key>/completion

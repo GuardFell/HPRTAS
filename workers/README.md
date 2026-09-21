@@ -97,6 +97,14 @@ in `referral-to-appointment.bpmn`; `treatment-authorisation-and-booking.bpmn` ca
 `UNAUTHORISED_BOOKING_REQUEST` and `INVALID_VARIABLE` on the treatment booking task and
 `PROHIBITED_FINANCIAL_DATA` and `INVALID_VARIABLE` on the payment task.
 
+**Coverage is not yet complete.** Four service tasks can raise `INVALID_VARIABLE` but have no catch
+event for it, so the error becomes an incident instead of a modelled path:
+`ServiceTask_SendAppointmentNotification`, `ServiceTask_DispatchClinicLetter`,
+`ServiceTask_CheckFollowUpAvailability` and (for `INVALID_VARIABLE` only)
+`ServiceTask_ValidateReferral`. This was observed, not inferred - the incident is recorded in
+`../tests/evidence/referral-to-appointment_normal-path_1b42bff_2026-09-21.txt`. Where each of those
+error paths should lead is a business decision and has not been made.
+
 | Error code | Raised by | Meaning |
 |---|---|---|
 | `INVALID_VARIABLE` | every worker | A required variable is missing, is of the wrong type, or the values contradict each other |
@@ -128,14 +136,14 @@ The ledgers are in memory, so they are per worker process and are cleared when i
 
 | Failure | Detection | Behaviour | Evidence |
 |---|---|---|---|
-| Invalid or missing input variable | The worker validates its variables before doing any work | Business error `INVALID_VARIABLE`; the process follows its error path; no rebooking and no recharging. A blank required reference and a contradictory pair (`documentsComplete = true` with missing items listed) are both treated this way | `tests/evidence/TC-11_worker-invalid-input_813fea6_2026-09-21.txt` |
+| Invalid or missing input variable | The worker validates its variables before doing any work | Business error `INVALID_VARIABLE`; where the model has a catch event the process follows its error path, and where it has none the error becomes an incident (see the note under Error codes). No rebooking and no recharging either way. A blank required reference and a contradictory pair (`documentsComplete = true` with missing items listed) are both treated this way | `tests/evidence/TC-11_worker-invalid-input_813fea6_2026-09-21.txt` |
 | External service unavailable | The simulated treatment service returns `unavailable` | The booking stays `pending`, `appointmentReference` is `null`, `treatmentRetryCount` is incremented, and a later attempt does not create a second appointment | `tests/evidence/TC-12_external-service-unavailable_813fea6_2026-09-21.txt` |
 | Payment taken but confirmation not returned | The provider response lacks the confirmation flag | `requiresInvestigation` is `true` and no further payment request is issued for that appointment (BR-07) | `tests/evidence/TC-09_payment-taken-without-confirmation_813fea6_2026-09-21.txt` |
 | Payment declined | The provider returns `declined` | `paymentStatus` is `declined`, `paidAmount` is `null`, and a later attempt with the same reference is allowed because nothing was taken | `tests/evidence/TC-08_payment-declined_813fea6_2026-09-21.txt` |
 | Card details supplied | The worker scans the variables for card and security field names | Business error `PROHIBITED_FINANCIAL_DATA`; the provider is not called; the field names are reported so the form can be corrected (BR-06, NFR-007) | `tests/evidence/TC-11_worker-invalid-input_813fea6_2026-09-21.txt` |
 | Booking request without clinical authorisation | `clinicalAuthorised` is false or absent | Business error `UNAUTHORISED_BOOKING_REQUEST`; the request is not processed and no treatment appointment is created (BR-04) | `tests/evidence/TC-06_booking-without-clinical-authorisation_813fea6_2026-09-21.txt` |
 | An unexpected exception in a handler | The handler wrapper catches it | `job.fail` with the message, so the broker retries the job rather than leaving it stalled. A handler that returns something other than a job outcome is failed the same way | `tests/evidence/TC-11_worker-invalid-input_813fea6_2026-09-21.txt` (tests 29 and 30) |
-| Worker unavailable (not running) | No worker is registered for the job type | The job stays in the queue and the process waits where it is: with no worker registered the element instance stays `ACTIVE` at the service task and the token does not move on. The deadline still applies, and after the model's retries are exhausted the job raises an incident in Operate. Observed at `ServiceTask_ValidateReferral` | Recorded with the operational model - see the model-level run under Testing |
+| Worker unavailable (not running) | No worker is registered for the job type | The job stays in the queue and the process waits where it is: with no worker registered the element instance stays `ACTIVE` at the service task and the token does not move on. The deadline still applies, and after the model's retries are exhausted the job raises an incident in Operate. Observed at `ServiceTask_ValidateReferral` | `tests/evidence/referral-to-appointment_normal-path_1b42bff_2026-09-21.txt` |
 
 ## Testing
 
@@ -152,5 +160,6 @@ let the process continue, and that a business error is caught by the model's bou
 Both runs are recorded in `tests/evidence/`. The workers were also exercised against the operational
 models once those existed: the workers running, an instance of `referral-to-appointment` driven
 through the Orchestration Cluster API, and the path read back from the engine. That run is recorded
-in `tests/evidence/` as well. Forms and role-based access are still out of scope here and are tested
+in `tests/evidence/referral-to-appointment_normal-path_1b42bff_2026-09-21.txt`, together with the
+one incident it produced. Forms and role-based access are still out of scope here and are tested
 separately; see `../tests/test-plan.md`.

@@ -1,0 +1,67 @@
+TC-06 - Treatment booking attempted without clinical authorisation
+=========================================================================
+Version under test : 813fea6
+                    ("Add external workers: source code, dependencies and
+                     configuration"). No code changed between this commit and
+                     the run.
+Component          : workers/src/workers/treatment-availability.js
+Date               : 2026-09-21
+Tester             : automated, `cd workers && npm test` and
+                     `cd workers && npm run test:smoke`
+Linked test case   : tests/test-plan.md TC-06
+Linked AC          : AC-02
+Linked rule        : BR-04, AS-06
+
+SCENARIO
+--------
+A Treatment Booking Request reaches the worker without clinical authorisation.
+Administrative staff must not be able to process it, and no treatment
+appointment may be created.
+
+DATA AND ACTIONS
+----------------
+  Unit test   proposedTreatment    = "FOLFOX cycle 1"
+              treatmentStartDate   = "2026-10-01"
+              clinicalAuthorised   = false
+  Smoke test  the same referral-to-treatment scenario as the normal path, with
+              clinicalAuthorised = false, run as a real process instance against
+              Camunda 8 Run 8.9.19.
+
+ACTUAL RESULT
+-------------
+PASS.
+
+  ok 13 - treatment-availability: a request without clinical authorisation is not
+          processed (TC-06, BR-04, AC-02)
+
+  The worker returned the business error UNAUTHORISED_BOOKING_REQUEST with
+  bookingStatus = "not_processed" and made no call to the treatment service, so
+  no appointment could be created.
+
+  Smoke test, scenario 2:
+    path: StartEvent_Smoke -> Task_ValidateReferral -> Task_AppointmentAvailability
+          -> Task_TreatmentAvailability -> Boundary_NotAuthorised
+          -> EndEvent_NotAuthorised
+
+    The real worker threw the BPMN error, the fixture model's boundary event
+    caught it, and the instance completed on the error path. Task_ProcessPayment
+    was never visited, so the process did not continue past the refused booking.
+    A separate assertion confirms no payment reference was returned.
+
+INTEGRATION NOTE FOUND WHILE TESTING
+------------------------------------
+The variables carried by a BPMN error are written to the scope of the activity
+that raised it, and are not visible in the process scope after a boundary event
+catches the error. An assertion written against the error's variables therefore
+fails even when the path is correct. The model must distinguish the reason for a
+failure by which error catch event was taken. The smoke test asserts on the
+element path for this reason.
+
+NOT COVERED HERE
+----------------
+TC-06 also expects an audit entry. Audit behaviour belongs to the engine and the
+model rather than to this worker, so it is not evidenced here.
+
+Reproduce with:
+  cd workers && npm test
+  cd workers && npm run test:smoke   (engine must be running)

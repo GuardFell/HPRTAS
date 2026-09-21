@@ -1,0 +1,63 @@
+TC-08 - Payment declined
+=========================================================================
+Version under test : 813fea6
+                    ("Add external workers: source code, dependencies and
+                     configuration"). No code changed between this commit and
+                     the run.
+Component          : workers/src/workers/payment-processing.js,
+                     workers/src/services/payment-service-provider.js
+Date               : 2026-09-21
+Tester             : automated, `cd workers && npm test`
+Linked test case   : tests/test-plan.md TC-08
+Linked AC          : AC-03, AC-10
+Linked rule        : EX-08, FR-022, FR-023, AS-10
+
+SCENARIO
+--------
+The simulated provider declines the payment. The patient and the responsible
+administrative team must be told, the appointment must not be confirmed, and a
+retry must be possible without a duplicate booking or a second charge.
+
+DATA AND ACTIONS
+----------------
+  chargeAmount     = 250
+  fundingRoute     = "patient"
+  paymentReference = "PAY-2026-0001"
+  paymentOutcome   = "declined"
+
+Then the same payment reference is retried once the payment can succeed:
+
+  attempt 1  paymentOutcome = "declined"
+  attempt 2  paymentOutcome = "completed"
+
+ACTUAL RESULT
+-------------
+PASS.
+
+  ok 17 - payment-processing: a declined payment is reported so the patient and
+          team can be notified (TC-08, EX-08)
+  ok 20 - payment-processing: a declined attempt may be retried without a double
+          charge (EX-08)
+
+  Attempt 1  paymentStatus = "declined"
+             paidAmount    = null
+             requiresInvestigation = false
+  Attempt 2  paymentStatus = "completed"
+             transactionReference different from the declined attempt's reference
+
+The declined attempt is returned with its status and the reference of the
+attempt, so the process can notify the patient and the administrative team. No
+amount is recorded, and because nothing was taken the reference is not held in
+the provider ledger, so attempt 2 is allowed to proceed through to completion
+rather than being reported as a duplicate. A patient who was declined therefore
+is not blocked, and is not charged twice.
+
+NOT COVERED HERE
+----------------
+TC-08 expects "no duplicate booking". The booking is created by the treatment
+worker, not here; the duplicate check for it is in the TC-12 evidence item. The
+notification itself is a user task or message in the operational model, which
+does not exist yet, so only the data the notification would need is evidenced
+here.
+
+Reproduce with: cd workers && npm test

@@ -1,0 +1,113 @@
+External workers - end-to-end run
+=========================================================================
+Version under test : 813fea6
+                    ("Add external workers: source code, dependencies and
+                     configuration"). No code changed between this commit and
+                     the run.
+Component          : workers/ (all five workers, both simulated booking and
+                     payment services)
+Date               : 2026-09-21
+Tester             : automated, `cd workers && npm run test:smoke`
+Evidence for       : the definition-of-done item "External worker" - the worker
+                     runs and completes jobs of the expected type, consumes and
+                     returns the agreed variables, and invalid input produces a
+                     controlled outcome
+Environment        : Camunda 8 Run 8.9.19, Zeebe gRPC gateway on
+                     grpc://localhost:26500, Node.js v22.17.0, Windows 11
+
+WHAT THIS RUN ADDS OVER THE UNIT TESTS
+--------------------------------------
+The unit tests call the handlers directly. This run goes through the engine, so
+it shows the parts the unit tests cannot reach: that the worker registers against
+the gateway, that the gateway activates a job of the expected type for it, that
+the variables it returns are merged into the process and the process continues,
+and that a business error it raises is caught by the model.
+
+METHOD
+------
+`test/fixtures/worker-smoke-test.bpmn` is deployed. It is a single linear
+process, five service tasks wide, that calls each worker once:
+
+  validate-referral -> check-appointment-availability ->
+  check-treatment-availability -> process-payment -> send-correspondence
+
+The fixture has an error boundary event on the treatment task catching
+UNAUTHORISED_BOOKING_REQUEST. It is a test fixture, not a deliverable model; the
+operational models live in `../../models/operational/`.
+
+Two instances are then run and the path each one took is read back from the
+Orchestration Cluster API, so the assertion is about the path rather than about
+the workers' own claims.
+
+LOG
+---
+Deployed worker-smoke-test version 1 (process definition key 2251799813702349)
+Registered 5 workers and they are polling.
+
+Scenario 1 - normal path
+  path: StartEvent_Smoke -> Task_ValidateReferral -> Task_AppointmentAvailability
+        -> Task_TreatmentAvailability -> Task_ProcessPayment
+        -> Task_SendCorrespondence -> EndEvent_Completed
+Scenario 1 passed.
+
+Variables returned, read back from the completed instance:
+  validationResult         = "complete"
+  slotAvailable            = true
+  appointmentDate          = "2026-10-01"
+  alternativeDate          = null
+  withinRequestedWindow    = true
+  appointmentWithinTwoWeeks= true
+  schedulingServiceOutcome = "available"
+  externalServiceAvailable = true
+  treatmentSlotAvailable   = true
+  bookingStatus            = "confirmed"
+  appointmentReference     = "TRT-2251799813717049:treatment-appointment"
+  treatmentRetryCount      = 1
+  duplicateAttempt         = false
+  paymentStatus            = "completed"
+  paidAmount               = 250
+  paymentDate              = "2026-09-21"
+  transactionReference     = "PSP-20260921-0001"
+  confirmationReceived     = true
+  requiresInvestigation    = false
+  dispatchDate             = "2026-09-21"
+  dispatchChannel          = "post"
+  dispatchReference        = "COR-1789956978859-1"
+
+Scenario 2 - booking without clinical authorisation
+  Worker log line, one JSON object per job:
+    {"time":"2026-09-21T02:16:19.633Z","level":"warn","logger":"workers",
+     "message":"job ended with a business error","worker":"treatment-availability",
+     "taskType":"check-treatment-availability","jobKey":"2251799813717168",
+     "processInstanceKey":"2251799813717129","elementId":"Task_TreatmentAvailability",
+     "durationMs":0,"outcome":"businessError",
+     "errorCode":"UNAUTHORISED_BOOKING_REQUEST"}
+
+  path: StartEvent_Smoke -> Task_ValidateReferral -> Task_AppointmentAvailability
+        -> Task_TreatmentAvailability -> Boundary_NotAuthorised
+        -> EndEvent_NotAuthorised
+Scenario 2 passed: the BPMN error was caught by the boundary event, no
+appointment and no payment.
+
+Smoke test passed: the workers obtain work and return results end to end.
+
+RESULT
+------
+PASS, both scenarios. Exit code 0.
+
+LIMITATIONS OF THIS EVIDENCE
+----------------------------
+The fixture process is a straight line. It does not contain the funding and
+payment gate, the two-week telephone contact path, the no-availability path or
+any user task, so this run does not evidence those. They are covered, at worker
+level, by the unit tests recorded in the other items in this directory, and they
+must be evidenced again end to end against the operational model.
+
+The smoke fixture is a second process definition in the engine alongside the
+operational models. It is deployed by the test and is not part of the delivered
+solution.
+
+Reproduce with:
+  cd workers && npm install
+  (start the engine: camunda-runtime\start-camunda.bat)
+  cd workers && npm run test:smoke

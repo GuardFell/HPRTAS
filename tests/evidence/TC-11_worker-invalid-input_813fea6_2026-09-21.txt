@@ -1,0 +1,85 @@
+TC-11 - Invalid input to a worker
+=========================================================================
+Version under test : 813fea6
+                    ("Add external workers: source code, dependencies and
+                     configuration"). No code changed between this commit and
+                     the run.
+Component          : workers/src (external workers)
+Date               : 2026-09-21
+Tester             : automated, `cd workers && npm test`
+Linked test case   : tests/test-plan.md TC-11
+Linked AC          : AC-10
+
+SCENARIO
+--------
+Malformed or missing variables are sent to a worker. The worker must produce a
+controlled outcome rather than crash, and the process must not stall.
+
+DATA AND ACTIONS
+----------------
+The suite calls each worker handler directly with input that is missing,
+mistyped or self-contradictory, and inspects the job action the handler chose.
+
+  referral-validation
+    - {}                                        (all required variables missing)
+    - documentsComplete = true with missingItems = ["diagnostic report"]
+                                                (contradictory)
+    - referringOrganisation = "   "              (blank required reference)
+  appointment-availability
+    - requestedWindow = 0                        (below the accepted minimum)
+    - priority = "soon"                          (not one of urgent, routine)
+  payment-processing
+    - chargeAmount = "two hundred and fifty"     (wrong type)
+    - chargeAmount = -5                          (negative money)
+    - fundingRoute = "charity"                   (unknown route)
+    - paymentReference = ""                      (blank reference)
+    - chargeAmount and fundingRoute only         (paymentReference missing)
+  correspondence-dispatch
+    - recipients = ""                            (empty recipient list)
+    - documentType = "a letter of some kind"     (unknown document type)
+    - channelPreference = "sms"                  (unknown channel)
+  Plus the job contract itself: a handler that throws, and a handler that
+  returns something other than a job outcome.
+
+ACTUAL RESULT
+-------------
+PASS. Every case produced a controlled outcome and nothing threw out of the
+handler.
+
+  ok 4  - referral-validation: unusable input produces a controlled error, not a crash (TC-11)
+  ok 11 - appointment-availability: an unusable booking request produces a controlled error (TC-11)
+  ok 23 - payment-processing: an unusable payment request produces a controlled error (TC-11)
+  ok 26 - correspondence-dispatch: an unusable dispatch request produces a controlled error (TC-11)
+  ok 29 - the worker fails the job when the handler throws, so the broker retries
+  ok 30 - the worker fails the job when a handler returns something that is not an outcome
+
+Invalid data is reported as a BPMN business error carrying the code
+INVALID_VARIABLE, so the process takes its modelled error path. Only a genuine
+defect fails the job (`job.fail`), which is the behaviour tests 29 and 30 check,
+so that an unexpected exception is retried by the broker instead of leaving the
+job stalled.
+
+A payment that carries card or security details is refused with
+PROHIBITED_FINANCIAL_DATA and the provider is NOT called; the test asserts the
+provider was not called, so card data cannot reach it (BR-06, NFR-007, AC-09).
+
+FULL UNIT TEST RUN
+------------------
+The whole suite was run in the same session against the same commit.
+Result: 30 tests, 30 pass, 0 fail, 0 skipped (duration 6.5 s).
+
+  # tests 30
+  # pass 30
+  # fail 0
+  # duration_ms 6478.7543
+
+NOT COVERED HERE
+----------------
+TC-11 expects "incident recorded" and "no rebooking or recharging". Whether an
+incident is raised, and whether the process takes the intended error path, is a
+property of the operational model, which does not exist yet. The worker side
+(controlled outcome, no duplicate booking and no second charge) is covered; see
+the TC-12 and TC-06 evidence items for the duplicate checks.
+
+The full log was not committed with this file to keep the repository small.
+Reproduce with: cd workers && npm test

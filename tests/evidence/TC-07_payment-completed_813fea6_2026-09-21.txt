@@ -1,0 +1,82 @@
+TC-07 - Payment required and completed before confirmation
+=========================================================================
+Version under test : 813fea6
+                    ("Add external workers: source code, dependencies and
+                     configuration"). No code changed between this commit and
+                     the run.
+Component          : workers/src/workers/payment-processing.js,
+                     workers/src/services/payment-service-provider.js
+Date               : 2026-09-21
+Tester             : automated, `cd workers && npm test` and
+                     `cd workers && npm run test:smoke`
+Linked test case   : tests/test-plan.md TC-07
+Linked AC          : AC-03, AC-09
+Linked rule        : BR-06, NFR-007
+
+SCENARIO
+--------
+A charge applies, the simulated provider approves, and no card data is captured.
+The payment must return a status, reference, date and amount, and the hospital
+system must hold no card details.
+
+DATA AND ACTIONS
+----------------
+  Unit test   chargeAmount     = 250
+              fundingRoute     = "patient"
+              paymentReference = "PAY-2026-0001"
+  Smoke test  chargeAmount = 250, fundingRoute = "patient",
+              paymentReference = "PAY-SMOKE-001", run as a real process instance.
+
+ACTUAL RESULT
+-------------
+PASS.
+
+  ok 16 - payment-processing: a completed payment returns the reference, date and
+          amount (TC-07, FR-020)
+
+  Scenario 1 (normal path) variables, read back from the completed instance:
+    paymentStatus         = "completed"
+    fundingRoute          = "patient"
+    paidAmount            = 250
+    paymentDate           = "2026-09-21"
+    transactionReference  = "PSP-20260921-0001"
+    confirmationReceived  = true
+    requiresInvestigation = false
+
+  The same instance also confirmed the earlier steps, which is what makes it the
+  normal path rather than a payment in isolation:
+    validationResult        = "complete"
+    slotAvailable           = true
+    appointmentDate         = "2026-10-01"
+    externalServiceAvailable= true
+    bookingStatus           = "confirmed"
+    appointmentReference    = "TRT-2251799813717049:treatment-appointment"
+    dispatchDate            = "2026-09-21"
+    dispatchChannel         = "post"
+    dispatchReference       = "COR-1789956978859-1"
+
+  Scenario 1 path, from the Orchestration Cluster API:
+    StartEvent_Smoke -> Task_ValidateReferral -> Task_AppointmentAvailability
+    -> Task_TreatmentAvailability -> Task_ProcessPayment
+    -> Task_SendCorrespondence -> EndEvent_Completed
+
+  Only the status, reference, date and amount come back from the provider. There
+  is no card field anywhere in the worker, the form contract or the returned
+  variables (AC-09). A payment carrying card or security details is refused
+  outright with PROHIBITED_FINANCIAL_DATA before the provider is called; that
+  check is recorded in the TC-11 evidence item.
+
+  A funded patient is not asked to pay: when fundingRoute is "hospital",
+  "insurer" or "exempt" the worker returns paymentStatus = "not_required" and
+  does not call the provider at all. The unit test asserts the provider was not
+  called.
+
+NOT COVERED HERE
+----------------
+TC-07 also expects the appointment to be confirmed only after payment. That gate
+is a gateway in the operational model, which does not exist yet. This evidence
+covers the payment component only.
+
+Reproduce with:
+  cd workers && npm test
+  cd workers && npm run test:smoke   (engine must be running)

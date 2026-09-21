@@ -1,0 +1,57 @@
+TC-09 - Payment taken but confirmation not returned
+=========================================================================
+Version under test : 813fea6
+                    ("Add external workers: source code, dependencies and
+                     configuration"). No code changed between this commit and
+                     the run.
+Component          : workers/src/workers/payment-processing.js,
+                     workers/src/services/payment-service-provider.js
+Date               : 2026-09-21
+Tester             : automated, `cd workers && npm test`
+Linked test case   : tests/test-plan.md TC-09
+Linked AC          : AC-04
+Linked rule        : BR-07, EX-09
+
+SCENARIO
+--------
+The provider takes the payment but the confirmation does not come back because
+of a communication failure. The transaction must be marked for investigation and
+**no** automatic re-request may be issued.
+
+DATA AND ACTIONS
+----------------
+  chargeAmount     = 250
+  fundingRoute     = "patient"
+  paymentReference = "PAY-2026-0001"
+  paymentOutcome   = "success_no_confirmation"
+
+ACTUAL RESULT
+-------------
+PASS.
+
+  ok 18 - payment-processing: a payment taken without a confirmation is marked for
+          investigation (TC-09, BR-07, AC-04)
+
+  paymentStatus         = "completed"    (the money was taken)
+  paidAmount            = 250
+  confirmationReceived  = false
+  requiresInvestigation = true
+  transactionReference  = returned and retained
+
+The distinction the case cares about is preserved: the payment is recorded as
+taken, but flagged for investigation rather than treated as settled. The
+transaction is held in the provider ledger against its payment reference, so if
+the process were to attempt the payment again the worker would return that same
+transaction as a duplicate and take no further money (tests 19 and 20 cover the
+duplicate and retry behaviour).
+
+NOT COVERED HERE
+----------------
+TC-09 expects that no automatic re-request is issued. That is a decision taken by
+the model, by routing the flagged transaction to investigation instead of back to
+the payment activity, so it is a property of the operational model rather than of
+this worker. What is evidenced here is the flag the model needs in order to make
+that decision, and the ledger behaviour that stops a re-request from charging
+again if one were made.
+
+Reproduce with: cd workers && npm test

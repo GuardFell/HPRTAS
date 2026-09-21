@@ -21,11 +21,19 @@ Example: `TC-01_normal-referral-accepted_release-1.0_2026-09-25.png`
 
 | Test case | File | Date | Version | Result |
 |---|---|---|---|---|
+| TC-06 | `TC-06_booking-without-clinical-authorisation_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (worker component) |
+| TC-07 | `TC-07_payment-completed_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (worker component) |
+| TC-08 | `TC-08_payment-declined_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (worker component) |
+| TC-09 | `TC-09_payment-taken-without-confirmation_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (worker component) |
+| TC-11 | `TC-11_worker-invalid-input_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (worker component) |
+| TC-12 | `TC-12_external-service-unavailable_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (worker component) |
+| end to end | `workers_end-to-end-smoke_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (workers through the engine) |
 |  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
-|  |  |  |  |  |
+
+### Scope of the items above
+
+These six test cases were executed against the **external workers** only, before the operational
+models and forms exist. Each item states plainly what it does not cover. The part of a test case
+that belongs to the operational model, the forms or role-based access has to be evidenced again
+end to end against `release-1.0`, and the execution record in `../test-plan.md` section 5 stays
+blank until then.

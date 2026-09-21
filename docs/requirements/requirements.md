@@ -18,7 +18,7 @@
 > The first draft of this list referenced the three models of the first operational edition
 > (`referral-to-appointment`, `treatment-authorisation-and-booking`,
 > `clinic-letter-and-pathway-monitoring`). Those models were replaced by the four `core-N` models
-> (`models/operational/README.md` records why), and the replacement was not a rename: elements were
+> (see the commit that migrated to them), and the replacement was not a rename: elements were
 > split, merged and re-identified, so every reference here was re-pointed by hand against the
 > element documentation of the current models rather than by text substitution.
 >

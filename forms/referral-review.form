@@ -1,4 +1,5 @@
 {
+  "id": "referral-review",
   "components": [
     {
       "type": "group",
@@ -46,16 +47,16 @@
         },
         {
           "type": "select",
-          "key": "reviewDecision",
+          "key": "decision",
           "label": "Review Decision",
           "validate": {
             "required": true
           },
           "options": [
-            { "label": "Accept Referral", "value": "accept" },
-            { "label": "Reject Referral", "value": "reject" },
-            { "label": "Request Further Information", "value": "request_info" },
-            { "label": "Redirect to Another Service", "value": "redirect" }
+            { "label": "Accept Referral", "value": "accepted" },
+            { "label": "Reject Referral", "value": "rejected" },
+            { "label": "Request Further Information", "value": "further_information" },
+            { "label": "Redirect to Another Service", "value": "redirected" }
           ]
         },
         {
@@ -122,6 +123,6 @@
     "name": "Camunda Modeler",
     "version": "5.0.0"
   },
-  "executionPlatform": "Camunda Platform",
-  "executionPlatformVersion": "8.5.0"
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
 }

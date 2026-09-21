@@ -1,4 +1,5 @@
 {
+  "id": "refund",
   "components": [
     {
       "type": "group",
@@ -7,10 +8,44 @@
       "elements": [
         {
           "type": "textfield",
-          "key": "appointmentId",
-          "label": "Appointment ID",
+          "key": "paymentReference",
+          "label": "Payment Reference",
+          "description": "The reference of the payment that is to be refunded.",
           "validate": {
             "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "refundDecision",
+          "label": "Decision",
+          "description": "What the Finance Team decided. Retaining or transferring the payment records no refund.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Full Refund",
+              "value": "full"
+            },
+            {
+              "label": "Partial Refund",
+              "value": "partial"
+            },
+            {
+              "label": "Retain or Transfer",
+              "value": "none"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "key": "refundAmount",
+          "label": "Refund Amount (£)",
+          "description": "Required for a partial refund. A full refund returns the amount the provider actually took.",
+          "validate": {
+            "min": 0,
+            "max": 100000
           }
         },
         {
@@ -21,29 +56,23 @@
             "required": true
           },
           "options": [
-            { "label": "Appointment Cancelled", "value": "cancelled" },
-            { "label": "Appointment Rescheduled", "value": "rescheduled" },
-            { "label": "Treatment Changed", "value": "treatment_changed" },
-            { "label": "Other", "value": "other" }
+            {
+              "label": "Appointment Cancelled",
+              "value": "cancelled"
+            },
+            {
+              "label": "Appointment Rescheduled",
+              "value": "rescheduled"
+            },
+            {
+              "label": "Treatment Changed",
+              "value": "treatment_changed"
+            },
+            {
+              "label": "Other",
+              "value": "other"
+            }
           ]
-        },
-        {
-          "type": "select",
-          "key": "refundType",
-          "label": "Refund Type",
-          "validate": {
-            "required": true
-          },
-          "options": [
-            { "label": "Full Refund", "value": "full" },
-            { "label": "Partial Refund", "value": "partial" },
-            { "label": "Transfer to Another Appointment", "value": "transfer" }
-          ]
-        },
-        {
-          "type": "number",
-          "key": "refundAmount",
-          "label": "Refund Amount (£)"
         },
         {
           "type": "textarea",
@@ -59,6 +88,6 @@
     "name": "Camunda Modeler",
     "version": "5.0.0"
   },
-  "executionPlatform": "Camunda Platform",
-  "executionPlatformVersion": "8.5.0"
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
 }

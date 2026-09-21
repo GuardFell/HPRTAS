@@ -49,18 +49,23 @@
   <bpmn:userTask id="N_C_PrepareLetter" name="Prepare the clinic letter">
     <bpmn:documentation>Clinical content: consultation, diagnosis, findings, decisions, follow-up arrangements; the Consultant identifies the intended recipients (BR-26, FR-036).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="clinic-letter" />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_C_ApproveLetter" name="Approve the clinical content">
     <bpmn:documentation>Approval gate before distribution; the approval date is recorded (BR-26, BR-29, FR-036). The seven-day timer fires from here (BR-28, BR-30).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="clinic-letter" />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_C_ReviewClinicalError" name="Review suspected clinical error">
     <bpmn:documentation>EX-18, BR-27: a suspected clinical error is returned to the Consultant; administrative staff may not change clinical meaning (FR-037).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -72,15 +77,18 @@
   <bpmn:userTask id="N_MS_ProcessLetter" name="Process and check the letter">
     <bpmn:documentation>Administrative checks and the correspondence timeline: appointment date, start and completion dates, approval date, processing date (BR-27, BR-29, FR-037, FR-039).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_MS_ErrorDecision" name="Suspected clinical error?">
+  <bpmn:exclusiveGateway id="N_MS_ErrorDecision" name="Suspected clinical error?" default="F6">
     <bpmn:documentation>EX-18: return to the Consultant or continue (BR-27, FR-037).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_MS_ConfirmRecipients" name="Confirm the recipients">
     <bpmn:documentation>Supplies the send-correspondence inputs recipients, documentType and channelPreference, using the recorded communication preference (BR-26, FR-039, FR-051, NFR-011).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="clinic-letter" />
       <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -96,6 +104,7 @@
   <bpmn:userTask id="N_MS_HandleDispatchFailure" name="Handle dispatch failure">
     <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the dispatch variables (for example the recipient list) were unusable, so they are corrected and the letter is sent again through the correspondence service. The failure and the retry are recorded (FR-037, FR-039, NFR-008).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -105,31 +114,35 @@
   <bpmn:userTask id="N_PC_MonitorCorrespondence" name="Monitor outstanding letters">
     <bpmn:documentation>Pathway monitoring of outstanding correspondence; seven days after the appointment a letter is delayed (BR-28, BR-30, FR-038).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_PC_SevenDays" name="Letter within seven days?">
+  <bpmn:exclusiveGateway id="N_PC_SevenDays" name="Letter within seven days?" default="F15">
     <bpmn:documentation>On time / delayed (BR-28, BR-30, EX-17, FR-038).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:endEvent id="N_PC_LetterOnTrack" name="Letter completed within target" />
   <bpmn:userTask id="N_PC_IssueReminder" name="Issue weekly reminder to consultant">
     <bpmn:documentation>Weekly reminders, suppressed once the letter is completed; the full history of reminders, responses and valid reasons for delay is retained (BR-31, BR-33, FR-040, FR-052).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_PC_OverdueDuration" name="How overdue is the letter?">
+  <bpmn:exclusiveGateway id="N_PC_OverdueDuration" name="How overdue is the letter?" default="F17">
     <bpmn:documentation>Escalation thresholds as calendar periods from the appointment date (BR-32, AS-13, FR-040).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_AM_ContactConsultant" name="Contact the responsible consultant">
     <bpmn:documentation>More than one month outstanding: the Administrative Manager contacts the consultant (BR-32, EX-17, FR-040).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="administrative-management" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_AM_EscalateHigher" name="Escalate to higher management">
     <bpmn:documentation>More than three months outstanding: escalation to the appropriate higher management team; the team is not named in the case (AM-05, BR-32, FR-040).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="administrative-management" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -139,9 +152,7 @@
   <bpmn:sequenceFlow id="F3" sourceRef="B_C_LetterOverdue" targetRef="N_PC_MonitorCorrespondence" />
   <bpmn:sequenceFlow id="F4" sourceRef="N_C_ApproveLetter" targetRef="N_MS_ProcessLetter" />
   <bpmn:sequenceFlow id="F5" sourceRef="N_MS_ProcessLetter" targetRef="N_MS_ErrorDecision" />
-  <bpmn:sequenceFlow id="F6" name="clinical error suspected" sourceRef="N_MS_ErrorDecision" targetRef="N_C_ReviewClinicalError">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= suspectedClinicalError = true</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F6" name="clinical error suspected" sourceRef="N_MS_ErrorDecision" targetRef="N_C_ReviewClinicalError" />
   <bpmn:sequenceFlow id="F7" sourceRef="N_C_ReviewClinicalError" targetRef="N_C_ApproveLetter" />
   <bpmn:sequenceFlow id="F8" name="no clinical error" sourceRef="N_MS_ErrorDecision" targetRef="N_MS_ConfirmRecipients">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= suspectedClinicalError = false</bpmn:conditionExpression>
@@ -154,13 +165,9 @@
   <bpmn:sequenceFlow id="F14" name="within seven days" sourceRef="N_PC_SevenDays" targetRef="N_PC_LetterOnTrack">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= letterWithinSevenDays = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F15" name="delayed" sourceRef="N_PC_SevenDays" targetRef="N_PC_IssueReminder">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= letterWithinSevenDays = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F15" name="delayed" sourceRef="N_PC_SevenDays" targetRef="N_PC_IssueReminder" />
   <bpmn:sequenceFlow id="F16" sourceRef="N_PC_IssueReminder" targetRef="N_PC_OverdueDuration" />
-  <bpmn:sequenceFlow id="F17" name="less than one month" sourceRef="N_PC_OverdueDuration" targetRef="N_PC_MonitorCorrespondence">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= overdueDuration = &quot;less_than_one_month&quot;</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F17" name="less than one month" sourceRef="N_PC_OverdueDuration" targetRef="N_PC_MonitorCorrespondence" />
   <bpmn:sequenceFlow id="F18" name="one to three months" sourceRef="N_PC_OverdueDuration" targetRef="N_AM_ContactConsultant">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= overdueDuration = &quot;one_to_three_months&quot;</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
@@ -214,7 +221,7 @@
       <bpmndi:BPMNShape id="N_C_ConsultationDone_di" bpmnElement="N_C_ConsultationDone">
         <dc:Bounds x="407" y="412" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="270" y="454" width="310" height="16" />
+          <dc:Bounds x="230" y="454" width="310" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_C_PrepareLetter_di" bpmnElement="N_C_PrepareLetter">

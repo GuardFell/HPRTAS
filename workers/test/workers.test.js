@@ -17,6 +17,7 @@ const appointmentAvailability = require('../src/workers/appointment-availability
 const treatmentAvailability = require('../src/workers/treatment-availability')
 const paymentProcessing = require('../src/workers/payment-processing')
 const correspondenceDispatch = require('../src/workers/correspondence-dispatch')
+const refundProcessing = require('../src/workers/refund-processing')
 
 const config = buildConfig()
 
@@ -413,6 +414,151 @@ test('correspondence-dispatch: an unusable dispatch request produces a controlle
   ]) {
     const outcome = await run(correspondenceDispatch, variables)
     assert.equal(outcome.kind, 'businessError', `expected a business error for ${JSON.stringify(variables)}`)
+    assert.equal(outcome.errorCode, 'INVALID_VARIABLE')
+  }
+})
+
+// ---------------------------------------------------------------------------
+// refund-processing
+// ---------------------------------------------------------------------------
+
+/** The same payment the payment tests use, settled first so there is money to give back. */
+const settledPayment = {
+  chargeAmount: 250,
+  fundingRoute: 'patient',
+  paymentReference: 'PAY-2026-0001',
+}
+
+const refundRequest = {
+  paymentReference: settledPayment.paymentReference,
+  refundDecision: 'full',
+  refundReason: 'cancelled',
+}
+
+/** Pays first, so the provider's ledger holds a transaction the refund can be made against. */
+async function settle(context) {
+  const paid = await paymentProcessing.handle(settledPayment, context)
+  assert.equal(paid.variables.paymentStatus, 'completed', 'the fixture payment must settle')
+  return paid
+}
+
+test('refund-processing: a full refund returns the amount the provider actually took (BR-20, FR-033)', async () => {
+  const context = buildContext(config)
+  await settle(context)
+
+  const outcome = await refundProcessing.handle(refundRequest, context)
+
+  assert.equal(outcome.kind, 'completed')
+  assert.equal(outcome.variables.refundStatus, 'full')
+  assert.equal(outcome.variables.refundedAmount, settledPayment.chargeAmount)
+  assert.match(outcome.variables.refundReference, /^PSP-RF-/)
+})
+
+test('refund-processing: a partial refund returns only the amount the Finance Team decided', async () => {
+  const context = buildContext(config)
+  await settle(context)
+
+  const outcome = await refundProcessing.handle(
+    { ...refundRequest, refundDecision: 'partial', refundAmount: 100, refundReason: 'rescheduled' },
+    context
+  )
+
+  assert.equal(outcome.kind, 'completed')
+  assert.equal(outcome.variables.refundStatus, 'partial')
+  assert.equal(outcome.variables.refundedAmount, 100)
+})
+
+test('refund-processing: the same payment is never refunded twice (FR-023, AC-10)', async () => {
+  const context = buildContext(config)
+  await settle(context)
+
+  const first = await refundProcessing.handle(refundRequest, context)
+  const second = await refundProcessing.handle(refundRequest, context)
+
+  assert.equal(second.kind, 'completed')
+  assert.equal(second.variables.refundStatus, 'duplicate')
+  assert.equal(second.variables.duplicateRefundAttempt, true)
+  assert.equal(
+    second.variables.refundReference,
+    first.variables.refundReference,
+    'the original refund is returned rather than a second payout'
+  )
+  assert.equal(second.variables.refundedAmount, first.variables.refundedAmount)
+})
+
+test('refund-processing: a payment that was never settled cannot be refunded (BR-20)', async () => {
+  // No payment was made for this reference, so refunding it would create money.
+  const outcome = await refundProcessing.handle(refundRequest, buildContext(config))
+
+  assert.equal(outcome.kind, 'businessError')
+  assert.equal(outcome.errorCode, 'INVALID_VARIABLE')
+  assert.match(outcome.errorMessage, /nothing to refund/)
+})
+
+test('refund-processing: a refund larger than the amount paid is refused', async () => {
+  const context = buildContext(config)
+  await settle(context)
+
+  const outcome = await refundProcessing.handle(
+    { ...refundRequest, refundDecision: 'partial', refundAmount: settledPayment.chargeAmount + 1 },
+    context
+  )
+
+  assert.equal(outcome.kind, 'businessError')
+  assert.equal(outcome.errorCode, 'INVALID_VARIABLE')
+})
+
+test('refund-processing: a partial refund that names no amount is refused', async () => {
+  const context = buildContext(config)
+  await settle(context)
+
+  const outcome = await refundProcessing.handle(
+    { ...refundRequest, refundDecision: 'partial' },
+    context
+  )
+
+  assert.equal(outcome.kind, 'businessError')
+  assert.equal(outcome.errorCode, 'INVALID_VARIABLE')
+  assert.match(outcome.errorMessage, /how much is to be refunded/)
+})
+
+test('refund-processing: card details are refused and never passed on (BR-06, NFR-007, AC-09)', async () => {
+  let providerCalled = false
+  const context = buildContext(config)
+  await settle(context)
+  const originalRefundPayment = context.services.payment.refundPayment
+  context.services.payment.refundPayment = (...args) => {
+    providerCalled = true
+    return originalRefundPayment(...args)
+  }
+
+  const outcome = await refundProcessing.handle(
+    { ...refundRequest, cardNumber: '4111111111111111', cvv: '123' },
+    context
+  )
+
+  assert.equal(outcome.kind, 'businessError')
+  assert.equal(outcome.errorCode, 'PROHIBITED_FINANCIAL_DATA')
+  assert.equal(providerCalled, false, 'the provider must not be called with card details')
+  assert.deepEqual(outcome.variables.prohibitedFields.sort(), ['cardNumber', 'cvv'])
+})
+
+test('refund-processing: an unusable refund request produces a controlled error (TC-11)', async () => {
+  const context = buildContext(config)
+  await settle(context)
+
+  for (const variables of [
+    { ...refundRequest, paymentReference: '' },
+    { ...refundRequest, refundReason: 'because' },
+    { ...refundRequest, refundDecision: 'none' },
+    { ...refundRequest, refundAmount: 'a hundred' },
+  ]) {
+    const outcome = await refundProcessing.handle(variables, context)
+    assert.equal(
+      outcome.kind,
+      'businessError',
+      `expected a business error for ${JSON.stringify(variables)}`
+    )
     assert.equal(outcome.errorCode, 'INVALID_VARIABLE')
   }
 })

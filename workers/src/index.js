@@ -23,6 +23,7 @@ const WORKER_MODULES = [
   require('./workers/treatment-availability'),
   require('./workers/payment-processing'),
   require('./workers/correspondence-dispatch'),
+  require('./workers/refund-processing'),
 ]
 
 /** Builds the parts a job handler needs, without any connection to an engine. */

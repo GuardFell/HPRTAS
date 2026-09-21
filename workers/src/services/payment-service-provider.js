@@ -19,20 +19,30 @@
  * and takes no more money (FR-023, EX-08, AC-10). A declined attempt recorded
  * nothing, so a retry after a decline is allowed.
  *
+ * The same ledger answers refunds, which is what `refund-processing` calls. A
+ * refund is only recorded against a payment the provider actually settled, it
+ * can never exceed what was paid, and a second refund against the same payment
+ * reference returns the first one as a duplicate rather than paying out twice
+ * (BR-20, FR-033, AC-10).
+ *
  * Limitations are recorded in `workers/README.md`: no card processing, no
  * clearing or settlement, no 3-D Secure, no fraud checks; refunds are recorded
  * rather than executed.
  */
 
 const OUTCOMES = ['completed', 'declined', 'success_no_confirmation']
+const REFUND_OUTCOMES = ['refunded']
 
 function createPaymentServiceProvider(config) {
   // payment reference -> { status, transactionReference, paymentDate, paidAmount, confirmationReceived }
   const ledger = new Map()
+  // payment reference -> { refundReference, refundDate, refundedAmount, refundReason, refundDecision }
+  const refunds = new Map()
   let sequence = 0
 
   return {
     outcomes: OUTCOMES,
+    refundOutcomes: REFUND_OUTCOMES,
 
     /**
      * @param {object} request
@@ -89,6 +99,72 @@ function createPaymentServiceProvider(config) {
 
       return { ...transaction, duplicateAttempt: false }
     },
+
+    /**
+     * Records a refund against a payment this provider settled earlier.
+     *
+     * The provider is the only party that can say whether the money was ever
+     * taken, so the decision about what may be refunded is made here and
+     * reported back as a status the worker turns into a business error:
+     *
+     *   refunded            the refund was recorded
+     *   duplicate           this payment reference has already been refunded
+     *   no_settled_payment  no completed transaction exists for the reference
+     *   amount_too_high     the refund is larger than the amount paid
+     *   invalid_amount      the refund is not a positive amount
+     *
+     * @param {object} request
+     * @param {string} request.paymentReference  the reference of the payment to refund
+     * @param {number} [request.refundAmount]    omitted means refund in full
+     * @param {string} [request.refundReason]
+     * @param {string} [request.refundDecision]  full | partial
+     * @param {Date}   request.now
+     */
+    async refundPayment({ paymentReference, refundAmount, refundReason, refundDecision, now }) {
+      await delay(config.latencyMs)
+
+      const settled = ledger.get(paymentReference)
+      if (!settled || settled.status !== 'completed' || typeof settled.paidAmount !== 'number') {
+        // Nothing was ever taken for this reference, so there is nothing to
+        // give back. Refunding it would create money.
+        return { status: 'no_settled_payment', paidAmount: null, refundedAmount: null }
+      }
+
+      const alreadyRefunded = refunds.get(paymentReference)
+      if (alreadyRefunded) {
+        // Paying out twice for one cancelled appointment is exactly what the
+        // ledger is there to prevent (AC-10).
+        return { ...alreadyRefunded, status: 'duplicate', duplicateRefundAttempt: true }
+      }
+
+      const amount = refundAmount === undefined || refundAmount === null ? settled.paidAmount : refundAmount
+      if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
+        return { status: 'invalid_amount', paidAmount: settled.paidAmount, refundedAmount: null }
+      }
+      if (amount > settled.paidAmount) {
+        return { status: 'amount_too_high', paidAmount: settled.paidAmount, refundedAmount: null }
+      }
+
+      sequence += 1
+      const refund = {
+        refundReference: `PSP-RF-${now.toISOString().slice(0, 10).replace(/-/g, '')}-${String(sequence).padStart(4, '0')}`,
+        refundDate: now.toISOString().slice(0, 10),
+        refundedAmount: amount,
+        refundReason: refundReason || null,
+        refundDecision: refundDecision || (amount === settled.paidAmount ? 'full' : 'partial'),
+      }
+      refunds.set(paymentReference, refund)
+
+      return { ...refund, status: 'refunded', paidAmount: settled.paidAmount, duplicateRefundAttempt: false }
+    },
+
+    /** Read-only view of what has been paid and refunded, used by the tests. */
+    ledger() {
+      return {
+        payments: Object.fromEntries(ledger),
+        refunds: Object.fromEntries(refunds),
+      }
+    },
   }
 }
 
@@ -96,4 +172,8 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-module.exports = { createPaymentServiceProvider, PAYMENT_OUTCOMES: OUTCOMES }
+module.exports = {
+  createPaymentServiceProvider,
+  PAYMENT_OUTCOMES: OUTCOMES,
+  REFUND_OUTCOMES,
+}

@@ -63,6 +63,7 @@
   <bpmn:userTask id="N_MS_CheckReferral" name="Check referral and documents">
     <bpmn:documentation>Medical Secretaries record the supporting information received and the patient identification check (BR-01, BR-46, FR-002, FR-048), and supply the validate-referral inputs documentsComplete, missingItems and referringOrganisation.</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -72,24 +73,27 @@
       <zeebe:taskDefinition type="validate-referral" retries="3" />
     </bpmn:extensionElements>
   </bpmn:serviceTask>
-  <bpmn:exclusiveGateway id="N_MS_DocumentsComplete" name="Documents complete?">
+  <bpmn:exclusiveGateway id="N_MS_DocumentsComplete" name="Documents complete?" default="F5">
     <bpmn:documentation>Reads validationResult; error variables do not reach this scope (BR-01, FR-002).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_MS_RequestMissing" name="Request missing information">
     <bpmn:documentation>Medical Secretaries only; they may not judge clinical suitability (BR-02, EX-01, FR-003).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_MS_ReviewException" name="Review referral exception">
     <bpmn:documentation>Handles MISSING_INFORMATION_NOT_SPECIFIED: the referral is marked incomplete but names no missing items, so nothing can be requested until the exception is reviewed (FR-003).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_MS_CorrectReferralInput" name="Correct referral input">
     <bpmn:documentation>Handles INVALID_VARIABLE on validate-referral: a required variable is missing, of the wrong type or contradicts another value, so the recorded inputs are corrected and the validation is re-run. Keeping this separate from the missing-information path is how the model tells the two failures apart (workers/README.md integration constraint).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -102,10 +106,12 @@
   <bpmn:userTask id="N_C_ClinicalReview" name="Clinical review of referral">
     <bpmn:documentation>Consultant only; the decision, its reason, the decision maker and the date and time are recorded (BR-03, FR-005).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="referral-review" />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_C_ReferralDecision" name="Referral decision?">
+  <bpmn:exclusiveGateway id="N_C_ReferralDecision" name="Referral decision?" default="F15">
     <bpmn:documentation>Accepted / rejected / redirected / further information (BR-03, EX-02 to EX-04, FR-005).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:endEvent id="N_C_Rejected" name="Referral rejected">
@@ -117,6 +123,8 @@
   <bpmn:userTask id="N_OB_PrepareRequest" name="Prepare booking request">
     <bpmn:documentation>Required speciality, appointment priority, preferred timeframe and any patient requirements (BR-05, FR-010); a New Patient Appointment may only be arranged after an accepted referral (BR-04, FR-006).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="booking-request" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -126,7 +134,7 @@
       <zeebe:taskDefinition type="check-appointment-availability" retries="3" />
     </bpmn:extensionElements>
   </bpmn:serviceTask>
-  <bpmn:exclusiveGateway id="N_OB_SlotAvailable" name="Slot in requested period?">
+  <bpmn:exclusiveGateway id="N_OB_SlotAvailable" name="Slot in requested period?" default="F21">
     <bpmn:documentation>Reads slotAvailable and withinRequestedWindow from the worker (FR-016, EX-05).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:serviceTask id="N_OB_SendNotification" name="Send appointment letter">
@@ -135,21 +143,25 @@
       <zeebe:taskDefinition type="send-correspondence" retries="3" />
     </bpmn:extensionElements>
   </bpmn:serviceTask>
-  <bpmn:exclusiveGateway id="N_OB_WithinTwoWeeks" name="Within two weeks?">
+  <bpmn:exclusiveGateway id="N_OB_WithinTwoWeeks" name="Within two weeks?" default="F30">
     <bpmn:documentation>Reads appointmentWithinTwoWeeks, recomputed by the worker from the slot actually found (BR-07, FR-014, AS-13).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_OB_TelephonePatient" name="Telephone the patient">
     <bpmn:documentation>Extra telephone contact inside two weeks; every attempt and its outcome is recorded (BR-07, BR-08, FR-013, FR-014, EX-07 to EX-09).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="patient-contact" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_OB_ContactOutcome" name="Contact outcome?">
+  <bpmn:exclusiveGateway id="N_OB_ContactOutcome" name="Contact outcome?" default="F34">
     <bpmn:documentation>Contacted / alternative appointment requested / not reached (BR-08, EX-07 to EX-09).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_OB_RecordAttempt" name="Record and retry contact">
     <bpmn:documentation>Unanswered call or incorrect contact number: the attempt and its outcome are recorded and another attempt is made (BR-08, FR-013, EX-07, EX-08).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="patient-contact" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -157,15 +169,18 @@
   <bpmn:userTask id="N_OB_RecordNoSlot" name="Record no suitable slot">
     <bpmn:documentation>EX-05: no suitable appointment inside the requested period; the scheduling outcome is outside_window or none and the action taken is recorded (FR-016).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_OB_UrgentReferral" name="Urgent referral?">
+  <bpmn:exclusiveGateway id="N_OB_UrgentReferral" name="Urgent referral?" default="F26">
     <bpmn:documentation>Urgent referrals are expedited through the same booking process (BR-09, AS-06, FR-015).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_OB_CorrectRequest" name="Correct booking request">
     <bpmn:documentation>Handles INVALID_VARIABLE on check-appointment-availability: the booking request variables are corrected and the availability check is re-run, without creating a duplicate appointment (FR-016, FR-018).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="booking-request" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -175,6 +190,7 @@
   <bpmn:userTask id="N_OB_RecordDispatchFailure" name="Record dispatch failure">
     <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the letter was not dispatched because a required variable (for example the recipient list) was unusable. The failure is recorded and the patient is contacted through another channel, so informing the patient does not depend on the correspondence service (FR-012, NFR-008, NFR-011).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -184,6 +200,7 @@
   <bpmn:userTask id="N_PC_ReviewDelay" name="Review the delay">
     <bpmn:documentation>Pathway monitoring of a case with no suitable appointment (FR-016, FR-040).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -194,9 +211,7 @@
   <bpmn:sequenceFlow id="F4" name="complete" sourceRef="N_MS_DocumentsComplete" targetRef="N_C_ClinicalReview">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= validationResult = &quot;complete&quot;</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F5" name="incomplete" sourceRef="N_MS_DocumentsComplete" targetRef="N_MS_RequestMissing">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= validationResult != &quot;complete&quot;</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F5" name="incomplete" sourceRef="N_MS_DocumentsComplete" targetRef="N_MS_RequestMissing" />
   <bpmn:sequenceFlow id="F6" sourceRef="N_MS_RequestMissing" targetRef="N_MS_CheckReferral" />
   <bpmn:sequenceFlow id="F7" sourceRef="B_MS_Validation" targetRef="N_MS_ReviewException" />
   <bpmn:sequenceFlow id="F8" sourceRef="N_MS_ReviewException" targetRef="N_MS_RequestMissing" />
@@ -212,9 +227,7 @@
   <bpmn:sequenceFlow id="F14" name="redirected" sourceRef="N_C_ReferralDecision" targetRef="N_C_Redirected">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= decision = &quot;redirected&quot;</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F15" name="further information" sourceRef="N_C_ReferralDecision" targetRef="N_MS_RequestMissing">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= decision = &quot;further_information&quot;</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F15" name="further information" sourceRef="N_C_ReferralDecision" targetRef="N_MS_RequestMissing" />
   <bpmn:sequenceFlow id="F16" sourceRef="N_OB_PrepareRequest" targetRef="N_OB_CheckAvailability" />
   <bpmn:sequenceFlow id="F17" sourceRef="N_OB_CheckAvailability" targetRef="N_OB_SlotAvailable" />
   <bpmn:sequenceFlow id="F18" sourceRef="B_OB_BookingInput" targetRef="N_OB_CorrectRequest" />
@@ -222,26 +235,20 @@
   <bpmn:sequenceFlow id="F20" name="in window" sourceRef="N_OB_SlotAvailable" targetRef="N_OB_SendNotification">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= slotAvailable = true and withinRequestedWindow = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F21" name="outside window" sourceRef="N_OB_SlotAvailable" targetRef="N_OB_RecordNoSlot">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= slotAvailable = false or withinRequestedWindow = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F21" name="outside window" sourceRef="N_OB_SlotAvailable" targetRef="N_OB_RecordNoSlot" />
   <bpmn:sequenceFlow id="F22" sourceRef="B_OB_DispatchFailure" targetRef="N_OB_RecordDispatchFailure" />
   <bpmn:sequenceFlow id="F23" sourceRef="N_OB_RecordDispatchFailure" targetRef="N_OB_TelephonePatient" />
   <bpmn:sequenceFlow id="F24" sourceRef="N_OB_RecordNoSlot" targetRef="N_OB_UrgentReferral" />
   <bpmn:sequenceFlow id="F25" name="urgent" sourceRef="N_OB_UrgentReferral" targetRef="N_OB_CheckAvailability">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= priority = &quot;urgent&quot;</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F26" name="routine" sourceRef="N_OB_UrgentReferral" targetRef="N_PC_ReviewDelay">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= priority != &quot;urgent&quot;</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F26" name="routine" sourceRef="N_OB_UrgentReferral" targetRef="N_PC_ReviewDelay" />
   <bpmn:sequenceFlow id="F27" sourceRef="N_PC_ReviewDelay" targetRef="N_PC_Referred" />
   <bpmn:sequenceFlow id="F28" sourceRef="N_OB_SendNotification" targetRef="N_OB_WithinTwoWeeks" />
   <bpmn:sequenceFlow id="F29" name="within two weeks" sourceRef="N_OB_WithinTwoWeeks" targetRef="N_OB_TelephonePatient">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= appointmentWithinTwoWeeks = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F30" name="later" sourceRef="N_OB_WithinTwoWeeks" targetRef="N_OB_AppointmentArranged">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= appointmentWithinTwoWeeks = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F30" name="later" sourceRef="N_OB_WithinTwoWeeks" targetRef="N_OB_AppointmentArranged" />
   <bpmn:sequenceFlow id="F31" sourceRef="N_OB_TelephonePatient" targetRef="N_OB_ContactOutcome" />
   <bpmn:sequenceFlow id="F32" name="contacted" sourceRef="N_OB_ContactOutcome" targetRef="N_OB_AppointmentArranged">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= contactOutcome = &quot;contacted&quot;</bpmn:conditionExpression>
@@ -249,9 +256,7 @@
   <bpmn:sequenceFlow id="F33" name="another date" sourceRef="N_OB_ContactOutcome" targetRef="N_OB_PrepareRequest">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= contactOutcome = &quot;alternative_requested&quot;</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F34" name="no contact" sourceRef="N_OB_ContactOutcome" targetRef="N_OB_RecordAttempt">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= contactOutcome != &quot;contacted&quot; and contactOutcome != &quot;alternative_requested&quot;</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F34" name="no contact" sourceRef="N_OB_ContactOutcome" targetRef="N_OB_RecordAttempt" />
   <bpmn:sequenceFlow id="F35" sourceRef="N_OB_RecordAttempt" targetRef="N_OB_TelephonePatient" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">

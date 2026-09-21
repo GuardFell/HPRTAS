@@ -72,10 +72,11 @@
   <bpmn:userTask id="N_CL_AssessPatient" name="Assess patient and treatment options">
     <bpmn:documentation>Clinical task: assess the patient, discuss the diagnosis and explain the treatment options (BR-25, FR-007).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_CL_ConsentDecision" name="Patient consents to proceed?">
+  <bpmn:exclusiveGateway id="N_CL_ConsentDecision" name="Patient consents to proceed?" default="F3">
     <bpmn:documentation>Consent is recorded before any Treatment Booking Request is created (BR-10, FR-007).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:endEvent id="N_CL_NotProceeding" name="Patient does not proceed">
@@ -84,36 +85,43 @@
   <bpmn:userTask id="N_CL_AuthoriseTreatment" name="Record consent and authorise request">
     <bpmn:documentation>Clinical authorisation of the Treatment Booking Request: proposed treatment, start date, number and frequency of cycles, reviews between cycles, special resources, authorising professional (BR-10, BR-11, FR-007, FR-019). Supplies clinicalAuthorised and the treatment availability inputs.</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="treatment-booking" />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_CL_ClinicalRisk" name="Delaying care is a clinical risk?">
+  <bpmn:exclusiveGateway id="N_CL_ClinicalRisk" name="Delaying care is a clinical risk?" default="F31">
     <bpmn:documentation>EX-13, BR-19: allows urgent treatment although payment is not confirmed (FR-032).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_CL_ModifyTreatment" name="Authorise treatment modification">
     <bpmn:documentation>Only a formally submitted Treatment Modification Request through the system is processed; requests made by email, telephone or informal communication are refused (BR-22, EX-15, FR-020).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="treatment-booking" />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_CL_UrgentAuthorise" name="Authorise urgent treatment">
     <bpmn:documentation>Records the reason for proceeding without confirmed payment and refers the case to the Finance Team for resolution (BR-19, EX-13, FR-032).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_OC_PreCycleReview" name="Pre-cycle review and blood test">
     <bpmn:documentation>Before each subsequent cycle: review, blood test results and the clinical decision on fitness to continue (BR-25, FR-009).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="clinical-professionals" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_OC_FitToContinue" name="Patient fit to continue?">
+  <bpmn:exclusiveGateway id="N_OC_FitToContinue" name="Patient fit to continue?" default="F40">
     <bpmn:documentation>Fit / delay or change the plan; a clinical decision that administrative roles cannot take (BR-25, BR-41, FR-009).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_TB_VerifyAuthorisation" name="Verify treatment authorisation">
     <bpmn:documentation>Administrative check that the request is complete and clinically authorised; supplies clinicalAuthorised to the availability check (BR-10, FR-008).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -123,12 +131,13 @@
       <zeebe:taskDefinition type="check-treatment-availability" retries="3" />
     </bpmn:extensionElements>
   </bpmn:serviceTask>
-  <bpmn:exclusiveGateway id="N_TB_AvailabilityDecision" name="Service available?">
+  <bpmn:exclusiveGateway id="N_TB_AvailabilityDecision" name="Service available?" default="F13">
     <bpmn:documentation>Reads externalServiceAvailable; bookingStatus stays pending when the service is unavailable (BR-12, EX-10, FR-018).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_TB_ConfirmAppointment" name="Confirm treatment appointment">
     <bpmn:documentation>Confirmation only after the funding route and, where required, the payment or an authorised exemption are in place (BR-15, FR-029).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -141,24 +150,29 @@
   <bpmn:userTask id="N_TB_ReturnRequest" name="Return request for authorisation">
     <bpmn:documentation>Handles UNAUTHORISED_BOOKING_REQUEST: the request has no clinical authorisation and is not processed; it is returned to the clinical role (BR-10, FR-008).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_TB_KeepPending" name="Keep booking pending">
     <bpmn:documentation>EX-10: the booking stays pending, the responsible team is notified, further attempts are recorded and no duplicate appointment is created (BR-12, FR-018).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_TB_CorrectBookingInput" name="Correct booking input">
     <bpmn:documentation>Handles INVALID_VARIABLE on check-treatment-availability: a required variable is missing, of the wrong type or contradicts another value, so the booking request is corrected and the availability check is re-run without creating a duplicate appointment (FR-018).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="treatment-booking" />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_TB_RecordNotificationFailure" name="Record notification failure">
     <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the notification was not dispatched because a required variable (for example the recipient list) was unusable; the failure is recorded and the patient is informed through another channel (FR-012, NFR-008, NFR-011).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -174,24 +188,29 @@
   <bpmn:userTask id="N_F_DetermineFunding" name="Determine funding route">
     <bpmn:documentation>Hospital-funded, insurer or funding organisation, or patient payment (BR-13, FR-025). A hospital, insurer or exempt route means the payment provider is not called at all.</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="funding-route" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_F_FundingApprovalRequired" name="Funding approval required?">
+  <bpmn:exclusiveGateway id="N_F_FundingApprovalRequired" name="Funding approval required?" default="F16">
     <bpmn:documentation>BR-13, BR-14, FR-025, FR-026.</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_F_RecordApproval" name="Record funding approval">
     <bpmn:documentation>Records the funding organisation, authorisation reference, approved amount and any limitations (BR-14, FR-026).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_F_PaymentRequired" name="Payment required from patient?">
+  <bpmn:exclusiveGateway id="N_F_PaymentRequired" name="Payment required from patient?" default="F19">
     <bpmn:documentation>Most eligible patients pay nothing; charges may apply to private patients, overseas visitors, optional services or excluded treatments (BR-13, FR-025).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_F_CalculateCharge" name="Calculate or obtain the charge">
     <bpmn:documentation>Supplies chargeAmount, fundingRoute and paymentReference to process-payment (AS-08, BR-15, FR-027).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="payment" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -201,18 +220,21 @@
       <zeebe:taskDefinition type="process-payment" retries="3" />
     </bpmn:extensionElements>
   </bpmn:serviceTask>
-  <bpmn:exclusiveGateway id="N_F_PaymentStatus" name="Payment completed?">
+  <bpmn:exclusiveGateway id="N_F_PaymentStatus" name="Payment completed?" default="F27">
     <bpmn:documentation>Reads paymentStatus, confirmationReceived and requiresInvestigation (BR-17, BR-18, EX-11, EX-12, FR-030, FR-031).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_F_CorrectPaymentRequest" name="Correct the payment request">
     <bpmn:documentation>Handles PROHIBITED_FINANCIAL_DATA (card or security details must never reach the system, BR-16, NFR-007) and INVALID_VARIABLE (the request variables are unusable). In both cases the provider is not called again until the request is correct, and no second charge is created (BR-17, FR-028, FR-030).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="payment" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_F_InvestigatePayment" name="Mark transaction for investigation">
     <bpmn:documentation>EX-12, BR-18: payment taken but confirmation not returned; the transaction is marked for investigation and no further payment request is issued (FR-031).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -222,12 +244,14 @@
   <bpmn:userTask id="N_F_NotifyPatient" name="Notify patient and booking team">
     <bpmn:documentation>EX-11, BR-17: the patient and the responsible administrative team are notified; another attempt is possible without a duplicate booking or a second charge (FR-030).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_F_ReviewFinancialImpact" name="Review the financial impact">
     <bpmn:documentation>BR-24, FR-022: a modification that affects an existing charge, funding approval or completed payment is reviewed by Finance.</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -240,9 +264,7 @@
   </bpmn:boundaryEvent>
   <bpmn:sequenceFlow id="F1" sourceRef="N_CL_PatientAttends" targetRef="N_CL_AssessPatient" />
   <bpmn:sequenceFlow id="F2" sourceRef="N_CL_AssessPatient" targetRef="N_CL_ConsentDecision" />
-  <bpmn:sequenceFlow id="F3" name="declined" sourceRef="N_CL_ConsentDecision" targetRef="N_CL_NotProceeding">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= consentGiven = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F3" name="declined" sourceRef="N_CL_ConsentDecision" targetRef="N_CL_NotProceeding" />
   <bpmn:sequenceFlow id="F4" name="consented" sourceRef="N_CL_ConsentDecision" targetRef="N_CL_AuthoriseTreatment">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= consentGiven = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
@@ -256,21 +278,15 @@
   <bpmn:sequenceFlow id="F12" name="available" sourceRef="N_TB_AvailabilityDecision" targetRef="N_F_DetermineFunding">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= externalServiceAvailable = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F13" name="not available" sourceRef="N_TB_AvailabilityDecision" targetRef="N_TB_KeepPending">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= externalServiceAvailable = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F13" name="not available" sourceRef="N_TB_AvailabilityDecision" targetRef="N_TB_KeepPending" />
   <bpmn:sequenceFlow id="F14" sourceRef="N_TB_KeepPending" targetRef="N_TB_CheckAvailability" />
   <bpmn:sequenceFlow id="F15" sourceRef="N_F_DetermineFunding" targetRef="N_F_FundingApprovalRequired" />
-  <bpmn:sequenceFlow id="F16" name="required" sourceRef="N_F_FundingApprovalRequired" targetRef="N_F_RecordApproval">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fundingApprovalRequired = true</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F16" name="required" sourceRef="N_F_FundingApprovalRequired" targetRef="N_F_RecordApproval" />
   <bpmn:sequenceFlow id="F17" name="not required" sourceRef="N_F_FundingApprovalRequired" targetRef="N_F_PaymentRequired">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fundingApprovalRequired = false</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
   <bpmn:sequenceFlow id="F18" sourceRef="N_F_RecordApproval" targetRef="N_F_PaymentRequired" />
-  <bpmn:sequenceFlow id="F19" name="payment required" sourceRef="N_F_PaymentRequired" targetRef="N_F_CalculateCharge">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentRequiredFromPatient = true</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F19" name="payment required" sourceRef="N_F_PaymentRequired" targetRef="N_F_CalculateCharge" />
   <bpmn:sequenceFlow id="F20" name="no payment due" sourceRef="N_F_PaymentRequired" targetRef="N_TB_ConfirmAppointment">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentRequiredFromPatient = false</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
@@ -282,9 +298,7 @@
   <bpmn:sequenceFlow id="F26" name="completed" sourceRef="N_F_PaymentStatus" targetRef="N_TB_ConfirmAppointment">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentStatus = &quot;completed&quot; and confirmationReceived = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F27" name="not completed" sourceRef="N_F_PaymentStatus" targetRef="N_CL_ClinicalRisk">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentStatus != &quot;completed&quot;</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F27" name="not completed" sourceRef="N_F_PaymentStatus" targetRef="N_CL_ClinicalRisk" />
   <bpmn:sequenceFlow id="F28" name="taken but unconfirmed" sourceRef="N_F_PaymentStatus" targetRef="N_F_InvestigatePayment">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= requiresInvestigation = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
@@ -292,9 +306,7 @@
   <bpmn:sequenceFlow id="F30" name="yes" sourceRef="N_CL_ClinicalRisk" targetRef="N_CL_UrgentAuthorise">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= delayingCareIsClinicalRisk = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F31" name="no" sourceRef="N_CL_ClinicalRisk" targetRef="N_F_NotifyPatient">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= delayingCareIsClinicalRisk = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F31" name="no" sourceRef="N_CL_ClinicalRisk" targetRef="N_F_NotifyPatient" />
   <bpmn:sequenceFlow id="F32" name="retry payment" sourceRef="N_F_NotifyPatient" targetRef="N_F_CalculateCharge">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= retryPayment = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
@@ -307,9 +319,7 @@
   <bpmn:sequenceFlow id="F39" name="fit" sourceRef="N_OC_FitToContinue" targetRef="N_TB_ConfirmAppointment">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fitToContinue = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F40" name="not fit" sourceRef="N_OC_FitToContinue" targetRef="N_CL_ModifyTreatment">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fitToContinue = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F40" name="not fit" sourceRef="N_OC_FitToContinue" targetRef="N_CL_ModifyTreatment" />
   <bpmn:sequenceFlow id="F41" name="affects charge or payment" sourceRef="N_CL_ModifyTreatment" targetRef="N_F_ReviewFinancialImpact">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= affectsCharge = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
@@ -362,7 +372,7 @@
       <bpmndi:BPMNShape id="N_CL_PatientAttends_di" bpmnElement="N_CL_PatientAttends">
         <dc:Bounds x="407" y="412" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="310" y="454" width="231" height="16" />
+          <dc:Bounds x="308" y="454" width="231" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_AssessPatient_di" bpmnElement="N_CL_AssessPatient">
@@ -386,7 +396,7 @@
       <bpmndi:BPMNShape id="N_CL_ClinicalRisk_di" bpmnElement="N_CL_ClinicalRisk" isMarkerVisible="true">
         <dc:Bounds x="4200" y="405" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="4103" y="461" width="245" height="16" />
+          <dc:Bounds x="4095" y="461" width="245" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_ModifyTreatment_di" bpmnElement="N_CL_ModifyTreatment">
@@ -491,7 +501,7 @@
       <bpmndi:BPMNShape id="N_F_InvestigationComplete_di" bpmnElement="N_F_InvestigationComplete">
         <dc:Bounds x="4017" y="1612" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3909" y="1654" width="252" height="16" />
+          <dc:Bounds x="3921" y="1654" width="252" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_F_NotifyPatient_di" bpmnElement="N_F_NotifyPatient">

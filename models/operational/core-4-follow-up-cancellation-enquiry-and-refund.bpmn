@@ -2,6 +2,8 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_core-4-follow-up-cancellation-enquiry-and-refund" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.51.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
   <!-- Core business process 4 of 4. Three related parts of the pathway after treatment: the follow-up appointment requested by a clinical professional, the cancellation, decline or non-attendance of an appointment (with the clinical decision on the pathway and the financial decision on a paid appointment), and the handling of a patient enquiry by the Call Handling Team, which must classify it as administrative, financial or clinical and route it accordingly. Job types: check-appointment-availability, send-correspondence, process-payment. -->
   <bpmn:error id="Error_INVALID_VARIABLE" name="INVALID_VARIABLE" errorCode="INVALID_VARIABLE" />
+  <bpmn:message id="Message_CancellationReceived" name="patient-cancellation-or-non-attendance" />
+  <bpmn:message id="Message_PatientEnquiry" name="patient-enquiry" />
   <bpmn:collaboration id="Collaboration_1">
     <bpmn:participant id="Participant_Hospital" name="Hospital Trust" processRef="core-4-follow-up-cancellation-enquiry-and-refund" />
     <bpmn:participant id="Participant_Patient" name="Patient or authorised representative" />
@@ -74,6 +76,8 @@
   <bpmn:userTask id="N_OB_ArrangeFollowUp" name="Arrange follow-up appointment">
     <bpmn:documentation>Supplies speciality, priority and the requestedWindow for the availability check (BR-05, FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="booking-request" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -83,12 +87,13 @@
       <zeebe:taskDefinition type="check-appointment-availability" retries="3" />
     </bpmn:extensionElements>
   </bpmn:serviceTask>
-  <bpmn:exclusiveGateway id="N_OB_WithinPeriod" name="Within the requested period?">
+  <bpmn:exclusiveGateway id="N_OB_WithinPeriod" name="Within the requested period?" default="F7">
     <bpmn:documentation>BR-34, EX-19: when no appointment can be found inside the clinically requested period the case is highlighted and referred to the pathway team, never booked outside the period (FR-023).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_OB_ConfirmFollowUp" name="Confirm the follow-up appointment">
     <bpmn:documentation>The appointment is confirmed in the Hospital Patient Administration System (BR-06, FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -102,12 +107,15 @@
   <bpmn:userTask id="N_OB_CorrectRequest" name="Correct the follow-up request">
     <bpmn:documentation>Handles INVALID_VARIABLE on check-appointment-availability: the request variables are corrected and the availability check is re-run (FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="booking-request" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:userTask id="N_OB_RecordDispatchFailure" name="Record dispatch failure">
     <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the letter was not dispatched; the failure is recorded and the patient is informed through another channel (FR-023, NFR-008, NFR-011).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -119,19 +127,23 @@
   </bpmn:boundaryEvent>
   <bpmn:startEvent id="N_OB_CancellationReceived" name="Cancellation, decline or non-attendance">
     <bpmn:documentation>EX-20, BR-39, FR-023.</bpmn:documentation>
+  <bpmn:messageEventDefinition id="MessageEventDefinition_Cancellation" messageRef="Message_CancellationReceived" />
   </bpmn:startEvent>
   <bpmn:userTask id="N_OB_RecordCancellation" name="Record cancellation or non-attendance">
     <bpmn:documentation>The event is recorded and a decision is taken on the next step (BR-39, FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="patient-contact" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_OB_AnotherAppointment" name="Offer another appointment?">
+  <bpmn:exclusiveGateway id="N_OB_AnotherAppointment" name="Offer another appointment?" default="F18">
     <bpmn:documentation>Another appointment / clinical pathway review / inform the referring organisation (BR-39, BR-41, FR-023).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_OB_NotifyReferrer" name="Inform the referring organisation">
     <bpmn:documentation>BR-39, EX-20: the referring organisation is told where the patient cancels, declines or fails to attend (FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -139,13 +151,15 @@
   <bpmn:userTask id="N_PC_ReviewUnbooked" name="Highlight and review the case">
     <bpmn:documentation>BR-34, EX-19: the case is highlighted for the relevant pathway team instead of being booked outside the requested period (FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:endEvent id="N_PC_PathwayReferred" name="Case referred to pathway team" />
-  <bpmn:userTask id="N_CNS_PathwayReview" name="Review the patient pathway">
+  <bpmn:userTask id="N_CNS_PathwayReview" name="Review the patient pathway" default="F20">
     <bpmn:documentation>BR-41: whether the patient can continue treatment, whether it should be delayed and whether the patient should be discharged are clinical decisions (FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -153,15 +167,17 @@
   <bpmn:userTask id="N_CNS_ClinicalAdvice" name="Provide clinical advice or support">
     <bpmn:documentation>BR-35, EX-21: clinical enquiries reach an appropriately qualified member of the Clinical Nurse Specialist Team (FR-042).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_CNS_Urgency" name="Urgent clinical concern?">
+  <bpmn:exclusiveGateway id="N_CNS_Urgency" name="Urgent clinical concern?" default="F39">
     <bpmn:documentation>BR-38, EX-23, AM-01: urgent clinical concerns are highlighted immediately; the complete rules for determining urgency are not yet agreed and stay configurable (FR-044, NFR-012).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_CNS_HighlightUrgent" name="Highlight and escalate urgently">
     <bpmn:documentation>BR-38, FR-044: the enquiry is prioritised and escalated immediately.</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -170,44 +186,51 @@
   </bpmn:endEvent>
   <bpmn:startEvent id="N_CH_ContactReceived" name="Patient contact received">
     <bpmn:documentation>BR-37, FR-041: every enquiry is recorded when it is received.</bpmn:documentation>
+  <bpmn:messageEventDefinition id="MessageEventDefinition_Enquiry" messageRef="Message_PatientEnquiry" />
   </bpmn:startEvent>
   <bpmn:userTask id="N_CH_ClassifyEnquiry" name="Record and classify the enquiry">
     <bpmn:documentation>Administrative, financial or clinical; a priority is assigned and the record names who handled it (BR-37, FR-041).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="call-handling" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_CH_EnquiryType" name="Enquiry type?">
+  <bpmn:exclusiveGateway id="N_CH_EnquiryType" name="Enquiry type?" default="F35">
     <bpmn:documentation>BR-35, BR-36, EX-21: call handlers must not diagnose, interpret results, recommend treatment or give clinical advice (FR-042, FR-043).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_CH_AnswerAdmin" name="Answer administrative enquiry">
     <bpmn:documentation>Straightforward administrative questions only, for example the date, time or location of an appointment (BR-36, FR-043).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="call-handling" />
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:endEvent id="N_CH_EnquiryAnswered" name="Enquiry resolved" />
-  <bpmn:exclusiveGateway id="N_F_PaidAffected" name="Paid appointment affected?">
+  <bpmn:exclusiveGateway id="N_F_PaidAffected" name="Paid appointment affected?" default="F24">
     <bpmn:documentation>BR-40, EX-20: a paid appointment that is cancelled or rescheduled is referred to Finance (FR-024).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_F_RetentionDecision" name="Decide retention, transfer or refund">
     <bpmn:documentation>BR-20, BR-40: only an authorised member of the Finance Team decides whether the payment is retained, transferred or refunded (FR-024, FR-033, FR-034).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="refund" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
-  <bpmn:exclusiveGateway id="N_F_RefundDecision" name="Refund appropriate?">
+  <bpmn:exclusiveGateway id="N_F_RefundDecision" name="Refund appropriate?" default="F27">
     <bpmn:documentation>Full, partial or none (BR-20, EX-14, FR-033).</bpmn:documentation>
   </bpmn:exclusiveGateway>
   <bpmn:serviceTask id="N_F_ProcessRefund" name="Process the refund">
-    <bpmn:documentation>Job type process-payment (worker payment-processing) used for the refund request. Input: chargeAmount, fundingRoute, paymentReference. Output: paymentStatus, transactionReference, paymentDate, paidAmount. Error: INVALID_VARIABLE; the provider records the refund rather than executing it (BR-20, FR-033).</bpmn:documentation>
+    <bpmn:documentation>Job type process-refund (worker refund-processing). Input: paymentReference, refundAmount, refundDecision, refundReason, refundType. Output: refundStatus, refundReference, refundDate, refundedAmount, duplicateRefundAttempt. Error: INVALID_VARIABLE when the request is unusable or names no settled payment (BR-20, BR-21, FR-033, FR-034); the provider records the refund rather than clearing it.</bpmn:documentation>
     <bpmn:extensionElements>
-      <zeebe:taskDefinition type="process-payment" retries="3" />
+      <zeebe:taskDefinition type="process-refund" retries="3" />
     </bpmn:extensionElements>
   </bpmn:serviceTask>
   <bpmn:userTask id="N_F_CorrectRefundRequest" name="Correct the refund request">
     <bpmn:documentation>Handles INVALID_VARIABLE on process-payment for a refund: the request variables are corrected and the request is sent again; clinical staff may not approve refunds unless they also hold the required financial authority (BR-21, BR-20, FR-033, FR-034).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
+      <zeebe:formDefinition formId="refund" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -220,6 +243,7 @@
   <bpmn:userTask id="N_F_AnswerFinance" name="Answer funding or payment enquiry">
     <bpmn:documentation>BR-36, EX-21: payment and funding enquiries that a call handler cannot answer from authorised information are referred to the Finance Team (FR-043).</bpmn:documentation>
     <bpmn:extensionElements>
+      <zeebe:userTask />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -232,9 +256,7 @@
   <bpmn:sequenceFlow id="F6" name="within requested period" sourceRef="N_OB_WithinPeriod" targetRef="N_OB_ConfirmFollowUp">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= withinRequestedWindow = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F7" name="outside requested period" sourceRef="N_OB_WithinPeriod" targetRef="N_PC_ReviewUnbooked">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= withinRequestedWindow = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F7" name="outside requested period" sourceRef="N_OB_WithinPeriod" targetRef="N_PC_ReviewUnbooked" />
   <bpmn:sequenceFlow id="F8" sourceRef="N_OB_ConfirmFollowUp" targetRef="N_OB_SendFollowUpLetter" />
   <bpmn:sequenceFlow id="F9" sourceRef="N_OB_SendFollowUpLetter" targetRef="N_OB_FollowUpBooked" />
   <bpmn:sequenceFlow id="F10" sourceRef="B_OB_DispatchFailure" targetRef="N_OB_RecordDispatchFailure" />
@@ -251,15 +273,11 @@
   <bpmn:sequenceFlow id="F17" name="paid appointment affected" sourceRef="N_OB_AnotherAppointment" targetRef="N_F_PaidAffected">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paidAppointment = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F18" name="no further appointment" sourceRef="N_OB_AnotherAppointment" targetRef="N_OB_NotifyReferrer">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= offerAnotherAppointment = false and pathwayReviewRequired = false and paidAppointment = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F18" name="no further appointment" sourceRef="N_OB_AnotherAppointment" targetRef="N_OB_NotifyReferrer" />
   <bpmn:sequenceFlow id="F19" name="continue treatment" sourceRef="N_CNS_PathwayReview" targetRef="N_OB_ArrangeFollowUp">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= continueTreatment = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F20" name="inform the referring organisation" sourceRef="N_CNS_PathwayReview" targetRef="N_OB_NotifyReferrer">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= informReferrer = true</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F20" name="inform the referring organisation" sourceRef="N_CNS_PathwayReview" targetRef="N_OB_NotifyReferrer" />
   <bpmn:sequenceFlow id="F21" name="pathway closed" sourceRef="N_CNS_PathwayReview" targetRef="N_CNS_PathwayClosed">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= pathwayClosed = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
@@ -267,16 +285,12 @@
   <bpmn:sequenceFlow id="F23" name="yes" sourceRef="N_F_PaidAffected" targetRef="N_F_RetentionDecision">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paidAppointment = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F24" name="no" sourceRef="N_F_PaidAffected" targetRef="N_OB_EpisodeClosed">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paidAppointment = false</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F24" name="no" sourceRef="N_F_PaidAffected" targetRef="N_OB_EpisodeClosed" />
   <bpmn:sequenceFlow id="F25" sourceRef="N_F_RetentionDecision" targetRef="N_F_RefundDecision" />
   <bpmn:sequenceFlow id="F26" name="full or partial refund" sourceRef="N_F_RefundDecision" targetRef="N_F_ProcessRefund">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= refundDecision = &quot;full&quot; or refundDecision = &quot;partial&quot;</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F27" name="retained or transferred" sourceRef="N_F_RefundDecision" targetRef="N_F_RefundRecorded">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= refundDecision = &quot;none&quot;</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F27" name="retained or transferred" sourceRef="N_F_RefundDecision" targetRef="N_F_RefundRecorded" />
   <bpmn:sequenceFlow id="F28" sourceRef="B_F_RefundInput" targetRef="N_F_CorrectRefundRequest" />
   <bpmn:sequenceFlow id="F29" sourceRef="N_F_CorrectRefundRequest" targetRef="N_F_ProcessRefund" />
   <bpmn:sequenceFlow id="F30" sourceRef="N_F_ProcessRefund" targetRef="N_F_RefundRecorded" />
@@ -288,15 +302,11 @@
   <bpmn:sequenceFlow id="F34" name="financial" sourceRef="N_CH_EnquiryType" targetRef="N_F_AnswerFinance">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= enquiryType = &quot;financial&quot;</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F35" name="clinical" sourceRef="N_CH_EnquiryType" targetRef="N_CNS_ClinicalAdvice">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= enquiryType = &quot;clinical&quot;</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F35" name="clinical" sourceRef="N_CH_EnquiryType" targetRef="N_CNS_ClinicalAdvice" />
   <bpmn:sequenceFlow id="F36" sourceRef="N_CH_AnswerAdmin" targetRef="N_CH_EnquiryAnswered" />
   <bpmn:sequenceFlow id="F37" sourceRef="N_F_AnswerFinance" targetRef="N_F_FinanceEnquiryResolved" />
   <bpmn:sequenceFlow id="F38" sourceRef="N_CNS_ClinicalAdvice" targetRef="N_CNS_Urgency" />
-  <bpmn:sequenceFlow id="F39" name="urgent" sourceRef="N_CNS_Urgency" targetRef="N_CNS_HighlightUrgent">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= urgentClinicalConcern = true</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F39" name="urgent" sourceRef="N_CNS_Urgency" targetRef="N_CNS_HighlightUrgent" />
   <bpmn:sequenceFlow id="F40" name="routine" sourceRef="N_CNS_Urgency" targetRef="N_CNS_EnquiryResolved">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= urgentClinicalConcern = false</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
@@ -358,7 +368,7 @@
       <bpmndi:BPMNShape id="N_OB_FollowUpRequested_di" bpmnElement="N_OB_FollowUpRequested">
         <dc:Bounds x="407" y="412" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="310" y="454" width="231" height="16" />
+          <dc:Bounds x="308" y="454" width="231" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_OB_ArrangeFollowUp_di" bpmnElement="N_OB_ArrangeFollowUp">
@@ -406,7 +416,7 @@
       <bpmndi:BPMNShape id="N_OB_CancellationReceived_di" bpmnElement="N_OB_CancellationReceived">
         <dc:Bounds x="407" y="612" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="281" y="654" width="288" height="16" />
+          <dc:Bounds x="251" y="654" width="288" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_OB_RecordCancellation_di" bpmnElement="N_OB_RecordCancellation">
@@ -442,7 +452,7 @@
       <bpmndi:BPMNShape id="N_CNS_PathwayClosed_di" bpmnElement="N_CNS_PathwayClosed">
         <dc:Bounds x="1547" y="1212" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1435" y="1254" width="260" height="16" />
+          <dc:Bounds x="1451" y="1254" width="260" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CNS_ClinicalAdvice_di" bpmnElement="N_CNS_ClinicalAdvice">

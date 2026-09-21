@@ -13,7 +13,8 @@
     "start": "node src/index.js",
     "check": "node src/index.js --check",
     "test": "node --test \"test/**/*.test.js\"",
-    "test:smoke": "node test/smoke/run-smoke.js"
+    "test:smoke": "node test/smoke/run-smoke.js",
+    "test:e2e": "node test/e2e/run-operational.js"
   },
   "dependencies": {
     "@camunda8/sdk": "^8.8.13"

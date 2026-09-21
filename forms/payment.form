@@ -1,4 +1,5 @@
 {
+  "id": "payment",
   "components": [
     {
       "type": "group",
@@ -54,6 +55,6 @@
     "name": "Camunda Modeler",
     "version": "5.0.0"
   },
-  "executionPlatform": "Camunda Platform",
-  "executionPlatformVersion": "8.5.0"
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
 }

@@ -3,6 +3,10 @@
 > **Agile Workshop, Part 1, Task 1.** The shared understanding every task is built on.
 > The analysis sections require group discussion - confirm this draft as a group and correct it
 > where the group disagrees.
+>
+> **Draft status:** sections 1-10 below were completed from the case study text on 17 September 2026
+> as a starting point for the group discussion. Every entry is traceable to the case; anything added
+> by the group beyond the case is recorded in section 10 as an assumption.
 
 ## Where each Part 1 question is answered
 
@@ -21,126 +25,188 @@
 
 | # | Question | Group's answer |
 |---|---|---|
-|  |  |  |
-|  |  |  |
-|  |  |  |
+| 1.1 | What organisation or service is described? | A specialist hospital service that manages patients end to end: referral, consultation, diagnosis, treatment, follow-up care and ongoing communication. |
+| 1.2 | What is the scope of the patient pathway? | From the point a patient is referred by a General Practitioner or another hospital, through consultation and diagnosis, treatment (including chemotherapy cycles), follow-up care, to ongoing communication with the patient and other care providers. |
+| 1.3 | What is the trigger for the proposed system? | Information is currently transferred through existing hospital systems, electronic forms, emails, telephone calls, letters and manually maintained records. This makes it difficult to monitor patient progress, identify delays and maintain a complete audit trail. The hospital therefore intends to introduce a Hospital Patient Administration System (HPAS) to support the patient pathway and improve coordination between teams. |
+| 1.4 | What must the service keep distinct? | Clinical decisions, administrative responsibilities and financial activities must remain clearly separated while the teams exchange accurate and timely information. |
+| 1.5 | Who are the parties outside the hospital? | Referring GPs and other hospitals, treatment/laboratory/imaging providers, an external scheduling service, an external correspondence service, an external payment service provider, funding organisations and insurers, and the patient. |
+| 1.6 | What does the requirements engineering team have to do? | Investigate the issues, identify stakeholders and their goals, examine dependencies and conflicts between clinical, administrative and financial teams, determine the information and authorisations required at each stage, analyse interactions with external services, identify possible failures and delays, and propose functional and non-functional requirements. Where the case is incomplete, identify the ambiguity, consult the Tutors and document reasonable assumptions. |
 
 ## 2. Main participants
 
 | Participant | Type (clinical / administrative / financial / external) | Stated responsibility in the case |
 |---|---|---|
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
+| Medical Secretaries | Administrative | Receive a new referral and check that it contains the expected supporting information (previous clinic letters, investigation results, diagnostic reports and other clinical documentation). May identify missing information and request it from the referring organisation, but **may not** assess the patient's clinical suitability or decide whether the referral should be accepted. Later, perform administrative checks on approved clinic letters, confirm recipients and arrange distribution. |
+| Consultant | Clinical | Clinically review the referred patient; accept, reject, request further information or redirect the referral, recording the reason and their identity. At the New Patient Appointment, assess the patient, discuss the diagnosis, explain treatment options, record the patient's consent and create the authorised Treatment Booking Request. Prepare, own and approve the clinical content of clinic letters and identify the intended recipients. May request follow-up appointments. |
+| Other clinical professionals (clinical team) | Clinical | With the Consultant, assess the patient and the treatment options; provide clinical authorisation of treatment requests and modifications; make the clinical decisions about fitness to continue treatment between chemotherapy cycles. |
+| Clinical Nurse Specialist Team | Clinical | Given to the patient as the contact for clinical advice, treatment-related support and information about the patient's condition. Receives clinical enquiries that call handlers must not answer. Contributes to the clinical review and blood tests before each treatment cycle. |
+| Clinical Nurse Specialist Administrative Support Team | Administrative | Administrative support to the Clinical Nurse Specialist Team (named as a participant in the pathway). |
+| Outpatient Bookings Team | Administrative | Receive the booking request (required speciality, appointment priority, preferred timeframe, relevant patient requirements), identify an appropriate appointment using the external scheduling service, confirm the booking within the HPAS, and inform the patient. Arrange follow-up appointments requested by clinical staff. |
+| Call Handling Team | Administrative | First point of contact for patient enquiries; determine whether an enquiry is administrative, financial or clinical; answer straightforward administrative questions and transfer other administrative matters. **May not** diagnose, interpret test results, recommend treatment or give clinical advice; payment and funding enquiries go to the Finance Team when they cannot be answered from authorised information. |
+| Treatment and Chemotherapy Bookings Team | Administrative | Receive the authorised Treatment Booking Request and coordinate the necessary appointments, using hospital facilities or external treatment, laboratory, imaging or scheduling services. Keep bookings pending when an external service is unavailable, notify the responsible team and record further attempts without creating duplicate appointments. |
+| Patient Pathway Coordinators | Administrative (pathway monitoring) | Review outstanding correspondence and issue weekly reminders to Consultants; monitor pathways, including letters that remain incomplete or unapproved more than seven days after an appointment. |
+| Administrative Management Team (Administrative Manager) | Administrative (management) | Escalation point where a clinic letter remains outstanding for more than one month: the Administrative Manager contacts the responsible Consultant. Further escalation to the appropriate higher management team after more than three months. |
+| Finance Team | Financial | Record funding approval details (funding organisation, authorisation reference, approved amount, limitations); take payment by telephone where authorised; receive payment and funding enquiries; determine whether a full or partial refund is appropriate where treatment is cancelled, postponed or changed after payment. **May not** decide whether treatment is clinically necessary. |
+| Patient | External (service user) | Attends the New Patient Appointment and treatment cycles; agrees (consents) to proceed with treatment; pays charges where the treatment is chargeable; may cancel, decline or fail to attend appointments; may contact the Clinical Nurse Specialist Team for clinical advice or the Call Handling Team with other enquiries; may require accessible formats, translation support or an authorised representative. |
+| Referring organisation - General Practitioner or another hospital | External | Refers the patient to the specialist service with the expected supporting documentation; may be asked to supply missing information; may be informed where a patient cancels, declines or fails to attend. |
+| Patient's GP and other letter recipients (other hospital, healthcare provider, other appropriate professional) | External | Identified by the Consultant as intended recipients of clinic letters and receive correspondence once it is approved and distributed. |
+| External scheduling service | External (system/service) | Provides the appointment availability used by the Outpatient Bookings Team and Treatment/Chemotherapy Bookings Team to identify and book appointments. |
+| External correspondence service | External (system/service) | Sends appointment letters and clinic letters to patients and recipients. |
+| External Payment Service Provider | External (system/service) | Processes card payments, returns payment status, transaction reference, payment date and amount to the hospital system, and processes approved refunds. |
+| Funding organisations and approved insurers | External | Where funding approval is required, the responsible funding organisation or insurer provides the authorisation reference, approved amount and any limitations attached to the approval. |
+| External treatment, laboratory, imaging and scheduling services | External | Provide the facilities or availability on which some treatment appointments depend, including blood tests and imaging between chemotherapy cycles. |
+| Tutors / stakeholders | External (project) | Consulted by the requirements engineering team where the case does not provide sufficient information (for example, the rules for determining urgency of enquiries). |
 
 ## 3. Main business process
 
 | Stage | Activity | Participants involved | Notes |
 |---|---|---|---|
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
-|  |  |  |  |
+| 1. Referral received | Receive a new referral and check that the expected supporting information is present (previous clinic letters, investigation results, diagnostic reports, other clinical documentation). | Medical Secretaries; referring organisation | Medical Secretaries may request missing information but may not assess clinical suitability or decide acceptance. |
+| 2. Referral clinical review | Send the checked referral to the appropriate Consultant; the Consultant accepts, rejects, requests further information or redirects it to another specialist service, recording the reason and their identity. | Consultant; Medical Secretaries | A New Patient Appointment may only be arranged after an authorised Consultant has accepted the referral. |
+| 3. New Patient Appointment booking | Booking request is received (speciality, appointment priority, preferred timeframe, patient requirements); an appropriate appointment is identified using the external scheduling service and confirmed in the HPAS. | Outpatient Bookings Team; external scheduling service; HPAS | Urgent referrals cannot wait for normal administrative timescales; there may be no suitable appointment within the requested period. |
+| 4. Informing the patient | The patient is informed by letter through the external correspondence service; where the appointment is within the following two weeks, the patient must also be contacted by telephone. Each contact attempt and its outcome is recorded. | Outpatient Bookings Team; external correspondence service; patient | Unanswered calls, incorrect numbers and requests for an alternative appointment must be recorded. |
+| 5. New Patient Appointment | The Consultant and the relevant clinical team assess the patient, discuss the diagnosis and explain the treatment options; if the patient agrees, consent is recorded and an authorised Treatment Booking Request is created. | Consultant; clinical team; patient | The request identifies the proposed treatment, required start date, number and frequency of cycles, reviews required between cycles and special resources needed. |
+| 6. Treatment booking | The Treatment or Chemotherapy Bookings Team coordinates the necessary appointments using hospital facilities or external treatment, laboratory, imaging or scheduling services. | Treatment and Chemotherapy Bookings Team; external providers | If an external service is unavailable the booking stays pending, the responsible team is notified and further attempts are recorded without duplicate appointments. |
+| 7. Funding and payment | Determine whether the treatment is hospital-funded, covered by an approved insurer or funding organisation, or requires payment by the patient. Where funding approval is required, the Finance Team records the funding organisation, authorisation reference, approved amount and limitations. Where payment is required, a secure payment request is sent to the external Payment Service Provider and the result is returned to the hospital system. | Finance Team; external Payment Service Provider; patient | A treatment appointment requiring advance payment must not normally be confirmed until payment is complete or an authorised exemption, funding approval or payment arrangement is recorded. No complete card data is stored. |
+| 8. Treatment delivery and between-cycle review | Before each subsequent chemotherapy cycle the clinical team reviews the patient and the blood test results and decides whether the patient is fit to continue, whether treatment should be delayed or whether the plan should change. | Clinical team; patient; external laboratory/imaging services | These are clinical decisions and cannot be made by the Treatment Bookings Team, the Finance Team or any other administrative employee. |
+| 9. Treatment modification | A clinical professional submits an authorised Treatment Modification Request through the system; urgent postponements for patient safety are supported and must be recorded and authorised afterwards; financial implications are referred to the Finance Team. | Clinical professional; Treatment and Chemotherapy Bookings Team; Finance Team | Requests made only by email, telephone or informal communication must not be processed. |
+| 10. Patient enquiries | Patients contact the Clinical Nurse Specialist Team for clinical advice and support, or the hospital through the Call Handling Team, which classifies the enquiry as administrative, financial or clinical and routes it. | Call Handling Team; Clinical Nurse Specialist Team; Finance Team; patient | Call handlers must not give clinical advice; every enquiry is recorded, classified, prioritised and routed. |
+| 11. Clinic letter | Following every consultation the Consultant prepares the clinic letter (the first is the New Patient Clinic Letter), identifies the recipients and approves the clinical content; the Medical Secretaries then perform administrative checks, confirm recipients and arrange distribution. | Consultant; Medical Secretaries; external correspondence service | Administrative staff may correct formatting and clear administrative errors but must not change clinical meaning; suspected clinical errors are returned to the Consultant. |
+| 12. Correspondence monitoring and escalation | Patient Pathway Coordinators review outstanding correspondence and issue weekly reminders to Consultants; letters outstanding for more than one month are escalated to the Administrative Manager, and more than three months to higher management. | Patient Pathway Coordinators; Administrative Manager; Consultant | Letters incomplete or unapproved more than seven days after the appointment are delayed and included in pathway monitoring. |
+| 13. Follow-up appointment | A consultant or another authorised clinical professional requests a follow-up appointment within a specified period; the Outpatient Bookings Team arranges it using the external scheduling service and informs the patient. | Clinical professional; Outpatient Bookings Team; patient | If no appointment can be found within the requested timeframe the case must be highlighted and referred to the relevant pathway team, not silently booked outside the period. |
+| 14. Cancellation, decline or non-attendance | The hospital records the event and decides whether to offer another appointment, review the patient's pathway clinically or inform the referring organisation; paid appointments are referred to the Finance Team. | Administrative teams; clinical professionals; Finance Team | Decisions about continuing or delaying treatment and about discharge remain with authorised clinical professionals. |
+| 15. Management reporting and audit | The system provides management reporting (referral volumes, outstanding referrals, waiting times, unsuccessful contacts, delayed letters, unresolved enquiries, booking delays, outstanding funding approvals, failed or incomplete payments, refunds awaiting processing, pathway progress) and an audit trail of significant actions. | Management; all teams | Audit records must identify user, date, time and nature of the action and must not be editable by ordinary users. |
 
 ## 4. Problem the proposed system solves
 
 | # | Problem | Consequence for the organisation |
 |---|---|---|
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
+| P-01 | Information is transferred through a combination of existing hospital systems, electronic forms, emails, telephone calls, letters and manually maintained records. | No single reliable record of the patient's pathway; hand-offs depend on individuals; information is re-keyed and can be lost or duplicated. |
+| P-02 | It is difficult to monitor the progress of patients. | Delays are detected late or not at all, and management cannot see where a patient has stalled. |
+| P-03 | It is difficult to identify delays systematically. | Clinic letters, appointments and funding approvals can lapse without anyone noticing until a complaint or an escalation. |
+| P-04 | A complete audit trail cannot be maintained. | The hospital cannot demonstrate who decided or authorised what, when and why - a clinical governance, financial control and compliance risk. |
+| P-05 | Clinical, administrative and financial responsibilities are blurred by informal channels. | Risk of administrative staff processing unauthorised treatment requests, or of clinical staff acting outside their financial authority. |
+| P-06 | Booking and payment activity is fragmented across internal teams and external services. | Duplicate appointments, double charging, payments taken without confirmation, and refunds that are not tracked. |
+| P-07 | The hospital has not agreed a complete set of rules for determining the urgency of enquiries. | Urgent clinical concerns may not be highlighted consistently. |
+| P-08 | Working practices are inconsistent across teams and patient expectations conflict (postal versus digital, accessible formats, translation, representatives). | Uneven patient experience and uneven compliance with the same rules. |
+| P-09 | Clinical staff are concerned that extensive administrative recording reduces the time available for patient care, while administrative and financial managers need enough information to demonstrate accountability and meet operational targets. | A system that adds recording burden without removing manual work will be resisted; a system that records too little will not satisfy management. |
 
 ## 5. Key business rules
 
 | # | Business rule (as stated in the case) | Where it affects the model (gateway / validation / permission) |
 |---|---|---|
-| BR-01 |  |  |
-| BR-02 |  |  |
-| BR-03 |  |  |
-| BR-04 |  |  |
-| BR-05 |  |  |
-| BR-06 |  |  |
-| BR-07 |  |  |
-| BR-08 |  |  |
-| BR-09 |  |  |
-| BR-10 |  |  |
-| BR-11 |  |  |
-| BR-12 |  |  |
-| BR-13 |  |  |
-| BR-14 |  |  |
-| BR-15 |  |  |
-| BR-16 |  |  |
-| BR-17 |  |  |
-| BR-18 |  |  |
-| BR-19 |  |  |
-| BR-20 |  |  |
+| BR-01 | A referral must be checked for the expected supporting information (previous clinic letters, investigation results, diagnostic reports and other relevant clinical documentation) before it goes for clinical review. | Validation at the referral receipt task (completeness checklist). |
+| BR-02 | Medical Secretaries may identify missing information and request it from the referring organisation, but are not permitted to assess the patient's clinical suitability or decide whether the referral should be accepted. | Permission constraint on the Medical Secretaries lane; the acceptance decision cannot be reached from that lane. |
+| BR-03 | Only the Consultant may accept, reject, request further information or redirect a referral, and the reason for the decision and the identity of the person making it must be recorded. | Exclusive gateway in the Consultant lane; mandatory audit data on the decision task. |
+| BR-04 | A New Patient Appointment may only be arranged after an authorised Consultant has accepted the referral. | Guard (pre-condition) before the appointment booking sub-process. |
+| BR-05 | A booking request must contain the required speciality, appointment priority, preferred timeframe and any relevant patient requirements. | Required inputs on the booking request task. |
+| BR-06 | An appropriate appointment must be identified using the hospital's external scheduling service and confirmed within the Hospital Patient Administration System. | Service task to the external scheduling pool, followed by a confirmation task in the HPAS. |
+| BR-07 | The patient is normally informed by letter through the external correspondence service; if the appointment is due to take place within the following two weeks, the patient must also be contacted by telephone. | Conditional branch (date condition) that adds the telephone contact path. |
+| BR-08 | Each contact attempt and its outcome must be recorded (unanswered call, incorrect contact number, patient requests an alternative appointment). | Data capture and audit on every contact attempt. |
+| BR-09 | Urgent referrals that cannot wait for normal administrative timescales must be handled outside those timescales. | Priority flag and an alternative (expedited) path through the booking sub-process. |
+| BR-10 | A Treatment Booking Request that has not been completed and authorised by an appropriate clinical professional must not be processed by administrative staff. | Guard plus permission constraint at the treatment booking task. |
+| BR-11 | A Treatment Booking Request must identify the proposed treatment, the required start date, the number and frequency of treatment cycles, any reviews required between cycles and any special resources that may be needed. | Required data on the clinical authorisation task. |
+| BR-12 | If an external service is temporarily unavailable, the booking must remain pending, the responsible team must be notified and further attempts must be recorded without creating duplicate appointments. | Exception boundary path with an idempotency rule on the booking record. |
+| BR-13 | Before a treatment appointment is confirmed, the system must determine whether the treatment is funded by the hospital, covered by an approved insurer or funding organisation, or requires payment by the patient. | Decision gateway before confirmation. |
+| BR-14 | Where funding approval is required, the Finance Team must record the responsible funding organisation, authorisation reference, approved amount and any limitations attached to the approval. | Data capture in the Finance lane; required before confirmation. |
+| BR-15 | A treatment appointment requiring advance payment must not normally be confirmed until the payment has been successfully completed, or an authorised exemption, funding approval or payment arrangement has been recorded. | Guard before confirmation; exception path for authorised exemptions. |
+| BR-16 | The payment status, transaction reference, payment date and amount returned by the external Payment Service Provider must be recorded, and the Hospital Patient Administration System must not store the patient's complete card information or other unnecessary financial details. | Data capture from the payment service task; data minimisation constraint. |
+| BR-17 | If a payment is declined, cancelled, duplicated or remains incomplete, the patient and the responsible administrative team must be notified, and another payment attempt must be possible without creating a duplicate booking or charging the patient more than once. | Exception path with notification and an idempotency rule. |
+| BR-18 | Where a payment was successfully taken but confirmation was not returned because of a communication failure, the transaction must be marked for investigation rather than automatically requesting another payment. | Exception path that terminates in an investigation status, not a retry. |
+| BR-19 | Clinical staff must still be able to authorise urgent treatment when delaying care would create a risk to the patient, but the reason for proceeding without confirmed payment must be recorded and referred to the Finance Team for resolution. | Overriding exception path with a recorded justification and a hand-off to Finance. |
+| BR-20 | Where treatment is cancelled, postponed or changed after payment, an authorised member of the Finance Team determines whether a full or partial refund is appropriate, and the result is recorded against the patient's account. | Refund sub-process owned by the Finance lane. |
+| BR-21 | Clinical staff may provide information about the treatment decision but must not approve financial refunds unless they also hold the required financial authority; members of the Finance Team must not make decisions about whether treatment is clinically necessary. | Separation-of-duties permission constraints across the clinical and Finance lanes. |
+| BR-22 | A change to an existing treatment schedule must be submitted as an authorised Treatment Modification Request through the system; requests made only by email, telephone or informal communication must not be processed. | Formality rule on the treatment modification task (only the formal request path is accepted). |
+| BR-23 | Urgent situations in which treatment must be postponed quickly for patient-safety reasons must be supported, with the responsible clinician subsequently recording and authorising the decision. | Exception path with a deferred authorisation step. |
+| BR-24 | Any treatment modification that affects an existing charge, funding approval or completed payment must be referred to the Finance Team so that the financial implications can be reviewed. | Conditional branch from the modification task to the Finance lane. |
+| BR-25 | A patient receiving several cycles of chemotherapy may require a clinical review and blood test before each subsequent cycle, and the decision whether the patient is medically fit to continue, whether treatment should be delayed or whether the plan should change is a clinical decision. | Loop (per cycle) with clinical decision gateways; no access from administrative lanes. |
+| BR-26 | The Consultant remains responsible for the clinical content of a clinic letter and must approve it before it can be distributed. | Approval gate before the distribution task. |
+| BR-27 | Administrative staff may correct formatting and clear administrative errors in a clinic letter but must not change its clinical meaning; any suspected clinical error must be returned to the Consultant for review. | Permission constraint and a return path to the Consultant lane. |
+| BR-28 | Clinic letters should be completed, approved, processed and sent within seven days of the relevant appointment so that recipients normally receive the correspondence within approximately two weeks. | Timer (seven days) on the letter process; target for monitoring. |
+| BR-29 | The system must record the appointment date, the date the Consultant started and completed the letter, the approval date, the date the Medical Secretary processed it and the date and method of distribution. | Mandatory timeline data on the letter record. |
+| BR-30 | If a letter remains incomplete or unapproved more than seven days after the appointment it is considered delayed and must be included in pathway monitoring. | Timer-driven status change and a monitoring flag. |
+| BR-31 | Patient Pathway Coordinators issue weekly reminders to Consultants for outstanding letters. | Repeating timer event. |
+| BR-32 | If a letter remains outstanding for more than one month the matter is escalated to the Administrative Manager, who contacts the responsible Consultant; if it remains outstanding for more than three months it is escalated to the appropriate higher management team. | Escalation timers and two escalation paths (different lanes). |
+| BR-33 | The system must prevent repeated reminders from being generated unnecessarily after a letter has been completed, support authorised staff in recording valid reasons for delays, and retain a full history of reminders, responses and escalations. | Termination of the reminder loop on completion; audit history on the letter record. |
+| BR-34 | If a follow-up appointment cannot be found within the requested timeframe, the case must be highlighted and referred to the relevant pathway team rather than being silently booked outside the clinically requested period. | Exception path with a highlight and referral, no alternative booking path. |
+| BR-35 | Call handlers must not diagnose a condition, interpret test results, recommend treatment or provide any form of clinical advice; enquiries involving clinical matters must be referred to an appropriately qualified member of the Clinical Nurse Specialist Team or another authorised clinical professional. | Permission constraint on the Call Handling lane; mandatory routing rule. |
+| BR-36 | Payment and funding enquiries must be referred to the Finance Team when they cannot be answered using authorised information available to the call handler. | Routing rule with an escalation branch. |
+| BR-37 | Every enquiry must be recorded, classified, assigned a priority and routed to an appropriate team, showing when it was received, who handled it, which team was responsible, any response provided and whether the matter has been resolved. | Mandatory data on the enquiry record. |
+| BR-38 | Urgent clinical concerns must be highlighted immediately. | Priority rule on the enquiry; the rules for determining urgency are not yet agreed (see AM-01). |
+| BR-39 | Patients may cancel, decline or fail to attend appointments; the hospital must record these events and decide whether another appointment should be offered, whether the clinical team should review the pathway or whether the referring organisation should be informed. | Exception paths from the appointment sub-process with recorded decisions. |
+| BR-40 | If a paid appointment is cancelled or rescheduled, the case must be referred to the Finance Team to determine whether the payment should be retained, transferred to another appointment or refunded. | Conditional branch to the Finance lane. |
+| BR-41 | Decisions about whether a patient can continue treatment, whether treatment should be delayed and whether a patient should be discharged remain the responsibility of authorised clinical professionals. | Permission constraints excluding all administrative and financial lanes. |
+| BR-42 | Staff must only be able to access the information required for their roles; the system must authenticate users and apply role-based access controls. | Role-based access control on every task and record. |
+| BR-43 | Significant actions must be recorded, including access to patient records, referral decisions, appointment changes, clinical authorisations, correspondence approvals, treatment modifications, payment requests, funding decisions and refunds. | Audit logging on the listed task types. |
+| BR-44 | Audit records must identify the user, date, time and nature of each action and must not be editable by ordinary users. | Immutable audit record; no edit permission for ordinary roles. |
+| BR-45 | Information exchanged with external services must be protected. | Security constraint on every external service task. |
+| BR-46 | The system must maintain accurate patient identification information and reduce the risk of records being associated with the wrong patient when information is received from different organisations or external services. | Patient identification and matching validation when records are created from external inputs. |
+| BR-47 | The system must remain sufficiently available to support time-sensitive clinical, administrative and financial work and provide a procedure for recording activities completed during any period of system or external-service unavailability. | Availability requirement plus a manual fallback recording procedure. |
 
 ## 6. Exceptions and alternative paths
 
 | # | Exception / alternative path | Handling described in the case |
 |---|---|---|
-| EX-01 |  |  |
-| EX-02 |  |  |
-| EX-03 |  |  |
-| EX-04 |  |  |
-| EX-05 |  |  |
-| EX-06 |  |  |
-| EX-07 |  |  |
-| EX-08 |  |  |
-| EX-09 |  |  |
-| EX-10 |  |  |
-| EX-11 |  |  |
-| EX-12 |  |  |
-| EX-13 |  |  |
-| EX-14 |  |  |
-| EX-15 |  |  |
-| EX-16 |  |  |
-| EX-17 |  |  |
+| EX-01 | The referral is missing expected supporting information. | Medical Secretaries identify the missing information and request it from the referring organisation. |
+| EX-02 | The Consultant rejects the referral. | The decision and its reason are recorded; no New Patient Appointment may be arranged. |
+| EX-03 | The Consultant requests further information about the referral. | The referral returns to the information-gathering step before a decision is made. |
+| EX-04 | The Consultant redirects the referral to another specialist service. | The decision and reason are recorded and the referral moves to the other service. |
+| EX-05 | No suitable appointment is available within the period requested by the Consultant. | The situation must be accounted for by the system (and for follow-up appointments the case is highlighted and referred to the relevant pathway team). |
+| EX-06 | An urgent referral cannot wait for normal administrative timescales. | The system must account for urgent referrals and handle them outside the normal timescales. |
+| EX-07 | A telephone call to the patient is unanswered. | The attempt and its outcome are recorded; the patient has already been informed by letter. |
+| EX-08 | The contact number held for the patient is incorrect. | The attempt and its outcome are recorded. |
+| EX-09 | The patient requests an alternative appointment. | The request is recorded and handled by the booking team. |
+| EX-10 | An external treatment, laboratory, imaging or scheduling service is temporarily unavailable. | The booking remains pending, the responsible team is notified, further attempts are recorded, and no duplicate appointments are created. |
+| EX-11 | A payment is declined, cancelled, duplicated or remains incomplete. | The patient and the responsible administrative team are notified, and another attempt is allowed without a duplicate booking or a second charge. |
+| EX-12 | Payment was taken but confirmation was not returned because of a communication failure. | The transaction is marked for investigation rather than automatically requesting another payment. |
+| EX-13 | Urgent treatment is required although payment is not confirmed. | Clinical staff may authorise it where delay would create a risk to the patient; the reason is recorded and referred to the Finance Team for resolution. |
+| EX-14 | Treatment is cancelled, postponed or changed after payment. | An authorised member of the Finance Team determines whether a full or partial refund is appropriate and the result is recorded against the patient's account. |
+| EX-15 | A treatment change is requested only by email, telephone or informal communication. | The request must not be processed; an authorised Treatment Modification Request is required. |
+| EX-16 | Treatment must be postponed quickly for patient-safety reasons. | The urgent postponement is supported and the responsible clinician records and authorises the decision afterwards. |
+| EX-17 | A clinic letter is incomplete or unapproved more than seven days after the appointment. | It is treated as delayed and included in pathway monitoring; weekly reminders are issued, escalating to the Administrative Manager after one month and to higher management after three months. |
+| EX-18 | A suspected clinical error is found in a clinic letter. | The letter is returned to the Consultant for review; administrative staff may not change clinical meaning. |
+| EX-19 | A follow-up appointment cannot be found within the clinically requested timeframe. | The case is highlighted and referred to the relevant pathway team rather than silently booked outside the period. |
+| EX-20 | A patient cancels, declines or fails to attend an appointment. | The event is recorded and a decision is made whether to offer another appointment, review the pathway clinically or inform the referring organisation; paid appointments go to the Finance Team. |
+| EX-21 | An enquiry cannot be answered by the call handler. | Administrative matters are transferred to the relevant team, payment and funding enquiries to the Finance Team, and clinical enquiries to a qualified member of the Clinical Nurse Specialist Team or another authorised clinical professional. |
+| EX-22 | The system or an external service is unavailable. | Activities completed during the unavailability are recorded under the hospital's procedure for system or external-service unavailability. |
+| EX-23 | The rules for determining urgency of an enquiry are not yet agreed. | Urgent clinical concerns are highlighted immediately; the complete urgency rules require further investigation with stakeholders. |
 
 ## 7. External systems and organisations
 
 | External party | Interaction | Simulated or real in the prototype |
 |---|---|---|
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
+| External scheduling service | Source of appointment availability used to identify outpatient, treatment and follow-up appointments that are then confirmed in the HPAS. | Simulated (stub returning available slots). |
+| External correspondence service | Distributes appointment letters and clinic letters to patients and other recipients. | Simulated (stub recording the distribution and returning a distribution reference). |
+| External Payment Service Provider | Receives secure payment requests and approved refund requests; returns payment status, transaction reference, payment date and amount. | Simulated (stub returning success, decline and failure statuses). |
+| Funding organisations and approved insurers | Provide funding authorisation references, approved amounts and any limitations. | Simulated (recorded data, no live interface). |
+| External treatment, laboratory, imaging and scheduling services | Provide availability for treatment appointments and the assessments (including blood tests) needed between chemotherapy cycles. | Simulated (stubs used to exercise the unavailable-service exception). |
+| Referring organisation - General Practitioner or another hospital | Sends the referral and supporting documentation; may be asked for missing information. | Modelled as an external participant pool; simulated. |
+| Letter recipients - patient's GP, other hospitals, healthcare providers and other professionals | Receive clinic letters after they are approved and distributed. | Modelled as external participants; simulated. |
+| The patient | Attends appointments, consents to treatment, pays chargeable amounts, raises enquiries, and may cancel or fail to attend. | Modelled as an external participant; represented by simulated contact channels. |
+| Existing hospital systems and manually maintained records | Current sources and destinations of information that the HPAS is intended to replace or coordinate with. | Out of scope for the prototype; recorded as an assumption about the current state. |
 
 ## 8. Information captured, stored, transferred or validated
 
 | Information object | What is captured | Controls / validation applied |
 |---|---|---|
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
+| Patient identification | Patient identifiers, name, contact details, preferred communication channel, accessibility or representation needs. | Accurate identification and matching when data arrives from different organisations or external services; role-based access. |
+| Referral | Referring organisation, date and time received, referral reference, supporting documentation received, missing information requested and responses received. | Completeness check before clinical review; Medical Secretaries cannot record a clinical decision. |
+| Referral decision | Decision (accept, reject, request further information, redirect), reason, identity of the decision maker, date and time. | Consultant only; decision and identity recorded for audit. |
+| Booking request | Required speciality, appointment priority, preferred timeframe, relevant patient requirements. | Mandatory inputs before the booking task. |
+| Appointment | Type (new patient, follow-up, treatment), date, time, location, external scheduling reference, confirmation status, cancellation or non-attendance outcome. | Booking confirmed in the HPAS; no duplicate appointments; cancellations and non-attendance recorded with the resulting decision. |
+| Patient contact attempts | Date and time, channel (letter or telephone), outcome (unanswered, incorrect number, alternative appointment requested), who made the attempt. | Every attempt recorded; telephone contact required when the appointment is within two weeks. |
+| Patient consent | Patient agreement to proceed with treatment, recorded by the Consultant at the New Patient Appointment. | Recorded before a Treatment Booking Request is created. |
+| Treatment Booking Request | Proposed treatment, required start date, number and frequency of treatment cycles, reviews required between cycles, special resources needed, authorising clinical professional, authorisation date and time. | Must be complete and authorised before administrative processing. |
+| Treatment Modification Request | Requested change, reason, authorising clinician, date and time, financial implications. | Only formal requests through the system are processed; modifications affecting charges, funding or payment are referred to the Finance Team. |
+| Clinical review between cycles | Review and blood test results, decision on fitness to continue, delay or change of plan, responsible clinical professional. | Clinical decision only; administrative roles have no access. |
+| Funding decision | Funding route (hospital, insurer or funding organisation, patient payment), funding organisation, authorisation reference, approved amount, limitations. | Recorded by the Finance Team before confirmation where approval is required. |
+| Payment transaction | Amount, payment status, transaction reference, payment date, payment channel, investigation status where confirmation was not returned. | No complete card information or other unnecessary financial details stored; no duplicate charges. |
+| Refund | Amount (full or partial), reason, authoriser, request sent to the Payment Service Provider, result recorded against the patient's account. | Finance Team authorisation only; clinical staff may not approve refunds without financial authority. |
+| Clinic letter | Letter type (including the New Patient Clinic Letter), clinical content authorship, approval, intended recipients, confirmed recipients, processing and distribution dates and method. | Consultant approves clinical content; administrative staff may not change clinical meaning; seven-day target tracked and delays monitored. |
+| Reminder and escalation history | Weekly reminders issued, responses, valid reasons for delay, escalation to the Administrative Manager and to higher management. | Reminders stop once the letter is completed; history retained for audit. |
+| Enquiry | Date and time received, classification (administrative, financial or clinical), priority, handler, responsible team, response provided, resolution status, urgency flag. | Every enquiry recorded, classified, prioritised and routed; clinical enquiries routed to clinical professionals. |
+| Audit record | User, date, time and nature of each significant action (record access, referral decisions, appointment changes, clinical authorisations, correspondence approvals, treatment modifications, payment requests, funding decisions, refunds). | Not editable by ordinary users; retained as evidence. |
+| Management information | Referral volumes, outstanding referrals, appointment waiting times, unsuccessful contact attempts, delayed clinic letters, unresolved enquiries, treatment-booking delays, outstanding funding approvals, failed or incomplete payments, refunds awaiting processing, pathway progress. | Derived from the operational records; access limited by role. |
 
 ## 9. Key requirements
 
@@ -148,34 +214,33 @@
 
 | Area | Key requirements | Requirement IDs |
 |---|---|---|
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
+| Referral management | Register a referral, check supporting information, request missing information, route the referral for clinical review, record the referral decision and its reason, prevent non-clinical acceptance decisions. | FR-001 - FR-005 |
+| Clinical review and authorisation | Block booking until an authorised Consultant has accepted the referral; record consent; require clinical authorisation of treatment requests; keep clinical decisions with clinical roles. | FR-006 - FR-009 |
+| Appointment booking and patient contact | Capture the booking request, book through the external scheduling service, confirm in the HPAS, inform the patient by letter and by telephone within two weeks, record every contact attempt, handle urgent referrals and no-suitable-appointment situations. | FR-010 - FR-016 |
+| Treatment booking and modification | Coordinate treatment appointments from an authorised request, handle unavailable external services without duplicates, accept only formal modification requests, support urgent postponement, refer financial implications to Finance, record cancellations and non-attendance. | FR-017 - FR-024 |
+| Funding and payment | Determine the funding route, record funding approval details, request and record payments, gate confirmation on payment or authorised exemption, handle failed and unconfirmed payments, process refunds, keep clinical and financial authority separate. | FR-025 - FR-035 |
+| Clinic letters and correspondence | Prepare, approve and distribute clinic letters, record the correspondence timeline, flag letters delayed beyond seven days, generate reminders and escalations, and suppress reminders once complete. | FR-036 - FR-040 |
+| Enquiries | Record, classify, prioritise and route enquiries, restrict clinical advice to clinical professionals, route financial enquiries to Finance, highlight urgent clinical concerns. | FR-041 - FR-044 |
+| Access, audit and reporting | Role-based access control, audit of significant actions, patient identification accuracy, downtime recording, management reporting. | FR-045 - FR-050 |
+| Patient communication and delay recording | Support the patient's preferred communication channel and accessible formats; record valid reasons where correspondence or another step is late. | FR-051 - FR-052 |
 
 ### 9.2 Non-functional requirements
 
 | # | Requirement | Category | Source |
 |---|---|---|---|
-| NFR-001 |  |  |  |
-| NFR-002 |  |  |  |
-| NFR-003 |  |  |  |
-| NFR-004 |  |  |  |
-| NFR-005 |  |  |  |
-| NFR-006 |  |  |  |
-| NFR-007 |  |  |  |
-| NFR-008 |  |  |  |
-| NFR-009 |  |  |  |
-| NFR-010 |  |  |  |
-| NFR-011 |  |  |  |
-| NFR-012 |  |  |  |
-| NFR-013 |  |  |  |
+| NFR-001 | The system must authenticate users and apply role-based access controls so that staff can only access the information required for their roles. | Security | Case, paragraph on access and audit (BR-42). |
+| NFR-002 | Access to patient, clinical and financial information must be restricted by role, with clinical, administrative and financial duties kept separate. | Security / Privacy | Case: separation of clinical, administrative and financial responsibilities (BR-21, BR-42). |
+| NFR-003 | Audit records must identify the user, date, time and nature of each action and must not be editable by ordinary users. | Compliance / Auditability | Case, paragraph on audit records (BR-44). |
+| NFR-004 | Patient identification must remain accurate and the risk of records being associated with the wrong patient must be reduced when information arrives from different organisations or external services. | Data quality | Case, paragraph on patient identification (BR-46). |
+| NFR-005 | The system must remain sufficiently available to support time-sensitive clinical, administrative and financial work. | Availability | Case, paragraph on availability (BR-47). |
+| NFR-006 | A documented procedure must allow activities completed during system or external-service unavailability to be recorded afterwards. | Continuity | Case, paragraph on availability (BR-47). |
+| NFR-007 | Information exchanged with external services must be protected, and the system must not store the patient's complete card information or other unnecessary financial details. | Privacy / Data minimisation | Case: payment handling and protection of exchanged information (BR-16, BR-45). |
+| NFR-008 | The system must exchange information reliably with external scheduling, correspondence, clinical (treatment, laboratory, imaging) and payment services. | Interoperability | Case: requirement to analyse interactions with external services. |
+| NFR-009 | Administrative recording must not reduce the time clinical staff have available for patient care. | Usability | Case: clinical staff concern about recording burden. |
+| NFR-010 | Management must be able to produce reports from the system showing referral volumes, outstanding referrals, appointment waiting times, unsuccessful contact attempts, delayed clinic letters, unresolved enquiries, treatment-booking delays, outstanding funding approvals, failed or incomplete payments, refunds awaiting processing and pathway progress. | Reporting | Case, paragraph on management reporting. |
+| NFR-011 | Patients must be able to receive communication in their preferred form, including postal and digital channels, accessible formats, translation support and assistance from an authorised representative. | Accessibility | Case, paragraph on patient expectations. |
+| NFR-012 | Business rules that are not yet fixed (for example the rules for determining the urgency of an enquiry, escalation thresholds and funding rules) must be configurable without changing program code. | Maintainability / Configurability | Case: urgency rules not yet agreed (AM-01). |
+| NFR-013 | The system must handle sensitive personal, clinical and financial information in line with applicable healthcare records, financial and data protection requirements, and support audit by the organisation. | Compliance | Case: sensitive information and audit expectations. |
 
 ## 10. Ambiguities and assumptions
 
@@ -183,38 +248,39 @@
 
 | # | Ambiguity in the case | Action taken (ask the tutor / record an assumption) |
 |---|---|---|
-| AM-01 |  |  |
-| AM-02 |  |  |
-| AM-03 |  |  |
-| AM-04 |  |  |
-| AM-05 |  |  |
-| AM-06 |  |  |
-| AM-07 |  |  |
-| AM-08 |  |  |
-| AM-09 |  |  |
-| AM-10 |  |  |
-| AM-11 |  |  |
+| AM-01 | The hospital has not yet agreed a complete set of rules for determining the urgency of an enquiry. | Recorded as an assumption (AS-03); urgency rules to be confirmed with stakeholders; the model highlights urgent clinical concerns and leaves the rule configurable. |
+| AM-02 | What counts as "normal administrative timescales" for urgent referrals is not defined. | Recorded as an assumption (AS-06); ask the tutor for a target. |
+| AM-03 | Which roles count as an "appropriate clinical professional" able to authorise treatment requests and modifications (Consultants only, or also registrars and Clinical Nurse Specialists) is not stated. | Recorded as an assumption (AS-05); to be confirmed with the tutor. |
+| AM-04 | The authority levels within the Finance Team ("an authorised member of the Finance Team") are not defined. | Recorded as an assumption (AS-07); financial authority could be modelled as a role flag. |
+| AM-05 | "Higher management team" above the Administrative Manager is not named. | Escalation modelled as a generic management role; ask the tutor to name it. |
+| AM-06 | Charges and charging rules (private patients, overseas visitors, optional services, excluded treatments) are not given, and it is not stated who sets the charge. | Recorded as an assumption that the HPAS calculates or obtains the charge from an existing charging source (AS-08). |
+| AM-07 | The approved payment channels are not fully listed ("another approved payment channel"). | The model supports online payment, payment by telephone with an authorised Finance member, and a configurable additional channel. |
+| AM-08 | Thresholds for "temporarily unavailable" external services (timeouts, retry counts, retry intervals) are not given. | Recorded as an assumption (AS-09); values to be agreed with the tutor. |
+| AM-09 | Retention periods for clinical, financial and audit records are not given. | Recorded as an assumption (AS-10). |
+| AM-10 | Whether consent is required to share clinic letters with the GP and other recipients is not stated. | Recorded as an assumption (AS-11); the Consultant identifies recipients and approval is recorded. |
+| AM-11 | Which existing hospital systems must be integrated with, or replaced by, the HPAS is not specified. | Recorded as an assumption (AS-12); integration scope to be confirmed. |
 
 ### Group assumptions
 
 | # | Assumption | Rationale | Risk if wrong |
 |---|---|---|---|
-| AS-01 |  |  |  |
-| AS-02 |  |  |  |
-| AS-03 |  |  |  |
-| AS-04 |  |  |  |
-| AS-05 |  |  |  |
-| AS-06 |  |  |  |
-| AS-07 |  |  |  |
-| AS-08 |  |  |  |
-| AS-09 |  |  |  |
-| AS-10 |  |  |  |
-| AS-11 |  |  |  |
-| AS-12 |  |  |  |
+| AS-01 | There is a single specialist service with one HPAS instance serving all the named teams. | The case describes one service and one proposed system. | Multiple sites or services would need multi-organisation pools and separate reporting. |
+| AS-02 | The HPAS becomes the system of record for the pathway; letters, emails and telephone calls remain communication channels only. | The stated purpose is to support the pathway and improve coordination and audit. | If records remain partly manual, the audit trail and reporting requirements cannot be met. |
+| AS-03 | Urgent clinical enquiries are those flagged as urgent by the receiving handler or by the clinical team, pending agreed urgency rules. | The case states that urgency rules are not yet agreed. | Inconsistent highlighting of urgent concerns until the rules are agreed. |
+| AS-04 | Every named team maps to one or more roles in the role-based access control model. | The case requires staff to access only what their role needs. | Access control that is too coarse would break the separation of clinical, administrative and financial duties. |
+| AS-05 | Consultants and other authorised clinical professionals (for example the Clinical Nurse Specialist Team) may authorise treatment requests and modifications; administrative roles may not. | The case requires authorisation by "an appropriate clinical professional". | If the authorised set is narrower or wider, the model's permission rules need adjustment. |
+| AS-06 | Urgent referrals follow an expedited path through the same booking process rather than a separate process. | The case requires the system to "account for" urgent referrals. | A separate urgent process would need its own model and SLA. |
+| AS-07 | Financial authority (approving refunds, recording funding decisions) is held by specific Finance roles. | The case distinguishes an "authorised member of the Finance Team". | Refunds or funding decisions could be recorded by staff without the required authority. |
+| AS-08 | The HPAS calculates or obtains the applicable charge from an existing charging source rather than holding a full tariff. | The case says the system "calculates or obtains" the charge. | If the HPAS must hold the tariff, an additional pricing component is needed. |
+| AS-09 | External service calls use a retry policy and remain pending while the service is unavailable, with each attempt recorded. | The case requires bookings to remain pending without duplicate appointments. | Mis-set retry values could create duplicates or delay patients. |
+| AS-10 | Clinical, financial and audit records are retained for the period required by the hospital's records policy, which is not stated in the case. | The case requires a complete audit trail. | Non-compliance if statutory retention differs. |
+| AS-11 | The Consultant's approval of a clinic letter covers distribution to the recipients the Consultant identified. | The case makes the Consultant responsible for clinical content and recipients. | Additional consent steps would be needed if sharing requires separate patient consent. |
+| AS-12 | Integration with existing hospital systems is limited to the interfaces needed for the pathway (patient identification, charging, correspondence); the prototype simulates all external services. | The case does not define the integration scope, and the module uses simulated services. | Underestimated integration effort in later deliverables. |
+| AS-13 | The seven-day letter target and the escalation thresholds (one month, three months) are calendar periods measured from the appointment date. | The case states the periods without defining how they are counted. | Monitoring and reminder dates could be wrong by a day or more. |
+| AS-14 | The first release implements a subset of the pathway (referral through to the new patient appointment), as defined by the group's Sprint 1 goal. | The group's sprint plan targets a deployable model of the referral-to-appointment pathway first. | Requirements outside the subset are still documented but implemented later. |
 
 ## Change log
 
 | Date | Change | By |
 |---|---|---|
-|  |  |  |
-|  |  |  |
+| 17 Sep 2026 | Sections 1-10 completed from the case study text as a first draft for group discussion and confirmation. | Eason050109 |

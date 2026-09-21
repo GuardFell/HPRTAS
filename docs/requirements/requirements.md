@@ -5,84 +5,101 @@
 >
 > Convention: `FR-###` functional, `NFR-###` non-functional, `BR-###` business rule
 > (`docs/case-study-summary.md` section 5), `AS-###` assumption (section 10).
+>
+> **Draft status:** the requirements below were elicited from the case study on 17 September 2026
+> as a first draft for group confirmation. `Where implemented` and `Where tested` are completed as
+> the BPMN models, Camunda forms and workers are produced; until then every requirement is marked
+> `Draft` in the `Status` column.
 
 ## Functional requirements
 
 | ID | Requirement | Source | Type (Must / Should / Could) | Where implemented | Where tested | Status |
 |---|---|---|---|---|---|---|
-| FR-001 |  |  |  |  |  |  |
-| FR-002 |  |  |  |  |  |  |
-| FR-003 |  |  |  |  |  |  |
-| FR-004 |  |  |  |  |  |  |
-| FR-005 |  |  |  |  |  |  |
-| FR-006 |  |  |  |  |  |  |
-| FR-007 |  |  |  |  |  |  |
-| FR-008 |  |  |  |  |  |  |
-| FR-009 |  |  |  |  |  |  |
-| FR-010 |  |  |  |  |  |  |
-| FR-011 |  |  |  |  |  |  |
-| FR-012 |  |  |  |  |  |  |
-| FR-013 |  |  |  |  |  |  |
-| FR-014 |  |  |  |  |  |  |
-| FR-015 |  |  |  |  |  |  |
-| FR-016 |  |  |  |  |  |  |
-| FR-017 |  |  |  |  |  |  |
-| FR-018 |  |  |  |  |  |  |
-| FR-019 |  |  |  |  |  |  |
-| FR-020 |  |  |  |  |  |  |
-| FR-021 |  |  |  |  |  |  |
-| FR-022 |  |  |  |  |  |  |
-| FR-023 |  |  |  |  |  |  |
-| FR-024 |  |  |  |  |  |  |
-| FR-025 |  |  |  |  |  |  |
-| FR-026 |  |  |  |  |  |  |
-| FR-027 |  |  |  |  |  |  |
-| FR-028 |  |  |  |  |  |  |
-| FR-029 |  |  |  |  |  |  |
-| FR-030 |  |  |  |  |  |  |
-| FR-031 |  |  |  |  |  |  |
-| FR-032 |  |  |  |  |  |  |
-| FR-033 |  |  |  |  |  |  |
-| FR-034 |  |  |  |  |  |  |
-| FR-035 |  |  |  |  |  |  |
-| FR-036 |  |  |  |  |  |  |
-| FR-037 |  |  |  |  |  |  |
-| FR-038 |  |  |  |  |  |  |
-| FR-039 |  |  |  |  |  |  |
-| FR-040 |  |  |  |  |  |  |
-| FR-041 |  |  |  |  |  |  |
-| FR-042 |  |  |  |  |  |  |
-| FR-043 |  |  |  |  |  |  |
-| FR-044 |  |  |  |  |  |  |
-| FR-045 |  |  |  |  |  |  |
+| FR-001 | Register a new referral received from a General Practitioner or another hospital, recording the referring organisation, the date and time of receipt and a referral reference. | BR-01; case study paragraph 3 | Must |  |  | Draft |
+| FR-002 | Record the supporting information received with a referral against a checklist: previous clinic letters, investigation results, diagnostic reports and other relevant clinical documentation. | BR-01; case study paragraph 3 | Must |  |  | Draft |
+| FR-003 | Record missing information and issue a request for it to the referring organisation, recording both the request and the response received. | BR-02; EX-01 | Must |  |  | Draft |
+| FR-004 | Prevent any non-clinical role from recording a decision on the clinical suitability or acceptance of a referral. | BR-02 | Must |  |  | Draft |
+| FR-005 | Route the checked referral to the appropriate Consultant for clinical review and record the outcome (accept, reject, request further information, redirect), including the reason, the identity of the decision maker and the date and time. | BR-03; EX-02, EX-03, EX-04 | Must |  |  | Draft |
+| FR-006 | Prevent a New Patient Appointment from being arranged until an authorised Consultant has accepted the referral. | BR-04 | Must |  |  | Draft |
+| FR-007 | Record the patient's consent to proceed with treatment at the New Patient Appointment, recorded by the Consultant. | BR-10; case study paragraph 7 | Must |  |  | Draft |
+| FR-008 | Require every Treatment Booking Request to be completed and authorised by an appropriate clinical professional, and block administrative processing of any request that is not authorised. | BR-10 | Must |  |  | Draft |
+| FR-009 | Record the clinical decision taken before each subsequent chemotherapy cycle (fitness to continue, delay, change of plan) and restrict those decisions to clinical roles. | BR-25 | Must |  |  | Draft |
+| FR-010 | Capture a booking request containing the required speciality, appointment priority, preferred timeframe and any relevant patient requirements. | BR-05 | Must |  |  | Draft |
+| FR-011 | Identify an appropriate appointment through the external scheduling service and confirm the booking within the Hospital Patient Administration System. | BR-06 | Must |  |  | Draft |
+| FR-012 | Inform the patient of the appointment by letter sent through the external correspondence service. | BR-07 | Must |  |  | Draft |
+| FR-013 | Record every patient contact attempt and its outcome, including unanswered calls, incorrect contact numbers and requests for an alternative appointment. | BR-08; EX-07, EX-08, EX-09 | Must |  |  | Draft |
+| FR-014 | Contact the patient by telephone in addition to the letter where the appointment is due to take place within the following two weeks. | BR-07 | Must |  |  | Draft |
+| FR-015 | Support the handling of urgent referrals that cannot wait for normal administrative timescales. | BR-09; EX-06 | Must |  |  | Draft |
+| FR-016 | Detect and highlight the situation where no suitable appointment is available within the period requested by the Consultant, and record the action taken. | EX-05 | Must |  |  | Draft |
+| FR-017 | Coordinate the treatment and chemotherapy appointments required by an authorised Treatment Booking Request, using hospital facilities or external treatment, laboratory, imaging or scheduling services. | BR-11; case study paragraph 8 | Must |  |  | Draft |
+| FR-018 | Keep a booking pending, notify the responsible team and record each further attempt where an external service is temporarily unavailable, without creating duplicate appointments. | BR-12; EX-10 | Must |  |  | Draft |
+| FR-019 | Capture the full content of a Treatment Booking Request: the proposed treatment, the required start date, the number and frequency of treatment cycles, any reviews required between cycles and any special resources that may be needed. | BR-11 | Must |  |  | Draft |
+| FR-020 | Accept a change to an existing treatment schedule only as a Treatment Modification Request submitted and authorised through the system, and refuse changes requested only by email, telephone or informal communication. | BR-22; EX-15 | Must |  |  | Draft |
+| FR-021 | Support the urgent postponement of treatment for patient-safety reasons and require the responsible clinician to record and authorise the decision afterwards. | BR-23; EX-16 | Must |  |  | Draft |
+| FR-022 | Refer any treatment modification that affects an existing charge, funding approval or completed payment to the Finance Team for review of the financial implications. | BR-24 | Must |  |  | Draft |
+| FR-023 | Record appointment cancellations, declines and non-attendance, together with the resulting decision: offer another appointment, refer the patient's pathway for clinical review, or inform the referring organisation. | BR-39; EX-20 | Must |  |  | Draft |
+| FR-024 | Refer a cancelled or rescheduled paid appointment to the Finance Team for a decision on whether the payment is retained, transferred or refunded. | BR-40; EX-20 | Must |  |  | Draft |
+| FR-025 | Determine and record the funding route for a treatment appointment: funded by the hospital, covered by an approved insurer or funding organisation, or requiring payment by the patient. | BR-13 | Must |  |  | Draft |
+| FR-026 | Record the funding approval details where approval is required: the responsible funding organisation, the authorisation reference, the approved amount and any limitations attached to the approval. | BR-14 | Must |  |  | Draft |
+| FR-027 | Calculate or obtain the applicable charge and send a secure payment request to the external Payment Service Provider, supporting payment online, by telephone with an authorised member of the Finance Team, or through another approved payment channel. | BR-15; case study paragraph 10 | Must |  |  | Draft |
+| FR-028 | Record the payment status, transaction reference, payment date and amount returned by the external Payment Service Provider, and store no complete card information or other unnecessary financial details. | BR-16 | Must |  |  | Draft |
+| FR-029 | Prevent confirmation of a treatment appointment that requires advance payment until the payment is complete or an authorised exemption, funding approval or payment arrangement has been recorded. | BR-15 | Must |  |  | Draft |
+| FR-030 | Handle payments that are declined, cancelled, duplicated or incomplete by notifying the patient and the responsible administrative team and allowing another attempt without a duplicate booking or a second charge. | BR-17; EX-11 | Must |  |  | Draft |
+| FR-031 | Mark a transaction as requiring investigation where payment was taken by the external provider but confirmation was not returned because of a communication failure, and prevent an automatic request for another payment. | BR-18; EX-12 | Must |  |  | Draft |
+| FR-032 | Allow clinical staff to authorise urgent treatment where delaying care would create a risk to the patient although payment is not confirmed, recording the reason and referring the case to the Finance Team for resolution. | BR-19; EX-13 | Must |  |  | Draft |
+| FR-033 | Support refunds: an authorised member of the Finance Team determines whether a full or partial refund is appropriate, an approved request is sent to the external Payment Service Provider, and the result is recorded against the patient's account. | BR-20; EX-14 | Must |  |  | Draft |
+| FR-034 | Enforce the separation of duties: clinical staff must not approve financial refunds unless they hold the required financial authority, and members of the Finance Team must not make decisions about whether treatment is clinically necessary. | BR-21 | Must |  |  | Draft |
+| FR-035 | Maintain an auditable relationship between the patient, referral, treatment request, appointment, funding decision, payment transaction and any subsequent refund. | BR-19; case study paragraph 13 | Must |  |  | Draft |
+| FR-036 | Allow the Consultant to prepare and approve the clinical content of clinic letters, including the New Patient Clinic Letter, and to identify the intended recipients. | BR-26 | Must |  |  | Draft |
+| FR-037 | Allow the Medical Secretaries to perform administrative checks, confirm recipients and arrange distribution without changing the clinical meaning of a letter, and return any suspected clinical error to the Consultant. | BR-27; EX-18 | Must |  |  | Draft |
+| FR-038 | Flag a letter as delayed where it is not completed and approved within seven days of the appointment and include it in pathway monitoring. | BR-28, BR-30; EX-17 | Must |  |  | Draft |
+| FR-039 | Record the correspondence timeline for each letter: the appointment date, the dates the Consultant started and completed the letter, the approval date, the date the Medical Secretary processed it, and the date and method of distribution. | BR-29 | Must |  |  | Draft |
+| FR-040 | Generate weekly reminders to Consultants for outstanding letters, escalate to the Administrative Manager after more than one month and to higher management after more than three months, suppress further reminders once the letter is completed, and retain the full history of reminders, responses and escalations. | BR-31, BR-32, BR-33; EX-17 | Must |  |  | Draft |
+| FR-041 | Record, classify (administrative, financial or clinical), prioritise and route every enquiry, capturing when it was received, who handled it, which team was assigned responsibility, the response provided and whether the matter is resolved. | BR-37 | Must |  |  | Draft |
+| FR-042 | Prevent call handlers from providing clinical advice and route enquiries involving clinical matters to an appropriately qualified member of the Clinical Nurse Specialist Team or another authorised clinical professional. | BR-35; EX-21 | Must |  |  | Draft |
+| FR-043 | Refer payment and funding enquiries that cannot be answered from authorised information to the Finance Team, and transfer other administrative matters to the relevant team. | BR-36; EX-21 | Must |  |  | Draft |
+| FR-044 | Highlight urgent clinical concerns immediately. | BR-38; EX-23; AM-01 | Must |  |  | Draft |
+| FR-045 | Authenticate users and apply role-based access control so that staff can only access the information required for their roles. | BR-42; AS-04 | Must |  |  | Draft |
+| FR-046 | Record significant actions in an audit trail, including access to patient records, referral decisions, appointment changes, clinical authorisations, correspondence approvals, treatment modifications, payment requests, funding decisions and refunds. | BR-43 | Must |  |  | Draft |
+| FR-047 | Ensure audit records identify the user, date, time and nature of each action and cannot be edited by ordinary users. | BR-44 | Must |  |  | Draft |
+| FR-048 | Maintain accurate patient identification information and reduce the risk of records being associated with the wrong patient when information is received from different organisations or external services. | BR-46 | Must |  |  | Draft |
+| FR-049 | Provide a procedure for recording activities completed during any period of system or external-service unavailability. | BR-47 | Must |  |  | Draft |
+| FR-050 | Provide management reports on referral volumes, outstanding referrals, appointment waiting times, unsuccessful patient contact attempts, delayed clinic letters, unresolved enquiries, treatment-booking delays, outstanding funding approvals, failed or incomplete payments, refunds awaiting processing and the progress of individual patient pathways. | NFR-010; case study paragraph 28 | Must |  |  | Draft |
+| FR-051 | Support the patient's preferred communication channel, including postal and digital communication, accessible formats, translation support and assistance from an authorised representative. | NFR-011; case study paragraph 29 | Should |  |  | Draft |
+| FR-052 | Record valid reasons for delay where correspondence or another pathway step is late, with the reason retained in the history. | BR-33 | Should |  |  | Draft |
 
 ## Non-functional requirements
 
 | ID | Requirement | Source | Category | How it will be demonstrated | Status |
 |---|---|---|---|---|---|
-| NFR-001 |  |  |  |  |  |
-| NFR-002 |  |  |  |  |  |
-| NFR-003 |  |  |  |  |  |
-| NFR-004 |  |  |  |  |  |
-| NFR-005 |  |  |  |  |  |
-| NFR-006 |  |  |  |  |  |
-| NFR-007 |  |  |  |  |  |
-| NFR-008 |  |  |  |  |  |
-| NFR-009 |  |  |  |  |  |
-| NFR-010 |  |  |  |  |  |
-| NFR-011 |  |  |  |  |  |
-| NFR-012 |  |  |  |  |  |
-| NFR-013 |  |  |  |  |  |
+| NFR-001 | The system must authenticate users and apply role-based access controls so that staff can only access the information required for their roles. | BR-42; case study paragraph 26 | Security | Attempt to reach clinical and financial tasks with an administrative role account and show the access is refused. | Draft |
+| NFR-002 | Access to patient, clinical and financial information must be restricted by role, keeping clinical, administrative and financial duties separate. | BR-21, BR-42 | Security / Privacy | Role matrix review plus a walkthrough showing no role can both decide a clinical matter and approve a financial one. | Draft |
+| NFR-003 | Audit records must identify the user, date, time and nature of each action and must not be editable by ordinary users. | BR-44 | Compliance / Auditability | Show the audit entries produced by a full pathway run and demonstrate that an ordinary user cannot change them. | Draft |
+| NFR-004 | Patient identification must remain accurate and the risk of records being associated with the wrong patient must be reduced when information is received from different organisations or external services. | BR-46 | Data quality | Test creation of a referral from an external source with ambiguous identifiers and inspect the identification check performed. | Draft |
+| NFR-005 | The system must remain sufficiently available to support time-sensitive clinical, administrative and financial work. | BR-47 | Availability | Availability target to be agreed (AS-10); demonstrated by checking the engine and application availability during a sprint review. | Draft |
+| NFR-006 | A documented procedure must allow activities completed during system or external-service unavailability to be recorded afterwards. | BR-47; EX-22 | Continuity | Simulate an unavailable external service, continue the pathway, and show the activity is recorded once the service returns. | Draft |
+| NFR-007 | Information exchanged with external services must be protected, and the system must not store the patient's complete card information or other unnecessary financial details. | BR-16, BR-45 | Privacy / Data minimisation | Inspect the payment flow and stored data to show only status, reference, date and amount are retained. | Draft |
+| NFR-008 | The system must exchange information reliably with the external scheduling, correspondence, clinical (treatment, laboratory, imaging) and payment services. | Case study paragraph 30 | Interoperability | Walkthrough of each external service interaction in the deployed model. | Draft |
+| NFR-009 | Administrative recording must not reduce the time clinical staff have available for patient care. | Case study paragraph 28 | Usability | Count the fields and steps a clinician must complete in the main clinical tasks and review with the group. | Draft |
+| NFR-010 | Management must be able to produce reports showing referral volumes, outstanding referrals, appointment waiting times, unsuccessful contact attempts, delayed clinic letters, unresolved enquiries, treatment-booking delays, outstanding funding approvals, failed or incomplete payments, refunds awaiting processing and pathway progress. | Case study paragraph 28 | Reporting | Produce each report from test data and check the figures against the recorded pathway instances. | Draft |
+| NFR-011 | Patients must be able to receive communication in their preferred form, including accessible formats, translation support and assistance from an authorised representative. | Case study paragraph 29 | Accessibility | Review the communication options available in the forms and the contact record. | Draft |
+| NFR-012 | Business rules that are not yet fixed (for example the rules for determining the urgency of an enquiry and escalation thresholds) must be configurable without changing program code. | AM-01; AS-03; case study paragraph 18 | Maintainability / Configurability | Change a threshold through configuration and show the model behaviour changes without redeployment of code. | Draft |
+| NFR-013 | The system must process sensitive personal, clinical and financial information in line with applicable healthcare records, financial and data protection requirements and support audit by the organisation. | Case study paragraphs 26-28 | Compliance | Compliance checklist reviewed with the tutor; evidence of access control, audit and data minimisation above. | Draft |
 
 ## Traceability: strategic model to operational model to implementation
 
+> The strategic and operational model elements below name the intended element in the model that
+> carries the requirement; `Implementation` and `Test` are completed as the models, forms and
+> workers are delivered, and the status becomes Supported / Partially supported / Unsupported when
+> the model is evaluated. Until then each row is marked as planned and not yet assessed.
+
 | Requirement | Strategic model element | Operational model element | Implementation | Test | Status (Supported / Partially supported / Unsupported) | Justification or gap |
 |---|---|---|---|---|---|---|
-| FR-005 |  |  |  |  |  |  |
-| FR-014 |  |  |  |  |  |  |
-| FR-021 |  |  |  |  |  |  |
-| FR-024 |  |  |  |  |  |  |
-| FR-028 |  |  |  |  |  |  |
-| FR-038 |  |  |  |  |  |  |
-| NFR-002 |  |  |  |  |  |  |
-| NFR-004 |  |  |  |  |  |  |
+| FR-005 | Hospital pool, Consultant lane: "Clinically review referral" task followed by an exclusive gateway (accept / reject / request information / redirect), with the decision reason and decision maker recorded. | User task "Record referral decision" with an exclusive gateway and mandatory reason fields (to be modelled). |  |  | Planned - not yet assessed | The record of the reason and the identity of the decision maker is the case's audit requirement (BR-03); check that no path to booking exists without an accepted decision. |
+| FR-014 | Hospital pool, Outpatient Bookings lane: conditional path taken when the appointment is within two weeks, leading to a telephone contact task; message flow to the Patient pool. | Timer/conditional branch "appointment within 14 days" with the contact task and outcome recording (to be modelled). |  |  | Planned - not yet assessed | Depends on the appointment date held in the booking record; check the condition against a boundary case (appointment exactly 14 days away). |
+| FR-020 | Hospital pool, clinical professional lane: "Treatment Modification Request" recorded as a formal, authorised request; informal channels are not represented as inputs to the process. | User task "Submit treatment modification request" with clinical authorisation and a Finance referral branch when money is affected (to be modelled). |  |  | Planned - not yet assessed | Case requires changes to be formally authorised, traceable and available for audit (BR-22, BR-24); the urgent postponement path (FR-022) must not bypass it. |
+| FR-024 | Hospital pool, Outpatient Bookings lane: boundary path for cancelled, declined and did-not-attend, followed by a decision gateway and a message flow to Finance when the appointment was paid. | Boundary event on the appointment sub-process with a decision gateway and a Finance hand-off (to be modelled). |  |  | Planned - not yet assessed | Cancellation outcomes must not be decided by administrative staff where they affect treatment (BR-39, BR-41). |
+| FR-028 | Hospital pool, Finance lane: message flow to the external Payment Service Provider pool returning status, transaction reference, payment date and amount; no card data retained. | Service/service-task pair "Request payment" and "Record payment result" with a restricted data set (to be modelled, via a simulated payment worker). |  |  | Planned - not yet assessed | Data minimisation is a case requirement (BR-16, NFR-007); check the variables produced by the payment worker carry no card data. |
+| FR-038 | Hospital pool, Patient Pathway Coordinators lane: timer boundary event of seven days on the clinic letter sub-process, leading to pathway monitoring. | Non-interrupting timer boundary event on the letter sub-process with a delayed-letter flag (to be modelled). |  |  | Planned - not yet assessed | The seven-day rule is stated in the case (BR-28); confirm how days are counted (AS-13). |
+| NFR-002 | All pools and lanes: lane assignment defines role; clinical lanes contain no financial tasks and financial lanes contain no clinical decisions. | Role assignments on every user task plus the access rules applied in the HPAS (to be modelled). |  |  | Planned - not yet assessed | Depends on the role model (AS-04) and on the finance authority roles (AS-07); to be checked in the permission matrix. |
+| NFR-004 | Hospital pool, Medical Secretaries lane: referral received from the Referring organisation pool with a patient identification check before the record is created. | Validation on referral registration against the patient index (to be modelled). |  |  | Planned - not yet assessed | The case requires the risk of wrong-patient association to be reduced when information arrives from different organisations (BR-46). |

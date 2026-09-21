@@ -1,0 +1,46 @@
+{
+  "components": [
+    {
+      "type": "group",
+      "label": "Funding Information",
+      "path": "fundingInfo",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "fundingRoute",
+          "label": "Funding Route",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            { "label": "Hospital Funded", "value": "hospital" },
+            { "label": "Approved Insurer", "value": "insurer" },
+            { "label": "Patient Payment", "value": "patient" },
+            { "label": "Exempt", "value": "exempt" }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "fundingNotes",
+          "label": "Additional Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "8.5.0"
+}

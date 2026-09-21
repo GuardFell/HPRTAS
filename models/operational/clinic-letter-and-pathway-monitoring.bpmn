@@ -53,7 +53,7 @@
       </bpmn:lane>
     </bpmn:laneSet>
     <bpmn:startEvent id="StartEvent_ConsultationCompleted" name="Consultation completed" />
-    <bpmn:userTask id="UserTask_PrepareAndApproveClinicLetter" name="Approve clinic letter">
+    <bpmn:userTask id="UserTask_PrepareAndApproveClinicLetter" name="Approve clinic letter" camunda:formKey="camunda:form:forms/clinic-letter.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="consultants" />
@@ -103,7 +103,7 @@
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_FollowUpStatus" name="Appointment status?" />
     <bpmn:endEvent id="EndEvent_PathwayCompleted" name="Pathway completed" />
-    <bpmn:userTask id="UserTask_RecordCancellationOrNonAttendance" name="Record cancellation">
+    <bpmn:userTask id="UserTask_RecordCancellationOrNonAttendance" name="Record cancellation" camunda:formKey="camunda:form:forms/patient-contact.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
@@ -112,7 +112,7 @@
     <bpmn:exclusiveGateway id="Gateway_PaidAppointmentAffected" name="Paid appointment?" />
     <bpmn:exclusiveGateway id="Gateway_OfferAnotherAppointment" name="Offer another?" />
     <bpmn:endEvent id="EndEvent_PathwayClosed" name="Pathway closed" />
-    <bpmn:userTask id="UserTask_DetermineRefund" name="Determine refund">
+    <bpmn:userTask id="UserTask_DetermineRefund" name="Determine refund" camunda:formKey="camunda:form:forms/refund.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />

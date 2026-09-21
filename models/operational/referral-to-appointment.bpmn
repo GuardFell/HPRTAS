@@ -54,7 +54,7 @@
       </bpmn:lane>
     </bpmn:laneSet>
     <bpmn:startEvent id="StartEvent_ReferralReceived" name="Referral received" />
-    <bpmn:userTask id="UserTask_CheckReferralDocuments" name="Check referral and documents">
+    <bpmn:userTask id="UserTask_CheckReferralDocuments" name="Check referral and documents" camunda:formKey="camunda:form:forms/referral-review.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
@@ -78,7 +78,7 @@
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:userTask id="UserTask_ClinicalReviewReferral" name="Clinical review and decision">
+    <bpmn:userTask id="UserTask_ClinicalReviewReferral" name="Clinical review and decision" camunda:formKey="camunda:form:forms/referral-review.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="consultants" />
@@ -87,7 +87,7 @@
     <bpmn:exclusiveGateway id="Gateway_ClinicalDecision" name="Decision?" default="Flow_A31_UnrecognisedDecision" />
     <bpmn:endEvent id="EndEvent_ReferralRejected" name="Referral rejected" />
     <bpmn:endEvent id="EndEvent_ReferralRedirected" name="Referral redirected" />
-    <bpmn:userTask id="UserTask_PrepareBookingRequest" name="Record booking request">
+    <bpmn:userTask id="UserTask_PrepareBookingRequest" name="Record booking request" camunda:formKey="camunda:form:forms/booking-request.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
@@ -118,14 +118,14 @@
       </bpmn:extensionElements>
     </bpmn:serviceTask>
     <bpmn:exclusiveGateway id="Gateway_WithinTwoWeeks" name="Within two weeks?" />
-    <bpmn:userTask id="UserTask_TelephoneContactPatient" name="Telephone the patient">
+    <bpmn:userTask id="UserTask_TelephoneContactPatient" name="Telephone the patient" camunda:formKey="camunda:form:forms/patient-contact.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_ContactOutcome" name="Contact outcome?" />
-    <bpmn:userTask id="UserTask_RecordUnsuccessfulAttempt" name="Record and retry contact">
+    <bpmn:userTask id="UserTask_RecordUnsuccessfulAttempt" name="Record and retry contact" camunda:formKey="camunda:form:forms/patient-contact.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />

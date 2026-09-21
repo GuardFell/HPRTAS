@@ -1,0 +1,75 @@
+{
+  "components": [
+    {
+      "type": "group",
+      "label": "Booking Request Details",
+      "path": "bookingDetails",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "speciality",
+          "label": "Required Speciality",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            { "label": "Oncology", "value": "oncology" },
+            { "label": "Chemotherapy", "value": "chemotherapy" },
+            { "label": "General", "value": "general" }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "priority",
+          "label": "Appointment Priority",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            { "label": "Urgent", "value": "urgent" },
+            { "label": "Routine", "value": "routine" }
+          ]
+        },
+        {
+          "type": "number",
+          "key": "requestedWindow",
+          "label": "Preferred Timeframe (days)",
+          "validate": {
+            "required": true,
+            "min": 1,
+            "max": 365
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "patientRequirements",
+          "label": "Patient Requirements (if any)"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "8.5.0"
+}

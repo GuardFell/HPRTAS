@@ -1,0 +1,65 @@
+{
+  "components": [
+    {
+      "type": "group",
+      "label": "Clinic Letter Details",
+      "path": "clinicLetterDetails",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "letterContent",
+          "label": "Clinic Letter Content",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "diagnosis",
+          "label": "Diagnosis"
+        },
+        {
+          "type": "textarea",
+          "key": "treatmentDecisions",
+          "label": "Treatment Decisions"
+        },
+        {
+          "type": "textarea",
+          "key": "followUpArrangements",
+          "label": "Follow-up Arrangements"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Recipients",
+      "path": "recipients",
+      "elements": [
+        {
+          "type": "textarea",
+          "key": "recipients",
+          "label": "Recipients (one per line)",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "8.5.0"
+}

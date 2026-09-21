@@ -1,0 +1,64 @@
+{
+  "components": [
+    {
+      "type": "group",
+      "label": "Refund Details",
+      "path": "refundDetails",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "appointmentId",
+          "label": "Appointment ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "refundReason",
+          "label": "Reason for Refund",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            { "label": "Appointment Cancelled", "value": "cancelled" },
+            { "label": "Appointment Rescheduled", "value": "rescheduled" },
+            { "label": "Treatment Changed", "value": "treatment_changed" },
+            { "label": "Other", "value": "other" }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "refundType",
+          "label": "Refund Type",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            { "label": "Full Refund", "value": "full" },
+            { "label": "Partial Refund", "value": "partial" },
+            { "label": "Transfer to Another Appointment", "value": "transfer" }
+          ]
+        },
+        {
+          "type": "number",
+          "key": "refundAmount",
+          "label": "Refund Amount (£)"
+        },
+        {
+          "type": "textarea",
+          "key": "refundNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "8.5.0"
+}

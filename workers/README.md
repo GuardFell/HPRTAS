@@ -66,10 +66,36 @@ Two variables are worth calling out because the model depends on them:
 - `paymentStatus` is `not_required` when the funding route is `hospital`, `insurer` or `exempt`.
   The provider is not called at all in that case, which is how AS-08 is implemented.
 
+## Where each worker runs in the operational models
+
+The job type in the configuration is the `<zeebe:taskDefinition type="...">` of the matching
+service task, so this table is the binding between the workers and the three operational models.
+Every service task in those models is covered; the strategic model is a non-executable view and
+contains no service tasks.
+
+| Model | Service task | Job type | Worker |
+|---|---|---|---|
+| `referral-to-appointment.bpmn` | `ServiceTask_ValidateReferral` - Validate referral | `validate-referral` | `referral-validation` |
+| `referral-to-appointment.bpmn` | `ServiceTask_CheckAppointmentAvailability` - Check availability | `check-appointment-availability` | `appointment-availability` |
+| `referral-to-appointment.bpmn` | `ServiceTask_SendAppointmentNotification` - Send notification | `send-correspondence` | `correspondence-dispatch` |
+| `treatment-authorisation-and-booking.bpmn` | `ServiceTask_CheckTreatmentAvailability` - Check treatment slots | `check-treatment-availability` | `treatment-availability` |
+| `treatment-authorisation-and-booking.bpmn` | `ServiceTask_ProcessPayment` - Process payment | `process-payment` | `payment-processing` |
+| `clinic-letter-and-pathway-monitoring.bpmn` | `ServiceTask_DispatchClinicLetter` - Send clinic letter | `send-correspondence` | `correspondence-dispatch` |
+| `clinic-letter-and-pathway-monitoring.bpmn` | `ServiceTask_CheckFollowUpAvailability` - Check availability | `check-appointment-availability` | `appointment-availability` |
+
+Two job types are used by more than one activity, so `send-correspondence` and
+`check-appointment-availability` each serve two service tasks. The worker log carries the
+`elementId`, which is what tells the two apart in the evidence.
+
 ## Error codes
 
 A business error is thrown as a BPMN error, so the process follows its modelled error path instead
 of stalling on an incident. The model needs one error catch event per code it wants to distinguish.
+The models now do that: `Boundary_Error_Validation` catches
+`MISSING_INFORMATION_NOT_SPECIFIED` and `Boundary_Error_BookingRequest` catches `INVALID_VARIABLE`
+in `referral-to-appointment.bpmn`; `treatment-authorisation-and-booking.bpmn` catches
+`UNAUTHORISED_BOOKING_REQUEST` and `INVALID_VARIABLE` on the treatment booking task and
+`PROHIBITED_FINANCIAL_DATA` and `INVALID_VARIABLE` on the payment task.
 
 | Error code | Raised by | Meaning |
 |---|---|---|
@@ -109,7 +135,7 @@ The ledgers are in memory, so they are per worker process and are cleared when i
 | Card details supplied | The worker scans the variables for card and security field names | Business error `PROHIBITED_FINANCIAL_DATA`; the provider is not called; the field names are reported so the form can be corrected (BR-06, NFR-007) | `tests/evidence/TC-11_worker-invalid-input_813fea6_2026-09-21.txt` |
 | Booking request without clinical authorisation | `clinicalAuthorised` is false or absent | Business error `UNAUTHORISED_BOOKING_REQUEST`; the request is not processed and no treatment appointment is created (BR-04) | `tests/evidence/TC-06_booking-without-clinical-authorisation_813fea6_2026-09-21.txt` |
 | An unexpected exception in a handler | The handler wrapper catches it | `job.fail` with the message, so the broker retries the job rather than leaving it stalled. A handler that returns something other than a job outcome is failed the same way | `tests/evidence/TC-11_worker-invalid-input_813fea6_2026-09-21.txt` (tests 29 and 30) |
-| Worker unavailable (not running) | No worker is registered for the job type | The job stays in the queue until a worker registers. The broker checks the job deadline, and after the model's retries are exhausted the job raises an incident in Operate | Not reproducible by the workers alone; to be recorded with the operational model |
+| Worker unavailable (not running) | No worker is registered for the job type | The job stays in the queue and the process waits where it is: with no worker registered the element instance stays `ACTIVE` at the service task and the token does not move on. The deadline still applies, and after the model's retries are exhausted the job raises an incident in Operate. Observed at `ServiceTask_ValidateReferral` | Recorded with the operational model - see the model-level run under Testing |
 
 ## Testing
 
@@ -123,5 +149,8 @@ and a booking without clinical authorisation. It asserts on the path each instan
 read from the Orchestration Cluster API, so it proves the workers obtain work, return results and
 let the process continue, and that a business error is caught by the model's boundary event.
 
-Both runs are recorded in `tests/evidence/`. The operational model, forms and role-based access are
-out of scope here and are tested separately; see `../tests/test-plan.md`.
+Both runs are recorded in `tests/evidence/`. The workers were also exercised against the operational
+models once those existed: the workers running, an instance of `referral-to-appointment` driven
+through the Orchestration Cluster API, and the path read back from the engine. That run is recorded
+in `tests/evidence/` as well. Forms and role-based access are still out of scope here and are tested
+separately; see `../tests/test-plan.md`.

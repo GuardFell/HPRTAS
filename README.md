@@ -56,14 +56,18 @@ Sprint goals and sprint dates are recorded in `docs/backlog/sprint-backlogs.md`.
 | JDK version | Java 21 (Temurin 21.0.12.1 LTS, in `camunda-runtime\jdk-21`); JDK 24 or newer is not supported |
 | Start the engine | `camunda-runtime\start-camunda.bat` (first start takes about 60 seconds); stop with `camunda-runtime\stop-camunda.bat` |
 | Modeler | `camunda-runtime\camunda-modeler\Camunda Modeler.exe` (launch the engine first so the connection is detected) |
-| Deploy a model | `curl -X POST "http://localhost:8080/v2/deployments" -F "resources=@models/operational/referral-to-treatment.bpmn;type=application/xml"` |
+| Deploy a model | `curl -X POST "http://localhost:8080/v2/deployments" -F "resources=@models/operational/referral-to-appointment.bpmn;type=application/xml"` - repeat for `treatment-authorisation-and-booking.bpmn` and `clinic-letter-and-pathway-monitoring.bpmn` |
 | Start the workers | `cd workers && npm install && npm start` (Node.js 22 with the Camunda 8 Node SDK); copy `workers/.env.example` to `workers/.env` first |
 | Check or test the workers | `cd workers && npm run check` (configuration and wiring, no engine needed), `npm test` (unit tests, no engine needed), `npm run test:smoke` (both scenarios against the running engine). See `workers/README.md` for the job types, variables, error codes and the simulated services |
 | Open the engine UI | http://localhost:8080/operate and http://localhost:8080/tasklist (login `demo` / `demo`) |
 
-Start a process instance from Tasklist (Tasklist -> Processes), then complete the user tasks in
-order: referral submission, clinical review, appointment contact recording, treatment
-authorisation, funding and payment, clinic letter approval.
+The three operational models are separate processes, so they are deployed and started separately
+from Tasklist (Tasklist -> Processes): `referral-to-appointment`,
+`treatment-authorisation-and-booking` and `clinic-letter-and-pathway-monitoring`. Complete the user
+tasks on each instance as it reaches them; the tasks are assigned to candidate groups that match the
+lanes. The strategic model (`models/strategic/referral-to-treatment-pathway.bpmn`) is a
+non-executable view: do not deploy it, Camunda rejects a deployment that contains no executable
+process (`INVALID_ARGUMENT: Must contain at least one executable process`).
 
 ## How we work
 

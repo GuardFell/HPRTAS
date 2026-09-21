@@ -56,6 +56,7 @@
     <bpmn:startEvent id="StartEvent_ReferralReceived" name="Referral received" />
     <bpmn:userTask id="UserTask_CheckReferralDocuments" name="Check referral and documents">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -64,27 +65,31 @@
         <zeebe:taskDefinition type="validate-referral" retries="3" />
       </bpmn:extensionElements>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="Gateway_DocumentsComplete" name="Documents complete?" />
+    <bpmn:exclusiveGateway id="Gateway_DocumentsComplete" name="Documents complete?" default="Flow_A32_ValidationResultUnknown" />
     <bpmn:userTask id="UserTask_ReviewReferralException" name="Review validation exception">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_RequestMissingInformation" name="Request missing information">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_ClinicalReviewReferral" name="Clinical review and decision">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_ClinicalDecision" name="Decision?" />
+    <bpmn:exclusiveGateway id="Gateway_ClinicalDecision" name="Decision?" default="Flow_A31_UnrecognisedDecision" />
     <bpmn:endEvent id="EndEvent_ReferralRejected" name="Referral rejected" />
     <bpmn:endEvent id="EndEvent_ReferralRedirected" name="Referral redirected" />
     <bpmn:userTask id="UserTask_PrepareBookingRequest" name="Record booking request">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -95,12 +100,14 @@
     </bpmn:serviceTask>
     <bpmn:userTask id="UserTask_CorrectBookingRequest" name="Correct request">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_SlotWithinWindow" name="Slot in window?" />
     <bpmn:userTask id="UserTask_RecordNoSuitableSlot" name="Record no suitable slot">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -113,18 +120,21 @@
     <bpmn:exclusiveGateway id="Gateway_WithinTwoWeeks" name="Within two weeks?" />
     <bpmn:userTask id="UserTask_TelephoneContactPatient" name="Telephone the patient">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_ContactOutcome" name="Contact outcome?" />
     <bpmn:userTask id="UserTask_RecordUnsuccessfulAttempt" name="Record and retry contact">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:endEvent id="EndEvent_AppointmentArranged" name="Appointment arranged" />
     <bpmn:userTask id="UserTask_ReviewPathwayDelay" name="Review the delay">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -144,6 +154,7 @@
     <bpmn:sequenceFlow id="Flow_A5" name="incomplete" sourceRef="Gateway_DocumentsComplete" targetRef="UserTask_RequestMissingInformation">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= validationResult != &quot;complete&quot;</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_A32_ValidationResultUnknown" name="result unknown" sourceRef="Gateway_DocumentsComplete" targetRef="UserTask_RequestMissingInformation" />
     <bpmn:sequenceFlow id="Flow_A6" sourceRef="UserTask_RequestMissingInformation" targetRef="UserTask_CheckReferralDocuments" />
     <bpmn:sequenceFlow id="Flow_A7" sourceRef="Boundary_Error_Validation" targetRef="UserTask_ReviewReferralException" />
     <bpmn:sequenceFlow id="Flow_A8" sourceRef="UserTask_ReviewReferralException" targetRef="UserTask_RequestMissingInformation" />
@@ -160,6 +171,7 @@
     <bpmn:sequenceFlow id="Flow_A13" name="further info" sourceRef="Gateway_ClinicalDecision" targetRef="UserTask_RequestMissingInformation">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= decision = &quot;further_information&quot;</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_A31_UnrecognisedDecision" name="no valid decision" sourceRef="Gateway_ClinicalDecision" targetRef="UserTask_ClinicalReviewReferral" />
     <bpmn:sequenceFlow id="Flow_A14" sourceRef="UserTask_PrepareBookingRequest" targetRef="ServiceTask_CheckAppointmentAvailability" />
     <bpmn:sequenceFlow id="Flow_A15" sourceRef="ServiceTask_CheckAppointmentAvailability" targetRef="Gateway_SlotWithinWindow" />
     <bpmn:sequenceFlow id="Flow_A16" sourceRef="Boundary_Error_BookingRequest" targetRef="UserTask_CorrectBookingRequest" />
@@ -375,6 +387,15 @@
         <dc:Bounds x="1200" y="436" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A32_ValidationResultUnknown_di" bpmnElement="Flow_A32_ValidationResultUnknown">
+        <di:waypoint x="960" y="405" />
+        <di:waypoint x="960" y="360" />
+        <di:waypoint x="1320" y="360" />
+        <di:waypoint x="1320" y="390" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="1052" y="341" width="106" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A6_di" bpmnElement="Flow_A6">
         <di:waypoint x="1320" y="470" />
         <di:waypoint x="1320" y="516" />
@@ -425,6 +446,15 @@
         <di:waypoint x="1320" y="470" />
         <bpmndi:BPMNLabel>
         <dc:Bounds x="1275" y="707" width="90" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A31_UnrecognisedDecision_di" bpmnElement="Flow_A31_UnrecognisedDecision">
+        <di:waypoint x="1680" y="605" />
+        <di:waypoint x="1680" y="560" />
+        <di:waypoint x="1500" y="560" />
+        <di:waypoint x="1500" y="590" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="1518" y="541" width="124" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A14_di" bpmnElement="Flow_A14">

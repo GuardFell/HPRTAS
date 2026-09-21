@@ -32,8 +32,9 @@ Example: `TC-01_normal-referral-accepted_release-1.0_2026-09-25.png`
 
 ### Scope of the items above
 
-These six test cases were executed against the **external workers** only, before the operational
-models and forms exist. Each item states plainly what it does not cover. The part of a test case
-that belongs to the operational model, the forms or role-based access has to be evidenced again
-end to end against `release-1.0`, and the execution record in `../test-plan.md` section 5 stays
-blank until then.
+These six test cases were executed against the **external workers** only, from before the
+operational models existed. Each item states plainly what it does not cover. The operational models
+now exist and the workers have been exercised against them; what is still open is the part of a
+test case that belongs to the **forms** or to role-based access, which has to be evidenced end to
+end against `release-1.0`, and the execution record in `../test-plan.md` section 5 stays blank
+until then.

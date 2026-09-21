@@ -55,11 +55,13 @@
     <bpmn:startEvent id="StartEvent_ConsultationCompleted" name="Consultation completed" />
     <bpmn:userTask id="UserTask_PrepareAndApproveClinicLetter" name="Approve clinic letter">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_ProcessAndDistributeLetter" name="Process letter and recipients">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -71,6 +73,7 @@
     <bpmn:exclusiveGateway id="Gateway_LetterOnTime" name="Letter within 7 days?" />
     <bpmn:userTask id="UserTask_ReviewOutstandingCorrespondence" name="Review reminders">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -78,6 +81,7 @@
     <bpmn:endEvent id="EndEvent_ReminderIssued" name="Reminder issued" />
     <bpmn:userTask id="UserTask_ContactResponsibleConsultant" name="Contact responsible consultant">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="administrative-management" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -92,6 +96,7 @@
     <bpmn:endEvent id="EndEvent_FollowUpReferred" name="Follow-up referred" />
     <bpmn:userTask id="UserTask_ConfirmFollowUpAndInformPatient" name="Confirm and inform patient">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1csb1ko</bpmn:incoming>
@@ -100,6 +105,7 @@
     <bpmn:endEvent id="EndEvent_PathwayCompleted" name="Pathway completed" />
     <bpmn:userTask id="UserTask_RecordCancellationOrNonAttendance" name="Record cancellation">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -108,27 +114,32 @@
     <bpmn:endEvent id="EndEvent_PathwayClosed" name="Pathway closed" />
     <bpmn:userTask id="UserTask_DetermineRefund" name="Determine refund">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_SendRefundRequest" name="Send refund request">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_RecordRefundResult" name="Record refund">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:endEvent id="EndEvent_RefundRecorded" name="Refund recorded" />
     <bpmn:userTask id="UserTask_ArrangeFollowUpAppointment" name="Arrange follow-up">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_ReferToPathwayTeam" name="Refer to pathway team">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_C15</bpmn:incoming>

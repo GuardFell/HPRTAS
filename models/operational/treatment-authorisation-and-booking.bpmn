@@ -79,6 +79,7 @@
     <bpmn:startEvent id="StartEvent_NewPatientAppointment" name="New patient appointment" />
     <bpmn:userTask id="UserTask_AssessAndAuthoriseTreatment" name="Assess and authorise treatment">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -87,17 +88,20 @@
     <bpmn:exclusiveGateway id="Gateway_ClinicalRisk" name="Clinical risk?" />
     <bpmn:userTask id="UserTask_AuthoriseUrgentTreatment" name="Authorise urgent treatment">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_PreTreatmentReview" name="Pre-cycle review and blood test">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_FitToContinue" name="Fit to continue?" />
     <bpmn:userTask id="UserTask_RequestTreatmentModification" name="Request treatment change">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -107,11 +111,13 @@
     <bpmn:endEvent id="EndEvent_TreatmentComplete" name="Treatment complete" />
     <bpmn:userTask id="UserTask_AuthoriseTreatmentModification" name="Authorise treatment change">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="clinical-professionals" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_PrepareTreatmentBooking" name="Plan treatment and resources">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -122,40 +128,47 @@
     </bpmn:serviceTask>
     <bpmn:userTask id="UserTask_ReturnForAuthorisation" name="Return for authorisation">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_CorrectTreatmentRequest" name="Correct treatment request">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_ExternalServiceAvailable" name="Service available?" />
     <bpmn:userTask id="UserTask_RecordPendingBooking" name="Keep booking pending">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_FundingAndPaymentConfirmed" name="Funding or payment confirmed?" />
     <bpmn:userTask id="UserTask_ConfirmTreatmentAppointment" name="Confirm treatment appointment">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_DetermineFundingRoute" name="Determine funding route">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_FundingRoute" name="Funding route?" />
     <bpmn:userTask id="UserTask_RecordFundingApproval" name="Record funding approval">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_PaymentRequired" name="Payment required?" />
     <bpmn:userTask id="UserTask_CalculateCharge" name="Calculate charge">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -166,6 +179,7 @@
     </bpmn:serviceTask>
     <bpmn:userTask id="UserTask_CorrectPaymentRequest" name="Correct payment request">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -173,11 +187,13 @@
     <bpmn:exclusiveGateway id="Gateway_ConfirmationReceived" name="Confirmation received?" />
     <bpmn:userTask id="UserTask_MarkForInvestigation" name="Mark for investigation">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_RecordPaymentAndReleaseAppointment" name="Record payment">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -185,27 +201,32 @@
     <bpmn:endEvent id="EndEvent_AppointmentNotConfirmed" name="Appointment not confirmed" />
     <bpmn:userTask id="UserTask_ReferChargeToFinance" name="Resolve unpaid charge">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_DetermineRefund" name="Determine refund">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_SendRefundRequest" name="Send refund request">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:userTask id="UserTask_RecordRefundResult" name="Record refund">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:endEvent id="EndEvent_RefundRecorded" name="Refund recorded" />
     <bpmn:userTask id="UserTask_NotifyPatientAndTeam" name="Notify patient and team">
       <bpmn:extensionElements>
+        <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="administrative-team" />
       </bpmn:extensionElements>
     </bpmn:userTask>

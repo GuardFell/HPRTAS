@@ -1,0 +1,59 @@
+{
+  "components": [
+    {
+      "type": "group",
+      "label": "Patient Contact Details",
+      "path": "contactDetails",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "contactMethod",
+          "label": "Contact Method",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            { "label": "Telephone", "value": "telephone" },
+            { "label": "Letter", "value": "letter" },
+            { "label": "Email", "value": "email" }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "contactOutcome",
+          "label": "Contact Outcome",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            { "label": "Successful", "value": "successful" },
+            { "label": "Unanswered", "value": "unanswered" },
+            { "label": "Incorrect Number", "value": "incorrect_number" },
+            { "label": "Alternative Requested", "value": "alternative_requested" }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "contactNotes",
+          "label": "Contact Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "8.5.0"
+}

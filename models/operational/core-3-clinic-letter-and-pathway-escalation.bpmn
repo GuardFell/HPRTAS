@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_core-3-clinic-letter-and-pathway-escalation" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.51.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <!-- Core business process 3 of 4. After every consultation the Consultant prepares and approves the clinic letter, the Medical Secretaries perform the administrative checks and distribute it, and the Patient Pathway Coordinators monitor the seven-day target. Includes the escalation chain of the case study: a weekly reminder, escalation to the Administrative Manager after one month and to higher management after three months, and the return of a suspected clinical error to the Consultant. Job type: send-correspondence. -->
+  <bpmn:error id="Error_INVALID_VARIABLE" name="INVALID_VARIABLE" errorCode="INVALID_VARIABLE" />
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_Hospital" name="Hospital Trust" processRef="core-3-clinic-letter-and-pathway-escalation" />
+    <bpmn:participant id="Participant_Correspondence" name="External correspondence service" />
+    <bpmn:participant id="Participant_Patient" name="Patient or authorised representative" />
+    <bpmn:participant id="Participant_Referring" name="Referring GP or another hospital" />
+    <bpmn:messageFlow id="MessageFlow_M1" name="clinic letter to recipients" sourceRef="N_MS_SendLetter" targetRef="Participant_Correspondence" />
+    <bpmn:messageFlow id="MessageFlow_M2" name="clinic letter to patient" sourceRef="N_MS_SendLetter" targetRef="Participant_Patient" />
+    <bpmn:messageFlow id="MessageFlow_M3" name="clinic letter to GP" sourceRef="N_MS_SendLetter" targetRef="Participant_Referring" />
+  </bpmn:collaboration>
+  <bpmn:process id="core-3-clinic-letter-and-pathway-escalation" name="Core 3 - Clinic letter approval, distribution and escalation of delays" isExecutable="true">
+    <bpmn:documentation>Covers FR-036 to FR-040 and BR-26 to BR-33, EX-17, EX-18: the Consultant owns and approves the clinical content, administrative staff may correct formatting but not clinical meaning, letters are delayed beyond seven days and enter pathway monitoring, reminders stop once the letter is complete and the history is retained. send-correspondence uses the job type and the variable contract of workers/README.md and carries a catch event for INVALID_VARIABLE, which the first edition left as an incident (AS-13: the seven-day target and the escalation thresholds are calendar periods from the appointment date).</bpmn:documentation>
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Consultants" name="Consultants">
+        <bpmn:flowNodeRef>N_C_ConsultationDone</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_C_PrepareLetter</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_C_ApproveLetter</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_C_ReviewClinicalError</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_C_LetterOverdue</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_MedicalSecretaries" name="Medical Secretaries">
+        <bpmn:flowNodeRef>N_MS_ProcessLetter</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_MS_ErrorDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_MS_ConfirmRecipients</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_MS_SendLetter</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_MS_LetterDistributed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_MS_HandleDispatchFailure</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_MS_DispatchFailure</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_PathwayCoordinators" name="Patient Pathway Coordinators">
+        <bpmn:flowNodeRef>N_PC_MonitorCorrespondence</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_PC_SevenDays</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_PC_LetterOnTrack</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_PC_IssueReminder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_PC_OverdueDuration</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_AdminManagement" name="Administrative Management Team">
+        <bpmn:flowNodeRef>N_AM_ContactConsultant</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_AM_EscalateHigher</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_AM_Escalated</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+  <bpmn:startEvent id="N_C_ConsultationDone" name="Consultation or treatment review completed">
+    <bpmn:documentation>Triggers letter production; the New Patient Clinic Letter is the first such letter (FR-036).</bpmn:documentation>
+  </bpmn:startEvent>
+  <bpmn:userTask id="N_C_PrepareLetter" name="Prepare the clinic letter">
+    <bpmn:documentation>Clinical content: consultation, diagnosis, findings, decisions, follow-up arrangements; the Consultant identifies the intended recipients (BR-26, FR-036).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="consultants" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_C_ApproveLetter" name="Approve the clinical content">
+    <bpmn:documentation>Approval gate before distribution; the approval date is recorded (BR-26, BR-29, FR-036). The seven-day timer fires from here (BR-28, BR-30).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="consultants" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_C_ReviewClinicalError" name="Review suspected clinical error">
+    <bpmn:documentation>EX-18, BR-27: a suspected clinical error is returned to the Consultant; administrative staff may not change clinical meaning (FR-037).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="consultants" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:boundaryEvent id="B_C_LetterOverdue" name="seven days elapsed" attachedToRef="N_C_ApproveLetter">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P7D</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+  </bpmn:boundaryEvent>
+  <bpmn:userTask id="N_MS_ProcessLetter" name="Process and check the letter">
+    <bpmn:documentation>Administrative checks and the correspondence timeline: appointment date, start and completion dates, approval date, processing date (BR-27, BR-29, FR-037, FR-039).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_MS_ErrorDecision" name="Suspected clinical error?">
+    <bpmn:documentation>EX-18: return to the Consultant or continue (BR-27, FR-037).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:userTask id="N_MS_ConfirmRecipients" name="Confirm the recipients">
+    <bpmn:documentation>Supplies the send-correspondence inputs recipients, documentType and channelPreference, using the recorded communication preference (BR-26, FR-039, FR-051, NFR-011).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:serviceTask id="N_MS_SendLetter" name="Send the letter to recipients">
+    <bpmn:documentation>Job type send-correspondence (worker correspondence-dispatch; simulates the external correspondence service). Input: recipients, documentType, channelPreference. Output: dispatchDate, dispatchChannel, dispatchReference. Error: INVALID_VARIABLE (FR-039, NFR-011).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:taskDefinition type="send-correspondence" retries="3" />
+    </bpmn:extensionElements>
+  </bpmn:serviceTask>
+  <bpmn:endEvent id="N_MS_LetterDistributed" name="Letter distributed">
+    <bpmn:documentation>Recipients normally receive the correspondence within about two weeks of the appointment (BR-28, FR-039).</bpmn:documentation>
+  </bpmn:endEvent>
+  <bpmn:userTask id="N_MS_HandleDispatchFailure" name="Handle dispatch failure">
+    <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the dispatch variables (for example the recipient list) were unusable, so they are corrected and the letter is sent again through the correspondence service. The failure and the retry are recorded (FR-037, FR-039, NFR-008).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:boundaryEvent id="B_MS_DispatchFailure" name="dispatch failed" attachedToRef="N_MS_SendLetter">
+      <bpmn:errorEventDefinition errorRef="Error_INVALID_VARIABLE" />
+  </bpmn:boundaryEvent>
+  <bpmn:userTask id="N_PC_MonitorCorrespondence" name="Monitor outstanding letters">
+    <bpmn:documentation>Pathway monitoring of outstanding correspondence; seven days after the appointment a letter is delayed (BR-28, BR-30, FR-038).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_PC_SevenDays" name="Letter within seven days?">
+    <bpmn:documentation>On time / delayed (BR-28, BR-30, EX-17, FR-038).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:endEvent id="N_PC_LetterOnTrack" name="Letter completed within target" />
+  <bpmn:userTask id="N_PC_IssueReminder" name="Issue weekly reminder to consultant">
+    <bpmn:documentation>Weekly reminders, suppressed once the letter is completed; the full history of reminders, responses and valid reasons for delay is retained (BR-31, BR-33, FR-040, FR-052).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_PC_OverdueDuration" name="How overdue is the letter?">
+    <bpmn:documentation>Escalation thresholds as calendar periods from the appointment date (BR-32, AS-13, FR-040).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:userTask id="N_AM_ContactConsultant" name="Contact the responsible consultant">
+    <bpmn:documentation>More than one month outstanding: the Administrative Manager contacts the consultant (BR-32, EX-17, FR-040).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="administrative-management" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_AM_EscalateHigher" name="Escalate to higher management">
+    <bpmn:documentation>More than three months outstanding: escalation to the appropriate higher management team; the team is not named in the case (AM-05, BR-32, FR-040).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="administrative-management" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:endEvent id="N_AM_Escalated" name="Delay escalated" />
+  <bpmn:sequenceFlow id="F1" sourceRef="N_C_ConsultationDone" targetRef="N_C_PrepareLetter" />
+  <bpmn:sequenceFlow id="F2" sourceRef="N_C_PrepareLetter" targetRef="N_C_ApproveLetter" />
+  <bpmn:sequenceFlow id="F3" sourceRef="B_C_LetterOverdue" targetRef="N_PC_MonitorCorrespondence" />
+  <bpmn:sequenceFlow id="F4" sourceRef="N_C_ApproveLetter" targetRef="N_MS_ProcessLetter" />
+  <bpmn:sequenceFlow id="F5" sourceRef="N_MS_ProcessLetter" targetRef="N_MS_ErrorDecision" />
+  <bpmn:sequenceFlow id="F6" name="clinical error suspected" sourceRef="N_MS_ErrorDecision" targetRef="N_C_ReviewClinicalError">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= suspectedClinicalError = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F7" sourceRef="N_C_ReviewClinicalError" targetRef="N_C_ApproveLetter" />
+  <bpmn:sequenceFlow id="F8" name="no clinical error" sourceRef="N_MS_ErrorDecision" targetRef="N_MS_ConfirmRecipients">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= suspectedClinicalError = false</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F9" sourceRef="N_MS_ConfirmRecipients" targetRef="N_MS_SendLetter" />
+  <bpmn:sequenceFlow id="F10" sourceRef="N_MS_SendLetter" targetRef="N_MS_LetterDistributed" />
+  <bpmn:sequenceFlow id="F11" sourceRef="B_MS_DispatchFailure" targetRef="N_MS_HandleDispatchFailure" />
+  <bpmn:sequenceFlow id="F12" sourceRef="N_MS_HandleDispatchFailure" targetRef="N_MS_ConfirmRecipients" />
+  <bpmn:sequenceFlow id="F13" sourceRef="N_PC_MonitorCorrespondence" targetRef="N_PC_SevenDays" />
+  <bpmn:sequenceFlow id="F14" name="within seven days" sourceRef="N_PC_SevenDays" targetRef="N_PC_LetterOnTrack">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= letterWithinSevenDays = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F15" name="delayed" sourceRef="N_PC_SevenDays" targetRef="N_PC_IssueReminder">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= letterWithinSevenDays = false</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F16" sourceRef="N_PC_IssueReminder" targetRef="N_PC_OverdueDuration" />
+  <bpmn:sequenceFlow id="F17" name="less than one month" sourceRef="N_PC_OverdueDuration" targetRef="N_PC_MonitorCorrespondence">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= overdueDuration = &quot;less_than_one_month&quot;</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F18" name="one to three months" sourceRef="N_PC_OverdueDuration" targetRef="N_AM_ContactConsultant">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= overdueDuration = &quot;one_to_three_months&quot;</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F19" name="over three months" sourceRef="N_PC_OverdueDuration" targetRef="N_AM_EscalateHigher">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= overdueDuration = &quot;over_three_months&quot;</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F20" sourceRef="N_AM_ContactConsultant" targetRef="N_AM_EscalateHigher" />
+  <bpmn:sequenceFlow id="F21" sourceRef="N_AM_EscalateHigher" targetRef="N_AM_Escalated" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_Hospital_di" bpmnElement="Participant_Hospital" isHorizontal="true">
+        <dc:Bounds x="140" y="140" width="3120" height="1710" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="146" y="1856" width="108" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Consultants_di" bpmnElement="Lane_Consultants" isHorizontal="true">
+        <dc:Bounds x="140" y="330" width="3120" height="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="148" y="338" width="87" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_MedicalSecretaries_di" bpmnElement="Lane_MedicalSecretaries" isHorizontal="true">
+        <dc:Bounds x="140" y="730" width="3120" height="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="148" y="738" width="144" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_PathwayCoordinators_di" bpmnElement="Lane_PathwayCoordinators" isHorizontal="true">
+        <dc:Bounds x="140" y="1130" width="3120" height="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="148" y="1138" width="209" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_AdminManagement_di" bpmnElement="Lane_AdminManagement" isHorizontal="true">
+        <dc:Bounds x="140" y="1530" width="3120" height="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="148" y="1538" width="224" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_Correspondence_di" bpmnElement="Participant_Correspondence" isHorizontal="true">
+        <dc:Bounds x="3460" y="180" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_Patient_di" bpmnElement="Participant_Patient" isHorizontal="true">
+        <dc:Bounds x="3460" y="270" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_Referring_di" bpmnElement="Participant_Referring" isHorizontal="true">
+        <dc:Bounds x="3460" y="360" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_C_ConsultationDone_di" bpmnElement="N_C_ConsultationDone">
+        <dc:Bounds x="407" y="412" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="270" y="454" width="310" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_C_PrepareLetter_di" bpmnElement="N_C_PrepareLetter">
+        <dc:Bounds x="540" y="390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_C_ApproveLetter_di" bpmnElement="N_C_ApproveLetter">
+        <dc:Bounds x="730" y="390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_C_ReviewClinicalError_di" bpmnElement="N_C_ReviewClinicalError">
+        <dc:Bounds x="920" y="590" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_C_LetterOverdue_di" bpmnElement="B_C_LetterOverdue">
+        <dc:Bounds x="787" y="452" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="737" y="494" width="137" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_MS_ProcessLetter_di" bpmnElement="N_MS_ProcessLetter">
+        <dc:Bounds x="920" y="790" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_MS_ErrorDecision_di" bpmnElement="N_MS_ErrorDecision" isMarkerVisible="true">
+        <dc:Bounds x="1160" y="805" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1091" y="861" width="188" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_MS_ConfirmRecipients_di" bpmnElement="N_MS_ConfirmRecipients">
+        <dc:Bounds x="1300" y="790" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_MS_SendLetter_di" bpmnElement="N_MS_SendLetter">
+        <dc:Bounds x="1490" y="790" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_MS_LetterDistributed_di" bpmnElement="N_MS_LetterDistributed">
+        <dc:Bounds x="1737" y="812" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1687" y="854" width="137" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_MS_HandleDispatchFailure_di" bpmnElement="N_MS_HandleDispatchFailure">
+        <dc:Bounds x="1870" y="990" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_MS_DispatchFailure_di" bpmnElement="B_MS_DispatchFailure">
+        <dc:Bounds x="1547" y="852" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1507" y="894" width="116" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_PC_MonitorCorrespondence_di" bpmnElement="N_PC_MonitorCorrespondence">
+        <dc:Bounds x="1870" y="1190" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_PC_SevenDays_di" bpmnElement="N_PC_SevenDays" isMarkerVisible="true">
+        <dc:Bounds x="2110" y="1205" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2041" y="1261" width="188" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_PC_LetterOnTrack_di" bpmnElement="N_PC_LetterOnTrack">
+        <dc:Bounds x="2307" y="1212" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2213" y="1254" width="224" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_PC_IssueReminder_di" bpmnElement="N_PC_IssueReminder">
+        <dc:Bounds x="2250" y="1390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_PC_OverdueDuration_di" bpmnElement="N_PC_OverdueDuration" isMarkerVisible="true">
+        <dc:Bounds x="2490" y="1405" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2418" y="1461" width="195" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_AM_ContactConsultant_di" bpmnElement="N_AM_ContactConsultant">
+        <dc:Bounds x="2630" y="1590" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_AM_EscalateHigher_di" bpmnElement="N_AM_EscalateHigher">
+        <dc:Bounds x="2820" y="1590" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_AM_Escalated_di" bpmnElement="N_AM_Escalated">
+        <dc:Bounds x="3067" y="1612" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3027" y="1654" width="116" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F1_di" bpmnElement="F1">
+        <di:waypoint x="443" y="430" />
+        <di:waypoint x="540" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F2_di" bpmnElement="F2">
+        <di:waypoint x="690" y="430" />
+        <di:waypoint x="730" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F3_di" bpmnElement="F3">
+        <di:waypoint x="805" y="488" />
+        <di:waypoint x="805" y="520" />
+        <di:waypoint x="1850" y="520" />
+        <di:waypoint x="1850" y="1230" />
+        <di:waypoint x="1870" y="1230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F4_di" bpmnElement="F4">
+        <di:waypoint x="880" y="430" />
+        <di:waypoint x="900" y="430" />
+        <di:waypoint x="900" y="830" />
+        <di:waypoint x="920" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F5_di" bpmnElement="F5">
+        <di:waypoint x="1070" y="830" />
+        <di:waypoint x="1160" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F6_di" bpmnElement="F6">
+        <di:waypoint x="1185" y="855" />
+        <di:waypoint x="1185" y="920" />
+        <di:waypoint x="900" y="920" />
+        <di:waypoint x="900" y="630" />
+        <di:waypoint x="920" y="630" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1095" y="861" width="180" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F7_di" bpmnElement="F7">
+        <di:waypoint x="995" y="670" />
+        <di:waypoint x="995" y="720" />
+        <di:waypoint x="710" y="720" />
+        <di:waypoint x="710" y="430" />
+        <di:waypoint x="730" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_di" bpmnElement="F8">
+        <di:waypoint x="1210" y="830" />
+        <di:waypoint x="1300" y="830" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1190" y="836" width="130" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F9_di" bpmnElement="F9">
+        <di:waypoint x="1450" y="830" />
+        <di:waypoint x="1490" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_di" bpmnElement="F10">
+        <di:waypoint x="1640" y="830" />
+        <di:waypoint x="1737" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F11_di" bpmnElement="F11">
+        <di:waypoint x="1565" y="888" />
+        <di:waypoint x="1565" y="920" />
+        <di:waypoint x="1850" y="920" />
+        <di:waypoint x="1850" y="1030" />
+        <di:waypoint x="1870" y="1030" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_di" bpmnElement="F12">
+        <di:waypoint x="1945" y="1070" />
+        <di:waypoint x="1945" y="1120" />
+        <di:waypoint x="1280" y="1120" />
+        <di:waypoint x="1280" y="830" />
+        <di:waypoint x="1300" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_di" bpmnElement="F13">
+        <di:waypoint x="2020" y="1230" />
+        <di:waypoint x="2110" y="1230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F14_di" bpmnElement="F14">
+        <di:waypoint x="2160" y="1230" />
+        <di:waypoint x="2307" y="1230" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2168" y="1236" width="130" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F15_di" bpmnElement="F15">
+        <di:waypoint x="2160" y="1230" />
+        <di:waypoint x="2230" y="1230" />
+        <di:waypoint x="2230" y="1430" />
+        <di:waypoint x="2250" y="1430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2165" y="1236" width="60" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F16_di" bpmnElement="F16">
+        <di:waypoint x="2400" y="1430" />
+        <di:waypoint x="2490" y="1430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F17_di" bpmnElement="F17">
+        <di:waypoint x="2515" y="1455" />
+        <di:waypoint x="2515" y="1520" />
+        <di:waypoint x="1850" y="1520" />
+        <di:waypoint x="1850" y="1230" />
+        <di:waypoint x="1870" y="1230" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2443" y="1461" width="144" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F18_di" bpmnElement="F18">
+        <di:waypoint x="2540" y="1430" />
+        <di:waypoint x="2610" y="1430" />
+        <di:waypoint x="2610" y="1630" />
+        <di:waypoint x="2630" y="1630" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2503" y="1436" width="144" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F19_di" bpmnElement="F19">
+        <di:waypoint x="2540" y="1430" />
+        <di:waypoint x="2800" y="1430" />
+        <di:waypoint x="2800" y="1630" />
+        <di:waypoint x="2820" y="1630" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2605" y="1436" width="130" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F20_di" bpmnElement="F20">
+        <di:waypoint x="2780" y="1630" />
+        <di:waypoint x="2820" y="1630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F21_di" bpmnElement="F21">
+        <di:waypoint x="2970" y="1630" />
+        <di:waypoint x="3067" y="1630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_M1_di" bpmnElement="MessageFlow_M1">
+        <di:waypoint x="1565" y="790" />
+        <di:waypoint x="1565" y="740" />
+        <di:waypoint x="3320" y="740" />
+        <di:waypoint x="3320" y="210" />
+        <di:waypoint x="3460" y="210" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1464" y="796" width="202" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_M2_di" bpmnElement="MessageFlow_M2">
+        <di:waypoint x="1565" y="790" />
+        <di:waypoint x="1565" y="752" />
+        <di:waypoint x="3344" y="752" />
+        <di:waypoint x="3344" y="300" />
+        <di:waypoint x="3460" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1475" y="796" width="180" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_M3_di" bpmnElement="MessageFlow_M3">
+        <di:waypoint x="1565" y="790" />
+        <di:waypoint x="1565" y="764" />
+        <di:waypoint x="3368" y="764" />
+        <di:waypoint x="3368" y="390" />
+        <di:waypoint x="3460" y="390" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1493" y="796" width="144" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,873 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_core-2-treatment-authorisation-funding-and-payment" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.51.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <!-- Core business process 2 of 4. The patient attends the appointment, the Consultant records consent and creates the authorised Treatment Booking Request, the Treatment and Chemotherapy Bookings Team coordinates the appointments, the Finance Team determines the funding route and the payment is taken through the external Payment Service Provider. Includes the failures the case study describes: unauthorised requests, unavailable external services, declined or incomplete payments, unconfirmed payments that must not be charged twice, urgent clinical treatment without confirmed payment and treatment modifications. Job types: check-treatment-availability, process-payment, send-correspondence. -->
+  <bpmn:error id="Error_INVALID_VARIABLE" name="INVALID_VARIABLE" errorCode="INVALID_VARIABLE" />
+  <bpmn:error id="Error_PROHIBITED_FINANCIAL_DATA" name="PROHIBITED_FINANCIAL_DATA" errorCode="PROHIBITED_FINANCIAL_DATA" />
+  <bpmn:error id="Error_UNAUTHORISED_BOOKING_REQUEST" name="UNAUTHORISED_BOOKING_REQUEST" errorCode="UNAUTHORISED_BOOKING_REQUEST" />
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_Hospital" name="Hospital Trust" processRef="core-2-treatment-authorisation-funding-and-payment" />
+    <bpmn:participant id="Participant_Patient" name="Patient or authorised representative" />
+    <bpmn:participant id="Participant_TreatmentService" name="External treatment, laboratory and imaging service" />
+    <bpmn:participant id="Participant_PaymentProvider" name="External Payment Service Provider" />
+    <bpmn:participant id="Participant_FundingOrganisation" name="Approved insurer or funding organisation" />
+    <bpmn:messageFlow id="MessageFlow_M1" name="patient attends" sourceRef="Participant_Patient" targetRef="N_CL_PatientAttends" />
+    <bpmn:messageFlow id="MessageFlow_M2" name="treatment availability request" sourceRef="N_TB_CheckAvailability" targetRef="Participant_TreatmentService" />
+    <bpmn:messageFlow id="MessageFlow_M3" name="funding approval request" sourceRef="N_F_RecordApproval" targetRef="Participant_FundingOrganisation" />
+    <bpmn:messageFlow id="MessageFlow_M4" name="secure payment request" sourceRef="N_F_ProcessPayment" targetRef="Participant_PaymentProvider" />
+    <bpmn:messageFlow id="MessageFlow_M5" name="treatment appointment details" sourceRef="N_TB_NotifyPatient" targetRef="Participant_Patient" />
+    <bpmn:messageFlow id="MessageFlow_M6" name="repeat availability request" sourceRef="N_TB_KeepPending" targetRef="Participant_TreatmentService" />
+  </bpmn:collaboration>
+  <bpmn:process id="core-2-treatment-authorisation-funding-and-payment" name="Core 2 - Treatment authorisation, funding determination and payment" isExecutable="true">
+    <bpmn:documentation>Covers FR-007 to FR-009, FR-017 to FR-035 and BR-10 to BR-25, EX-10 to EX-16. Service tasks use the job types and the variable contract of workers/README.md. The error codes are caught on the service task that raises them - UNAUTHORISED_BOOKING_REQUEST and INVALID_VARIABLE on check-treatment-availability, PROHIBITED_FINANCIAL_DATA and INVALID_VARIABLE on process-payment, INVALID_VARIABLE on send-correspondence - because error variables are written to the scope of the activity that raised them and do not survive into the process scope: the reason for a failure is told apart by which boundary event was taken.</bpmn:documentation>
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_ClinicalTeam" name="Consultant and clinical team">
+        <bpmn:flowNodeRef>N_CL_PatientAttends</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_AssessPatient</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_ConsentDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_NotProceeding</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_AuthoriseTreatment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_ClinicalRisk</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_ModifyTreatment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_UrgentAuthorise</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_OtherClinical" name="Other Clinical Professionals">
+        <bpmn:flowNodeRef>N_OC_PreCycleReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_OC_FitToContinue</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_TreatmentBookings" name="Treatment and Chemotherapy Bookings Team">
+        <bpmn:flowNodeRef>N_TB_VerifyAuthorisation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_CheckAvailability</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_AvailabilityDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_ConfirmAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_NotifyPatient</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_ReturnRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_KeepPending</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_CorrectBookingInput</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_RecordNotificationFailure</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_TB_Unauthorised</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_TB_InvalidVariables</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_TB_NotifyFailure</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Finance" name="Finance Team">
+        <bpmn:flowNodeRef>N_F_DetermineFunding</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_FundingApprovalRequired</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_RecordApproval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_PaymentRequired</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_CalculateCharge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_ProcessPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_PaymentStatus</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_CorrectPaymentRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_InvestigatePayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_InvestigationComplete</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_NotifyPatient</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_ReviewFinancialImpact</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_ImpactReviewed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_F_ProhibitedData</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_F_InvalidVariables</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+  <bpmn:startEvent id="N_CL_PatientAttends" name="Patient attends the appointment">
+    <bpmn:documentation>The patient attends the New Patient Appointment (FR-007).</bpmn:documentation>
+  </bpmn:startEvent>
+  <bpmn:userTask id="N_CL_AssessPatient" name="Assess patient and treatment options">
+    <bpmn:documentation>Clinical task: assess the patient, discuss the diagnosis and explain the treatment options (BR-25, FR-007).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="consultants" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_CL_ConsentDecision" name="Patient consents to proceed?">
+    <bpmn:documentation>Consent is recorded before any Treatment Booking Request is created (BR-10, FR-007).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:endEvent id="N_CL_NotProceeding" name="Patient does not proceed">
+    <bpmn:documentation>The patient does not agree to proceed; no request is created (FR-007).</bpmn:documentation>
+  </bpmn:endEvent>
+  <bpmn:userTask id="N_CL_AuthoriseTreatment" name="Record consent and authorise request">
+    <bpmn:documentation>Clinical authorisation of the Treatment Booking Request: proposed treatment, start date, number and frequency of cycles, reviews between cycles, special resources, authorising professional (BR-10, BR-11, FR-007, FR-019). Supplies clinicalAuthorised and the treatment availability inputs.</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="consultants" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_CL_ClinicalRisk" name="Delaying care is a clinical risk?">
+    <bpmn:documentation>EX-13, BR-19: allows urgent treatment although payment is not confirmed (FR-032).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:userTask id="N_CL_ModifyTreatment" name="Authorise treatment modification">
+    <bpmn:documentation>Only a formally submitted Treatment Modification Request through the system is processed; requests made by email, telephone or informal communication are refused (BR-22, EX-15, FR-020).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="consultants" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_CL_UrgentAuthorise" name="Authorise urgent treatment">
+    <bpmn:documentation>Records the reason for proceeding without confirmed payment and refers the case to the Finance Team for resolution (BR-19, EX-13, FR-032).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="consultants" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_OC_PreCycleReview" name="Pre-cycle review and blood test">
+    <bpmn:documentation>Before each subsequent cycle: review, blood test results and the clinical decision on fitness to continue (BR-25, FR-009).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="clinical-professionals" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_OC_FitToContinue" name="Patient fit to continue?">
+    <bpmn:documentation>Fit / delay or change the plan; a clinical decision that administrative roles cannot take (BR-25, BR-41, FR-009).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:userTask id="N_TB_VerifyAuthorisation" name="Verify treatment authorisation">
+    <bpmn:documentation>Administrative check that the request is complete and clinically authorised; supplies clinicalAuthorised to the availability check (BR-10, FR-008).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:serviceTask id="N_TB_CheckAvailability" name="Check treatment availability">
+    <bpmn:documentation>Job type check-treatment-availability (worker treatment-availability; simulates the external treatment, laboratory and imaging service). Input: proposedTreatment, treatmentStartDate, specialResources, clinicalAuthorised. Output: externalServiceAvailable, treatmentSlotAvailable, appointmentReference, treatmentAppointmentDate, bookingStatus, treatmentRetryCount, duplicateAttempt. Errors: UNAUTHORISED_BOOKING_REQUEST, INVALID_VARIABLE (BR-10, BR-12, FR-017, FR-018).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:taskDefinition type="check-treatment-availability" retries="3" />
+    </bpmn:extensionElements>
+  </bpmn:serviceTask>
+  <bpmn:exclusiveGateway id="N_TB_AvailabilityDecision" name="Service available?">
+    <bpmn:documentation>Reads externalServiceAvailable; bookingStatus stays pending when the service is unavailable (BR-12, EX-10, FR-018).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:userTask id="N_TB_ConfirmAppointment" name="Confirm treatment appointment">
+    <bpmn:documentation>Confirmation only after the funding route and, where required, the payment or an authorised exemption are in place (BR-15, FR-029).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:serviceTask id="N_TB_NotifyPatient" name="Notify patient of appointment">
+    <bpmn:documentation>Job type send-correspondence (worker correspondence-dispatch; simulates the external correspondence service). Input: recipients, documentType, channelPreference. Output: dispatchDate, dispatchChannel, dispatchReference. Error: INVALID_VARIABLE (FR-039, NFR-011).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:taskDefinition type="send-correspondence" retries="3" />
+    </bpmn:extensionElements>
+  </bpmn:serviceTask>
+  <bpmn:userTask id="N_TB_ReturnRequest" name="Return request for authorisation">
+    <bpmn:documentation>Handles UNAUTHORISED_BOOKING_REQUEST: the request has no clinical authorisation and is not processed; it is returned to the clinical role (BR-10, FR-008).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_TB_KeepPending" name="Keep booking pending">
+    <bpmn:documentation>EX-10: the booking stays pending, the responsible team is notified, further attempts are recorded and no duplicate appointment is created (BR-12, FR-018).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_TB_CorrectBookingInput" name="Correct booking input">
+    <bpmn:documentation>Handles INVALID_VARIABLE on check-treatment-availability: a required variable is missing, of the wrong type or contradicts another value, so the booking request is corrected and the availability check is re-run without creating a duplicate appointment (FR-018).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_TB_RecordNotificationFailure" name="Record notification failure">
+    <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the notification was not dispatched because a required variable (for example the recipient list) was unusable; the failure is recorded and the patient is informed through another channel (FR-012, NFR-008, NFR-011).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:boundaryEvent id="B_TB_Unauthorised" name="request not authorised" attachedToRef="N_TB_CheckAvailability">
+      <bpmn:errorEventDefinition errorRef="Error_UNAUTHORISED_BOOKING_REQUEST" />
+  </bpmn:boundaryEvent>
+  <bpmn:boundaryEvent id="B_TB_InvalidVariables" name="invalid booking input" attachedToRef="N_TB_CheckAvailability">
+      <bpmn:errorEventDefinition errorRef="Error_INVALID_VARIABLE" />
+  </bpmn:boundaryEvent>
+  <bpmn:boundaryEvent id="B_TB_NotifyFailure" name="notification failed" attachedToRef="N_TB_NotifyPatient">
+      <bpmn:errorEventDefinition errorRef="Error_INVALID_VARIABLE" />
+  </bpmn:boundaryEvent>
+  <bpmn:userTask id="N_F_DetermineFunding" name="Determine funding route">
+    <bpmn:documentation>Hospital-funded, insurer or funding organisation, or patient payment (BR-13, FR-025). A hospital, insurer or exempt route means the payment provider is not called at all.</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="finance" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_F_FundingApprovalRequired" name="Funding approval required?">
+    <bpmn:documentation>BR-13, BR-14, FR-025, FR-026.</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:userTask id="N_F_RecordApproval" name="Record funding approval">
+    <bpmn:documentation>Records the funding organisation, authorisation reference, approved amount and any limitations (BR-14, FR-026).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="finance" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_F_PaymentRequired" name="Payment required from patient?">
+    <bpmn:documentation>Most eligible patients pay nothing; charges may apply to private patients, overseas visitors, optional services or excluded treatments (BR-13, FR-025).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:userTask id="N_F_CalculateCharge" name="Calculate or obtain the charge">
+    <bpmn:documentation>Supplies chargeAmount, fundingRoute and paymentReference to process-payment (AS-08, BR-15, FR-027).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="finance" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:serviceTask id="N_F_ProcessPayment" name="Process payment">
+    <bpmn:documentation>Job type process-payment (worker payment-processing; simulates the external Payment Service Provider). Input: chargeAmount, fundingRoute, paymentReference. Output: paymentStatus, transactionReference, paymentDate, paidAmount, confirmationReceived, requiresInvestigation, duplicateAttempt. Errors: PROHIBITED_FINANCIAL_DATA, INVALID_VARIABLE. The provider is not called at all when paymentStatus is not_required (hospital, insurer or exempt route) (BR-15, BR-16, BR-17, BR-18, FR-027 to FR-031).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:taskDefinition type="process-payment" retries="3" />
+    </bpmn:extensionElements>
+  </bpmn:serviceTask>
+  <bpmn:exclusiveGateway id="N_F_PaymentStatus" name="Payment completed?">
+    <bpmn:documentation>Reads paymentStatus, confirmationReceived and requiresInvestigation (BR-17, BR-18, EX-11, EX-12, FR-030, FR-031).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
+  <bpmn:userTask id="N_F_CorrectPaymentRequest" name="Correct the payment request">
+    <bpmn:documentation>Handles PROHIBITED_FINANCIAL_DATA (card or security details must never reach the system, BR-16, NFR-007) and INVALID_VARIABLE (the request variables are unusable). In both cases the provider is not called again until the request is correct, and no second charge is created (BR-17, FR-028, FR-030).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="finance" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_F_InvestigatePayment" name="Mark transaction for investigation">
+    <bpmn:documentation>EX-12, BR-18: payment taken but confirmation not returned; the transaction is marked for investigation and no further payment request is issued (FR-031).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="finance" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:endEvent id="N_F_InvestigationComplete" name="Transaction investigation recorded">
+    <bpmn:documentation>The investigation outcome is recorded against the patient account (BR-18, FR-031).</bpmn:documentation>
+  </bpmn:endEvent>
+  <bpmn:userTask id="N_F_NotifyPatient" name="Notify patient and booking team">
+    <bpmn:documentation>EX-11, BR-17: the patient and the responsible administrative team are notified; another attempt is possible without a duplicate booking or a second charge (FR-030).</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="finance" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:userTask id="N_F_ReviewFinancialImpact" name="Review the financial impact">
+    <bpmn:documentation>BR-24, FR-022: a modification that affects an existing charge, funding approval or completed payment is reviewed by Finance.</bpmn:documentation>
+    <bpmn:extensionElements>
+      <zeebe:assignmentDefinition candidateGroups="finance" />
+    </bpmn:extensionElements>
+  </bpmn:userTask>
+  <bpmn:endEvent id="N_F_ImpactReviewed" name="Charge or funding reviewed" />
+  <bpmn:boundaryEvent id="B_F_ProhibitedData" name="prohibited financial data" attachedToRef="N_F_ProcessPayment">
+      <bpmn:errorEventDefinition errorRef="Error_PROHIBITED_FINANCIAL_DATA" />
+  </bpmn:boundaryEvent>
+  <bpmn:boundaryEvent id="B_F_InvalidVariables" name="invalid payment input" attachedToRef="N_F_ProcessPayment">
+      <bpmn:errorEventDefinition errorRef="Error_INVALID_VARIABLE" />
+  </bpmn:boundaryEvent>
+  <bpmn:sequenceFlow id="F1" sourceRef="N_CL_PatientAttends" targetRef="N_CL_AssessPatient" />
+  <bpmn:sequenceFlow id="F2" sourceRef="N_CL_AssessPatient" targetRef="N_CL_ConsentDecision" />
+  <bpmn:sequenceFlow id="F3" name="declined" sourceRef="N_CL_ConsentDecision" targetRef="N_CL_NotProceeding">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= consentGiven = false</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F4" name="consented" sourceRef="N_CL_ConsentDecision" targetRef="N_CL_AuthoriseTreatment">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= consentGiven = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F5" sourceRef="N_CL_AuthoriseTreatment" targetRef="N_TB_VerifyAuthorisation" />
+  <bpmn:sequenceFlow id="F6" sourceRef="B_TB_Unauthorised" targetRef="N_TB_ReturnRequest" />
+  <bpmn:sequenceFlow id="F7" sourceRef="N_TB_ReturnRequest" targetRef="N_CL_AuthoriseTreatment" />
+  <bpmn:sequenceFlow id="F8" sourceRef="N_TB_VerifyAuthorisation" targetRef="N_TB_CheckAvailability" />
+  <bpmn:sequenceFlow id="F9" sourceRef="B_TB_InvalidVariables" targetRef="N_TB_CorrectBookingInput" />
+  <bpmn:sequenceFlow id="F10" sourceRef="N_TB_CorrectBookingInput" targetRef="N_TB_CheckAvailability" />
+  <bpmn:sequenceFlow id="F11" sourceRef="N_TB_CheckAvailability" targetRef="N_TB_AvailabilityDecision" />
+  <bpmn:sequenceFlow id="F12" name="available" sourceRef="N_TB_AvailabilityDecision" targetRef="N_F_DetermineFunding">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= externalServiceAvailable = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F13" name="not available" sourceRef="N_TB_AvailabilityDecision" targetRef="N_TB_KeepPending">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= externalServiceAvailable = false</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F14" sourceRef="N_TB_KeepPending" targetRef="N_TB_CheckAvailability" />
+  <bpmn:sequenceFlow id="F15" sourceRef="N_F_DetermineFunding" targetRef="N_F_FundingApprovalRequired" />
+  <bpmn:sequenceFlow id="F16" name="required" sourceRef="N_F_FundingApprovalRequired" targetRef="N_F_RecordApproval">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fundingApprovalRequired = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F17" name="not required" sourceRef="N_F_FundingApprovalRequired" targetRef="N_F_PaymentRequired">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fundingApprovalRequired = false</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F18" sourceRef="N_F_RecordApproval" targetRef="N_F_PaymentRequired" />
+  <bpmn:sequenceFlow id="F19" name="payment required" sourceRef="N_F_PaymentRequired" targetRef="N_F_CalculateCharge">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentRequiredFromPatient = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F20" name="no payment due" sourceRef="N_F_PaymentRequired" targetRef="N_TB_ConfirmAppointment">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentRequiredFromPatient = false</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F21" sourceRef="N_F_CalculateCharge" targetRef="N_F_ProcessPayment" />
+  <bpmn:sequenceFlow id="F22" sourceRef="B_F_ProhibitedData" targetRef="N_F_CorrectPaymentRequest" />
+  <bpmn:sequenceFlow id="F23" sourceRef="B_F_InvalidVariables" targetRef="N_F_CorrectPaymentRequest" />
+  <bpmn:sequenceFlow id="F24" sourceRef="N_F_CorrectPaymentRequest" targetRef="N_F_CalculateCharge" />
+  <bpmn:sequenceFlow id="F25" sourceRef="N_F_ProcessPayment" targetRef="N_F_PaymentStatus" />
+  <bpmn:sequenceFlow id="F26" name="completed" sourceRef="N_F_PaymentStatus" targetRef="N_TB_ConfirmAppointment">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentStatus = &quot;completed&quot; and confirmationReceived = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F27" name="not completed" sourceRef="N_F_PaymentStatus" targetRef="N_CL_ClinicalRisk">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentStatus != &quot;completed&quot;</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F28" name="taken but unconfirmed" sourceRef="N_F_PaymentStatus" targetRef="N_F_InvestigatePayment">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= requiresInvestigation = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F29" sourceRef="N_F_InvestigatePayment" targetRef="N_F_InvestigationComplete" />
+  <bpmn:sequenceFlow id="F30" name="yes" sourceRef="N_CL_ClinicalRisk" targetRef="N_CL_UrgentAuthorise">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= delayingCareIsClinicalRisk = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F31" name="no" sourceRef="N_CL_ClinicalRisk" targetRef="N_F_NotifyPatient">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= delayingCareIsClinicalRisk = false</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F32" name="retry payment" sourceRef="N_F_NotifyPatient" targetRef="N_F_CalculateCharge">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= retryPayment = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F33" sourceRef="N_CL_UrgentAuthorise" targetRef="N_TB_ConfirmAppointment" />
+  <bpmn:sequenceFlow id="F34" sourceRef="N_TB_ConfirmAppointment" targetRef="N_TB_NotifyPatient" />
+  <bpmn:sequenceFlow id="F35" sourceRef="B_TB_NotifyFailure" targetRef="N_TB_RecordNotificationFailure" />
+  <bpmn:sequenceFlow id="F36" sourceRef="N_TB_RecordNotificationFailure" targetRef="N_TB_NotifyPatient" />
+  <bpmn:sequenceFlow id="F37" sourceRef="N_TB_NotifyPatient" targetRef="N_OC_PreCycleReview" />
+  <bpmn:sequenceFlow id="F38" sourceRef="N_OC_PreCycleReview" targetRef="N_OC_FitToContinue" />
+  <bpmn:sequenceFlow id="F39" name="fit" sourceRef="N_OC_FitToContinue" targetRef="N_TB_ConfirmAppointment">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fitToContinue = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F40" name="not fit" sourceRef="N_OC_FitToContinue" targetRef="N_CL_ModifyTreatment">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fitToContinue = false</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F41" name="affects charge or payment" sourceRef="N_CL_ModifyTreatment" targetRef="N_F_ReviewFinancialImpact">
+    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= affectsCharge = true</bpmn:conditionExpression>
+  </bpmn:sequenceFlow>
+  <bpmn:sequenceFlow id="F42" sourceRef="N_F_ReviewFinancialImpact" targetRef="N_F_ImpactReviewed" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_Hospital_di" bpmnElement="Participant_Hospital" isHorizontal="true">
+        <dc:Bounds x="140" y="140" width="4830" height="1710" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="146" y="1856" width="108" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_ClinicalTeam_di" bpmnElement="Lane_ClinicalTeam" isHorizontal="true">
+        <dc:Bounds x="140" y="330" width="4830" height="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="148" y="338" width="209" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_OtherClinical_di" bpmnElement="Lane_OtherClinical" isHorizontal="true">
+        <dc:Bounds x="140" y="730" width="4830" height="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="148" y="738" width="209" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_TreatmentBookings_di" bpmnElement="Lane_TreatmentBookings" isHorizontal="true">
+        <dc:Bounds x="140" y="930" width="4830" height="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="148" y="938" width="296" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Finance_di" bpmnElement="Lane_Finance" isHorizontal="true">
+        <dc:Bounds x="140" y="1330" width="4830" height="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="148" y="1338" width="94" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_Patient_di" bpmnElement="Participant_Patient" isHorizontal="true">
+        <dc:Bounds x="5170" y="180" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_TreatmentService_di" bpmnElement="Participant_TreatmentService" isHorizontal="true">
+        <dc:Bounds x="5170" y="270" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_PaymentProvider_di" bpmnElement="Participant_PaymentProvider" isHorizontal="true">
+        <dc:Bounds x="5170" y="360" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_FundingOrganisation_di" bpmnElement="Participant_FundingOrganisation" isHorizontal="true">
+        <dc:Bounds x="5170" y="450" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CL_PatientAttends_di" bpmnElement="N_CL_PatientAttends">
+        <dc:Bounds x="407" y="412" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="310" y="454" width="231" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CL_AssessPatient_di" bpmnElement="N_CL_AssessPatient">
+        <dc:Bounds x="540" y="390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CL_ConsentDecision_di" bpmnElement="N_CL_ConsentDecision" isMarkerVisible="true">
+        <dc:Bounds x="780" y="405" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="701" y="461" width="209" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CL_NotProceeding_di" bpmnElement="N_CL_NotProceeding">
+        <dc:Bounds x="977" y="412" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="905" y="454" width="180" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CL_AuthoriseTreatment_di" bpmnElement="N_CL_AuthoriseTreatment">
+        <dc:Bounds x="1110" y="390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CL_ClinicalRisk_di" bpmnElement="N_CL_ClinicalRisk" isMarkerVisible="true">
+        <dc:Bounds x="4200" y="405" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4103" y="461" width="245" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CL_ModifyTreatment_di" bpmnElement="N_CL_ModifyTreatment">
+        <dc:Bounds x="4340" y="390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CL_UrgentAuthorise_di" bpmnElement="N_CL_UrgentAuthorise">
+        <dc:Bounds x="4340" y="590" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_OC_PreCycleReview_di" bpmnElement="N_OC_PreCycleReview">
+        <dc:Bounds x="3960" y="790" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_OC_FitToContinue_di" bpmnElement="N_OC_FitToContinue" isMarkerVisible="true">
+        <dc:Bounds x="4200" y="805" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4135" y="861" width="180" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_VerifyAuthorisation_di" bpmnElement="N_TB_VerifyAuthorisation">
+        <dc:Bounds x="1300" y="990" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_CheckAvailability_di" bpmnElement="N_TB_CheckAvailability">
+        <dc:Bounds x="1490" y="990" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_AvailabilityDecision_di" bpmnElement="N_TB_AvailabilityDecision" isMarkerVisible="true">
+        <dc:Bounds x="1730" y="1005" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1687" y="1061" width="137" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_ConfirmAppointment_di" bpmnElement="N_TB_ConfirmAppointment">
+        <dc:Bounds x="3580" y="990" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_NotifyPatient_di" bpmnElement="N_TB_NotifyPatient">
+        <dc:Bounds x="3770" y="990" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_ReturnRequest_di" bpmnElement="N_TB_ReturnRequest">
+        <dc:Bounds x="1490" y="1190" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_KeepPending_di" bpmnElement="N_TB_KeepPending">
+        <dc:Bounds x="1680" y="1190" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_CorrectBookingInput_di" bpmnElement="N_TB_CorrectBookingInput">
+        <dc:Bounds x="1870" y="1190" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_RecordNotificationFailure_di" bpmnElement="N_TB_RecordNotificationFailure">
+        <dc:Bounds x="2060" y="1190" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_TB_Unauthorised_di" bpmnElement="B_TB_Unauthorised">
+        <dc:Bounds x="1523" y="1052" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1458" y="1094" width="166" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_TB_InvalidVariables_di" bpmnElement="B_TB_InvalidVariables">
+        <dc:Bounds x="1571" y="1052" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1510" y="1094" width="159" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_TB_NotifyFailure_di" bpmnElement="B_TB_NotifyFailure">
+        <dc:Bounds x="3827" y="1052" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3773" y="1094" width="144" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_DetermineFunding_di" bpmnElement="N_F_DetermineFunding">
+        <dc:Bounds x="2250" y="1390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_FundingApprovalRequired_di" bpmnElement="N_F_FundingApprovalRequired" isMarkerVisible="true">
+        <dc:Bounds x="2490" y="1405" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2418" y="1461" width="195" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_RecordApproval_di" bpmnElement="N_F_RecordApproval">
+        <dc:Bounds x="2630" y="1390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_PaymentRequired_di" bpmnElement="N_F_PaymentRequired" isMarkerVisible="true">
+        <dc:Bounds x="2870" y="1405" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2783" y="1461" width="224" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_CalculateCharge_di" bpmnElement="N_F_CalculateCharge">
+        <dc:Bounds x="3010" y="1390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_ProcessPayment_di" bpmnElement="N_F_ProcessPayment">
+        <dc:Bounds x="3200" y="1390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_PaymentStatus_di" bpmnElement="N_F_PaymentStatus" isMarkerVisible="true">
+        <dc:Bounds x="3440" y="1405" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3397" y="1461" width="137" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_CorrectPaymentRequest_di" bpmnElement="N_F_CorrectPaymentRequest">
+        <dc:Bounds x="3200" y="1590" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_InvestigatePayment_di" bpmnElement="N_F_InvestigatePayment">
+        <dc:Bounds x="3770" y="1590" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_InvestigationComplete_di" bpmnElement="N_F_InvestigationComplete">
+        <dc:Bounds x="4017" y="1612" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3909" y="1654" width="252" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_NotifyPatient_di" bpmnElement="N_F_NotifyPatient">
+        <dc:Bounds x="4530" y="1590" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_ReviewFinancialImpact_di" bpmnElement="N_F_ReviewFinancialImpact">
+        <dc:Bounds x="4530" y="1390" width="150" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_ImpactReviewed_di" bpmnElement="N_F_ImpactReviewed">
+        <dc:Bounds x="4777" y="1412" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4698" y="1454" width="195" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_F_ProhibitedData_di" bpmnElement="B_F_ProhibitedData">
+        <dc:Bounds x="3233" y="1452" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3157" y="1494" width="188" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_F_InvalidVariables_di" bpmnElement="B_F_InvalidVariables">
+        <dc:Bounds x="3281" y="1452" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3220" y="1494" width="159" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F1_di" bpmnElement="F1">
+        <di:waypoint x="443" y="430" />
+        <di:waypoint x="540" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F2_di" bpmnElement="F2">
+        <di:waypoint x="690" y="430" />
+        <di:waypoint x="780" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F3_di" bpmnElement="F3">
+        <di:waypoint x="830" y="430" />
+        <di:waypoint x="977" y="430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="871" y="436" width="65" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F4_di" bpmnElement="F4">
+        <di:waypoint x="805" y="455" />
+        <di:waypoint x="805" y="520" />
+        <di:waypoint x="1090" y="520" />
+        <di:waypoint x="1090" y="430" />
+        <di:waypoint x="1110" y="430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="769" y="461" width="72" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F5_di" bpmnElement="F5">
+        <di:waypoint x="1260" y="430" />
+        <di:waypoint x="1280" y="430" />
+        <di:waypoint x="1280" y="1030" />
+        <di:waypoint x="1300" y="1030" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F6_di" bpmnElement="F6">
+        <di:waypoint x="1541" y="1088" />
+        <di:waypoint x="1541" y="1120" />
+        <di:waypoint x="1470" y="1120" />
+        <di:waypoint x="1470" y="1230" />
+        <di:waypoint x="1490" y="1230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F7_di" bpmnElement="F7">
+        <di:waypoint x="1565" y="1270" />
+        <di:waypoint x="1565" y="1320" />
+        <di:waypoint x="1090" y="1320" />
+        <di:waypoint x="1090" y="430" />
+        <di:waypoint x="1110" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_di" bpmnElement="F8">
+        <di:waypoint x="1450" y="1030" />
+        <di:waypoint x="1490" y="1030" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F9_di" bpmnElement="F9">
+        <di:waypoint x="1589" y="1088" />
+        <di:waypoint x="1589" y="1120" />
+        <di:waypoint x="1850" y="1120" />
+        <di:waypoint x="1850" y="1230" />
+        <di:waypoint x="1870" y="1230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_di" bpmnElement="F10">
+        <di:waypoint x="1945" y="1270" />
+        <di:waypoint x="1945" y="1320" />
+        <di:waypoint x="1470" y="1320" />
+        <di:waypoint x="1470" y="1030" />
+        <di:waypoint x="1490" y="1030" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F11_di" bpmnElement="F11">
+        <di:waypoint x="1640" y="1030" />
+        <di:waypoint x="1730" y="1030" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_di" bpmnElement="F12">
+        <di:waypoint x="1780" y="1030" />
+        <di:waypoint x="2230" y="1030" />
+        <di:waypoint x="2230" y="1430" />
+        <di:waypoint x="2250" y="1430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1969" y="1036" width="72" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_di" bpmnElement="F13">
+        <di:waypoint x="1755" y="1055" />
+        <di:waypoint x="1755" y="1120" />
+        <di:waypoint x="1660" y="1120" />
+        <di:waypoint x="1660" y="1230" />
+        <di:waypoint x="1680" y="1230" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1705" y="1061" width="101" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F14_di" bpmnElement="F14">
+        <di:waypoint x="1755" y="1270" />
+        <di:waypoint x="1755" y="1320" />
+        <di:waypoint x="1470" y="1320" />
+        <di:waypoint x="1470" y="1030" />
+        <di:waypoint x="1490" y="1030" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F15_di" bpmnElement="F15">
+        <di:waypoint x="2400" y="1430" />
+        <di:waypoint x="2490" y="1430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F16_di" bpmnElement="F16">
+        <di:waypoint x="2540" y="1430" />
+        <di:waypoint x="2630" y="1430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2553" y="1436" width="65" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F17_di" bpmnElement="F17">
+        <di:waypoint x="2515" y="1455" />
+        <di:waypoint x="2515" y="1520" />
+        <di:waypoint x="2800" y="1520" />
+        <di:waypoint x="2800" y="1430" />
+        <di:waypoint x="2870" y="1430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2468" y="1461" width="94" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F18_di" bpmnElement="F18">
+        <di:waypoint x="2780" y="1430" />
+        <di:waypoint x="2870" y="1430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F19_di" bpmnElement="F19">
+        <di:waypoint x="2920" y="1430" />
+        <di:waypoint x="3010" y="1430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2904" y="1436" width="123" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F20_di" bpmnElement="F20">
+        <di:waypoint x="2895" y="1455" />
+        <di:waypoint x="2895" y="1520" />
+        <di:waypoint x="3560" y="1520" />
+        <di:waypoint x="3560" y="1030" />
+        <di:waypoint x="3580" y="1030" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2841" y="1461" width="108" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F21_di" bpmnElement="F21">
+        <di:waypoint x="3160" y="1430" />
+        <di:waypoint x="3200" y="1430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F22_di" bpmnElement="F22">
+        <di:waypoint x="3251" y="1488" />
+        <di:waypoint x="3251" y="1520" />
+        <di:waypoint x="3180" y="1520" />
+        <di:waypoint x="3180" y="1630" />
+        <di:waypoint x="3200" y="1630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F23_di" bpmnElement="F23">
+        <di:waypoint x="3299" y="1488" />
+        <di:waypoint x="3299" y="1520" />
+        <di:waypoint x="3180" y="1520" />
+        <di:waypoint x="3180" y="1630" />
+        <di:waypoint x="3200" y="1630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F24_di" bpmnElement="F24">
+        <di:waypoint x="3275" y="1670" />
+        <di:waypoint x="3275" y="1720" />
+        <di:waypoint x="2990" y="1720" />
+        <di:waypoint x="2990" y="1430" />
+        <di:waypoint x="3010" y="1430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F25_di" bpmnElement="F25">
+        <di:waypoint x="3350" y="1430" />
+        <di:waypoint x="3440" y="1430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F26_di" bpmnElement="F26">
+        <di:waypoint x="3490" y="1430" />
+        <di:waypoint x="3560" y="1430" />
+        <di:waypoint x="3560" y="1030" />
+        <di:waypoint x="3580" y="1030" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3489" y="1436" width="72" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F27_di" bpmnElement="F27">
+        <di:waypoint x="3490" y="1430" />
+        <di:waypoint x="4130" y="1430" />
+        <di:waypoint x="4130" y="430" />
+        <di:waypoint x="4200" y="430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3760" y="1436" width="101" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F28_di" bpmnElement="F28">
+        <di:waypoint x="3490" y="1430" />
+        <di:waypoint x="3750" y="1430" />
+        <di:waypoint x="3750" y="1630" />
+        <di:waypoint x="3770" y="1630" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3541" y="1436" width="159" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F29_di" bpmnElement="F29">
+        <di:waypoint x="3920" y="1630" />
+        <di:waypoint x="4017" y="1630" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F30_di" bpmnElement="F30">
+        <di:waypoint x="4250" y="430" />
+        <di:waypoint x="4320" y="430" />
+        <di:waypoint x="4320" y="630" />
+        <di:waypoint x="4340" y="630" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4255" y="436" width="60" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F31_di" bpmnElement="F31">
+        <di:waypoint x="4225" y="455" />
+        <di:waypoint x="4225" y="520" />
+        <di:waypoint x="4510" y="520" />
+        <di:waypoint x="4510" y="1630" />
+        <di:waypoint x="4530" y="1630" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4195" y="461" width="60" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F32_di" bpmnElement="F32">
+        <di:waypoint x="4605" y="1670" />
+        <di:waypoint x="4605" y="1720" />
+        <di:waypoint x="2990" y="1720" />
+        <di:waypoint x="2990" y="1430" />
+        <di:waypoint x="3010" y="1430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4555" y="1676" width="101" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F33_di" bpmnElement="F33">
+        <di:waypoint x="4415" y="670" />
+        <di:waypoint x="4415" y="720" />
+        <di:waypoint x="3560" y="720" />
+        <di:waypoint x="3560" y="1030" />
+        <di:waypoint x="3580" y="1030" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F34_di" bpmnElement="F34">
+        <di:waypoint x="3730" y="1030" />
+        <di:waypoint x="3770" y="1030" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F35_di" bpmnElement="F35">
+        <di:waypoint x="3845" y="1088" />
+        <di:waypoint x="3845" y="1120" />
+        <di:waypoint x="2040" y="1120" />
+        <di:waypoint x="2040" y="1230" />
+        <di:waypoint x="2060" y="1230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F36_di" bpmnElement="F36">
+        <di:waypoint x="2210" y="1230" />
+        <di:waypoint x="3750" y="1230" />
+        <di:waypoint x="3750" y="1030" />
+        <di:waypoint x="3770" y="1030" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F37_di" bpmnElement="F37">
+        <di:waypoint x="3920" y="1030" />
+        <di:waypoint x="3940" y="1030" />
+        <di:waypoint x="3940" y="830" />
+        <di:waypoint x="3960" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F38_di" bpmnElement="F38">
+        <di:waypoint x="4110" y="830" />
+        <di:waypoint x="4200" y="830" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F39_di" bpmnElement="F39">
+        <di:waypoint x="4225" y="855" />
+        <di:waypoint x="4225" y="920" />
+        <di:waypoint x="3560" y="920" />
+        <di:waypoint x="3560" y="1030" />
+        <di:waypoint x="3580" y="1030" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4195" y="861" width="60" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F40_di" bpmnElement="F40">
+        <di:waypoint x="4250" y="830" />
+        <di:waypoint x="4320" y="830" />
+        <di:waypoint x="4320" y="430" />
+        <di:waypoint x="4340" y="430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4255" y="836" width="60" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F41_di" bpmnElement="F41">
+        <di:waypoint x="4490" y="430" />
+        <di:waypoint x="4510" y="430" />
+        <di:waypoint x="4510" y="1430" />
+        <di:waypoint x="4530" y="1430" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4406" y="436" width="188" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F42_di" bpmnElement="F42">
+        <di:waypoint x="4680" y="1430" />
+        <di:waypoint x="4777" y="1430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_M1_di" bpmnElement="MessageFlow_M1">
+        <di:waypoint x="5170" y="210" />
+        <di:waypoint x="5030" y="210" />
+        <di:waypoint x="5030" y="340" />
+        <di:waypoint x="425" y="340" />
+        <di:waypoint x="425" y="412" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5042" y="216" width="116" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_M2_di" bpmnElement="MessageFlow_M2">
+        <di:waypoint x="1565" y="990" />
+        <di:waypoint x="1565" y="940" />
+        <di:waypoint x="5054" y="940" />
+        <di:waypoint x="5054" y="300" />
+        <di:waypoint x="5170" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1453" y="996" width="224" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_M3_di" bpmnElement="MessageFlow_M3">
+        <di:waypoint x="2705" y="1390" />
+        <di:waypoint x="2705" y="1340" />
+        <di:waypoint x="5078" y="1340" />
+        <di:waypoint x="5078" y="480" />
+        <di:waypoint x="5170" y="480" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2615" y="1396" width="180" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_M4_di" bpmnElement="MessageFlow_M4">
+        <di:waypoint x="3275" y="1390" />
+        <di:waypoint x="3275" y="1352" />
+        <di:waypoint x="5102" y="1352" />
+        <di:waypoint x="5102" y="390" />
+        <di:waypoint x="5170" y="390" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3192" y="1396" width="166" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_M5_di" bpmnElement="MessageFlow_M5">
+        <di:waypoint x="3845" y="990" />
+        <di:waypoint x="3845" y="952" />
+        <di:waypoint x="5126" y="952" />
+        <di:waypoint x="5126" y="210" />
+        <di:waypoint x="5170" y="210" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3737" y="996" width="216" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_M6_di" bpmnElement="MessageFlow_M6">
+        <di:waypoint x="1755" y="1190" />
+        <di:waypoint x="1755" y="1164" />
+        <di:waypoint x="5150" y="1164" />
+        <di:waypoint x="5150" y="300" />
+        <di:waypoint x="5170" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1654" y="1196" width="202" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

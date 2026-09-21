@@ -1,0 +1,80 @@
+{
+  "components": [
+    {
+      "type": "group",
+      "label": "Treatment Booking Details",
+      "path": "treatmentBookingDetails",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "proposedTreatment",
+          "label": "Proposed Treatment",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "date",
+          "key": "treatmentStartDate",
+          "label": "Required Start Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "number",
+          "key": "numberOfCycles",
+          "label": "Number of Cycles",
+          "validate": {
+            "required": true,
+            "min": 1
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "specialResources",
+          "label": "Special Resources Required"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Authorisation",
+      "path": "authorisation",
+      "elements": [
+        {
+          "type": "checkbox",
+          "key": "clinicalAuthorised",
+          "label": "Clinical Authorisation Confirmed",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "authorisingClinician",
+          "label": "Authorising Clinician",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Platform",
+  "executionPlatformVersion": "8.5.0"
+}

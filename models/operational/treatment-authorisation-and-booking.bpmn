@@ -77,7 +77,7 @@
       </bpmn:lane>
     </bpmn:laneSet>
     <bpmn:startEvent id="StartEvent_NewPatientAppointment" name="New patient appointment" />
-    <bpmn:userTask id="UserTask_AssessAndAuthoriseTreatment" name="Assess and authorise treatment">
+    <bpmn:userTask id="UserTask_AssessAndAuthoriseTreatment" name="Assess and authorise treatment" camunda:formKey="camunda:form:forms/treatment-booking.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="consultants" />
@@ -115,7 +115,7 @@
         <zeebe:assignmentDefinition candidateGroups="clinical-professionals" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:userTask id="UserTask_PrepareTreatmentBooking" name="Plan treatment and resources">
+    <bpmn:userTask id="UserTask_PrepareTreatmentBooking" name="Plan treatment and resources" camunda:formKey="camunda:form:forms/treatment-booking.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
@@ -152,7 +152,7 @@
         <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:userTask id="UserTask_DetermineFundingRoute" name="Determine funding route">
+    <bpmn:userTask id="UserTask_DetermineFundingRoute" name="Determine funding route" camunda:formKey="camunda:form:forms/funding-route.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
@@ -166,7 +166,7 @@
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_PaymentRequired" name="Payment required?" default="Flow_B11" />
-    <bpmn:userTask id="UserTask_CalculateCharge" name="Calculate charge">
+    <bpmn:userTask id="UserTask_CalculateCharge" name="Calculate charge" camunda:formKey="camunda:form:forms/payment.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
@@ -205,7 +205,7 @@
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:userTask id="UserTask_DetermineRefund" name="Determine refund">
+    <bpmn:userTask id="UserTask_DetermineRefund" name="Determine refund" camunda:formKey="camunda:form:forms/refund.form">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />

@@ -93,6 +93,13 @@
 
 ## 5. Key business rules
 
+> **Note on IDs.** The external workers and the test evidence already cite IDs from an earlier,
+> coarser allocation of the same numbering (BR-03 for the two-week telephone rule, BR-04 for
+> clinical authorisation of treatment requests, BR-06 for card data, BR-07 for a payment taken
+> without a confirmation, BR-17 for an appointment outside the requested period). Check the
+> reconciliation table in `docs/requirements/requirements.md` before assigning new IDs, so that one
+> allocation is used across the whole repository.
+
 | # | Business rule (as stated in the case) | Where it affects the model (gateway / validation / permission) |
 |---|---|---|
 | BR-01 | A referral must be checked for the expected supporting information (previous clinic letters, investigation results, diagnostic reports and other relevant clinical documentation) before it goes for clinical review. | Validation at the referral receipt task (completeness checklist). |
@@ -175,15 +182,15 @@
 
 | External party | Interaction | Simulated or real in the prototype |
 |---|---|---|
-| External scheduling service | Source of appointment availability used to identify outpatient, treatment and follow-up appointments that are then confirmed in the HPAS. | Simulated (stub returning available slots). |
-| External correspondence service | Distributes appointment letters and clinic letters to patients and other recipients. | Simulated (stub recording the distribution and returning a distribution reference). |
-| External Payment Service Provider | Receives secure payment requests and approved refund requests; returns payment status, transaction reference, payment date and amount. | Simulated (stub returning success, decline and failure statuses). |
-| Funding organisations and approved insurers | Provide funding authorisation references, approved amounts and any limitations. | Simulated (recorded data, no live interface). |
-| External treatment, laboratory, imaging and scheduling services | Provide availability for treatment appointments and the assessments (including blood tests) needed between chemotherapy cycles. | Simulated (stubs used to exercise the unavailable-service exception). |
-| Referring organisation - General Practitioner or another hospital | Sends the referral and supporting documentation; may be asked for missing information. | Modelled as an external participant pool; simulated. |
-| Letter recipients - patient's GP, other hospitals, healthcare providers and other professionals | Receive clinic letters after they are approved and distributed. | Modelled as external participants; simulated. |
-| The patient | Attends appointments, consents to treatment, pays chargeable amounts, raises enquiries, and may cancel or fail to attend. | Modelled as an external participant; represented by simulated contact channels. |
-| Existing hospital systems and manually maintained records | Current sources and destinations of information that the HPAS is intended to replace or coordinate with. | Out of scope for the prototype; recorded as an assumption about the current state. |
+| External scheduling service | Source of appointment availability used to identify outpatient, treatment and follow-up appointments that are then confirmed in the HPAS. | Simulated: `workers/src/services/scheduling-service.js`, called by `workers/src/workers/appointment-availability.js`. |
+| External correspondence service | Distributes appointment letters and clinic letters to patients and other recipients. | Simulated: `workers/src/services/correspondence-service.js`, called by `workers/src/workers/correspondence-dispatch.js`; records the channel, date and reference. |
+| External Payment Service Provider | Receives secure payment requests and approved refund requests; returns payment status, transaction reference, payment date and amount. | Simulated: `workers/src/services/payment-service-provider.js`, called by `workers/src/workers/payment-processing.js`; returns `completed`, `declined` or `success_no_confirmation`. |
+| Funding organisations and approved insurers | Provide funding authorisation references, approved amounts and any limitations. | Simulated: recorded as data on the funding approval task; no live interface. A hospital, insurer or exempt route means the payment provider is not called at all. |
+| External treatment, laboratory, imaging and scheduling services | Provide availability for treatment appointments and the assessments (including blood tests) needed between chemotherapy cycles. | Simulated: `workers/src/services/treatment-service.js`, called by `workers/src/workers/treatment-availability.js`; can return `unavailable`. |
+| Referring organisation - General Practitioner or another hospital | Sends the referral and supporting documentation; may be asked for missing information. | Modelled as an external pool (`Participant_ReferringOrganisation`) in the strategic model and in `referral-to-appointment.bpmn`; no worker. |
+| Letter recipients - patient's GP, other hospitals, healthcare providers and other professionals | Receive clinic letters after they are approved and distributed. | Modelled as recipients on the letter task; distribution simulated by the correspondence service. |
+| The patient | Attends appointments, consents to treatment, pays chargeable amounts, raises enquiries, and may cancel or fail to attend. | Modelled as an external participant; reached through the correspondence service and the contact tasks; the patient is not a pool in the current models. |
+| Existing hospital systems and manually maintained records | Current sources and destinations of information that the HPAS is intended to replace or coordinate with. | Out of scope for the prototype; recorded as an assumption about the current state (AS-12). |
 
 ## 8. Information captured, stored, transferred or validated
 
@@ -284,3 +291,4 @@
 | Date | Change | By |
 |---|---|---|
 | 17 Sep 2026 | Sections 1-10 completed from the case study text as a first draft for group discussion and confirmation. | Eason050109 |
+| 17 Sep 2026 | Section 7 now names the simulated services in `workers/src/services/`; section 5 carries a note on the two ID allocations in use, with the reconciliation table in `docs/requirements/requirements.md`. | Eason050109 |

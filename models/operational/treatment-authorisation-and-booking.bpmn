@@ -1,0 +1,973 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_treatment-authorisation-and-booking" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.51.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <!-- Core process 2 of 3. Consent and treatment authorisation, funding-route determination,
+     payment through the external Payment Service Provider with its failure paths (declined,
+     duplicated, taken without confirmation, urgent clinical override), treatment booking with
+     external services and the between-cycle clinical review. Job types: check-treatment-
+     availability, process-payment. -->
+  <bpmn:error id="Error_InvalidVariable" name="INVALID_VARIABLE" errorCode="INVALID_VARIABLE" />
+  <bpmn:error id="Error_UnauthorisedBooking" name="UNAUTHORISED_BOOKING_REQUEST" errorCode="UNAUTHORISED_BOOKING_REQUEST" />
+  <bpmn:error id="Error_ProhibitedFinancialData" name="PROHIBITED_FINANCIAL_DATA" errorCode="PROHIBITED_FINANCIAL_DATA" />
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_Hospital" name="Hospital Trust (specialist service)" processRef="treatment-authorisation-and-booking" />
+    <bpmn:participant id="Participant_TreatmentService" name="External treatment, laboratory and imaging service" />
+    <bpmn:participant id="Participant_PaymentProvider" name="External Payment Service Provider" />
+    <bpmn:participant id="Participant_FundingOrganisation" name="Funding organisation (insurer or commissioner)" />
+    <bpmn:messageFlow id="MessageFlow_B1" name="funding approval request and response" sourceRef="UserTask_RecordFundingApproval" targetRef="Participant_FundingOrganisation" />
+    <bpmn:messageFlow id="MessageFlow_B2" name="payment request, status, transaction reference, date and amount" sourceRef="ServiceTask_ProcessPayment" targetRef="Participant_PaymentProvider" />
+    <bpmn:messageFlow id="MessageFlow_B3" name="refund request and result" sourceRef="UserTask_SendRefundRequest" targetRef="Participant_PaymentProvider" />
+    <bpmn:messageFlow id="MessageFlow_B4" name="treatment, laboratory and imaging request and response" sourceRef="ServiceTask_CheckTreatmentAvailability" targetRef="Participant_TreatmentService" />
+  </bpmn:collaboration>
+  <bpmn:process id="treatment-authorisation-and-booking" name="Treatment authorisation, funding, payment and treatment booking" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Clinical" name="Consultant and clinical team">
+        <bpmn:flowNodeRef>StartEvent_NewPatientAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_AssessAndAuthoriseTreatment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_TreatmentAuthorised</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_NoTreatmentAgreed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_ClinicalRisk</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_AuthoriseUrgentTreatment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_PreTreatmentReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_FitToContinue</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_RequestTreatmentModification</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_FinancialImpact</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_TreatmentModified</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_MoreCycles</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_TreatmentComplete</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_OtherClinical" name="Other clinical professionals">
+        <bpmn:flowNodeRef>UserTask_AuthoriseTreatmentModification</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_TreatmentBookings" name="Treatment and Chemotherapy Bookings Team">
+        <bpmn:flowNodeRef>UserTask_PrepareTreatmentBooking</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ServiceTask_CheckTreatmentAvailability</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_ReturnForAuthorisation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_CorrectTreatmentRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_ExternalServiceAvailable</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_RecordPendingBooking</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_FundingAndPaymentConfirmed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_ConfirmTreatmentAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Boundary_Error_UnauthorisedBooking</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Boundary_Error_TreatmentRequest</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Finance" name="Finance Team">
+        <bpmn:flowNodeRef>UserTask_DetermineFundingRoute</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_FundingRoute</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_RecordFundingApproval</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PaymentRequired</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_CalculateCharge</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>ServiceTask_ProcessPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_CorrectPaymentRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PaymentStatus</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_ConfirmationReceived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_MarkForInvestigation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_RecordPaymentAndReleaseAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_RetryPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_AppointmentNotConfirmed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_ReferChargeToFinance</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_DetermineRefund</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_SendRefundRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>UserTask_RecordRefundResult</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_RefundRecorded</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Boundary_Error_ProhibitedData</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Boundary_Error_PaymentRequest</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_PatientAdmin" name="Patient and administrative team">
+        <bpmn:flowNodeRef>UserTask_NotifyPatientAndTeam</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_NewPatientAppointment" name="Patient attends the new patient appointment" />
+    <bpmn:userTask id="UserTask_AssessAndAuthoriseTreatment" name="Assess the patient, record consent and authorise the Treatment Booking Request">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="consultants" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_TreatmentAuthorised" name="Treatment Booking Request authorised?" />
+    <bpmn:endEvent id="EndEvent_NoTreatmentAgreed" name="No treatment agreed; the pathway is reviewed" />
+    <bpmn:exclusiveGateway id="Gateway_ClinicalRisk" name="Would delaying care create a clinical risk?" />
+    <bpmn:userTask id="UserTask_AuthoriseUrgentTreatment" name="Authorise urgent treatment and record the reason for proceeding without confirmed payment">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="consultants" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:userTask id="UserTask_PreTreatmentReview" name="Clinical review and blood test before the next cycle">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_FitToContinue" name="Medically fit to continue?" />
+    <bpmn:userTask id="UserTask_RequestTreatmentModification" name="Submit an authorised Treatment Modification Request to delay or change the plan">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="consultants" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_FinancialImpact" name="Does the change affect a charge, funding approval or payment?" />
+    <bpmn:endEvent id="EndEvent_TreatmentModified" name="Treatment plan changed and authorised" />
+    <bpmn:exclusiveGateway id="Gateway_MoreCycles" name="Further cycles required?" />
+    <bpmn:endEvent id="EndEvent_TreatmentComplete" name="Treatment complete; a clinic letter is required" />
+    <bpmn:userTask id="UserTask_AuthoriseTreatmentModification" name="Authorise the treatment modification request">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="clinical-professionals" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:userTask id="UserTask_PrepareTreatmentBooking" name="Plan the treatment cycles, reviews and special resources">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ServiceTask_CheckTreatmentAvailability" name="Check treatment, laboratory and imaging availability">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="check-treatment-availability" retries="3" />
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="UserTask_ReturnForAuthorisation" name="Return the request for clinical authorisation">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:userTask id="UserTask_CorrectTreatmentRequest" name="Correct the treatment booking request and retry">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_ExternalServiceAvailable" name="External service available?" />
+    <bpmn:userTask id="UserTask_RecordPendingBooking" name="Keep the booking pending, notify the responsible team and record the attempt">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_FundingAndPaymentConfirmed" name="Funding or payment confirmed?" />
+    <bpmn:userTask id="UserTask_ConfirmTreatmentAppointment" name="Confirm the treatment appointment in the Hospital Patient Administration System">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:userTask id="UserTask_DetermineFundingRoute" name="Determine and record the funding route">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_FundingRoute" name="Funding route?" />
+    <bpmn:userTask id="UserTask_RecordFundingApproval" name="Record the funding organisation, authorisation reference, approved amount and limitations">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_PaymentRequired" name="Payment required from the patient?" />
+    <bpmn:userTask id="UserTask_CalculateCharge" name="Calculate or obtain the applicable charge">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="ServiceTask_ProcessPayment" name="Send the secure payment request to the external Payment Service Provider">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="process-payment" retries="3" />
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="UserTask_CorrectPaymentRequest" name="Remove the prohibited card or security data and correct the payment request">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_PaymentStatus" name="Payment status?" />
+    <bpmn:exclusiveGateway id="Gateway_ConfirmationReceived" name="Confirmation received?" />
+    <bpmn:userTask id="UserTask_MarkForInvestigation" name="Mark the transaction for investigation and notify the Finance Team; no second payment request">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:userTask id="UserTask_RecordPaymentAndReleaseAppointment" name="Record the payment and release the appointment">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_RetryPayment" name="Another payment attempt required?" />
+    <bpmn:endEvent id="EndEvent_AppointmentNotConfirmed" name="Appointment not confirmed; the patient and the team have been informed" />
+    <bpmn:userTask id="UserTask_ReferChargeToFinance" name="Record the unpaid charge and resolve it with the clinical team">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:userTask id="UserTask_DetermineRefund" name="Determine and record whether a full or partial refund is appropriate">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:userTask id="UserTask_SendRefundRequest" name="Send the approved refund request to the external Payment Service Provider">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:userTask id="UserTask_RecordRefundResult" name="Record the refund result against the patient account">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="finance" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_RefundRecorded" name="Refund recorded against the patient account" />
+    <bpmn:userTask id="UserTask_NotifyPatientAndTeam" name="Notify the patient and the responsible administrative team">
+      <bpmn:extensionElements>
+        <zeebe:assignmentDefinition candidateGroups="administrative-team" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="Boundary_Error_UnauthorisedBooking" name="UNAUTHORISED_BOOKING_REQUEST" attachedToRef="ServiceTask_CheckTreatmentAvailability">
+      <bpmn:errorEventDefinition errorRef="Error_UnauthorisedBooking" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="Boundary_Error_TreatmentRequest" name="INVALID_VARIABLE" attachedToRef="ServiceTask_CheckTreatmentAvailability">
+      <bpmn:errorEventDefinition errorRef="Error_InvalidVariable" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="Boundary_Error_ProhibitedData" name="PROHIBITED_FINANCIAL_DATA" attachedToRef="ServiceTask_ProcessPayment">
+      <bpmn:errorEventDefinition errorRef="Error_ProhibitedFinancialData" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="Boundary_Error_PaymentRequest" name="INVALID_VARIABLE" attachedToRef="ServiceTask_ProcessPayment">
+      <bpmn:errorEventDefinition errorRef="Error_InvalidVariable" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="Flow_B1" sourceRef="StartEvent_NewPatientAppointment" targetRef="UserTask_AssessAndAuthoriseTreatment" />
+    <bpmn:sequenceFlow id="Flow_B2" sourceRef="UserTask_AssessAndAuthoriseTreatment" targetRef="Gateway_TreatmentAuthorised" />
+    <bpmn:sequenceFlow id="Flow_B3" name="authorised" sourceRef="Gateway_TreatmentAuthorised" targetRef="UserTask_DetermineFundingRoute">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= treatmentAuthorised = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B4" name="not authorised" sourceRef="Gateway_TreatmentAuthorised" targetRef="EndEvent_NoTreatmentAgreed" />
+    <bpmn:sequenceFlow id="Flow_B5" sourceRef="UserTask_DetermineFundingRoute" targetRef="Gateway_FundingRoute" />
+    <bpmn:sequenceFlow id="Flow_B6" name="insurer or funding organisation" sourceRef="Gateway_FundingRoute" targetRef="UserTask_RecordFundingApproval">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fundingRoute = &quot;insurer&quot; or fundingRoute = &quot;funding_organisation&quot;</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B7" name="hospital funded or exempt" sourceRef="Gateway_FundingRoute" targetRef="Gateway_PaymentRequired">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fundingRoute = &quot;hospital&quot; or fundingRoute = &quot;exempt&quot;</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B8" name="self payer" sourceRef="Gateway_FundingRoute" targetRef="UserTask_CalculateCharge" />
+    <bpmn:sequenceFlow id="Flow_B9" sourceRef="UserTask_RecordFundingApproval" targetRef="UserTask_CalculateCharge" />
+    <bpmn:sequenceFlow id="Flow_B10" name="no payment required" sourceRef="Gateway_PaymentRequired" targetRef="UserTask_PrepareTreatmentBooking">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentRequiredFromPatient = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B11" name="payment required" sourceRef="Gateway_PaymentRequired" targetRef="UserTask_CalculateCharge" />
+    <bpmn:sequenceFlow id="Flow_B12" sourceRef="UserTask_CalculateCharge" targetRef="ServiceTask_ProcessPayment" />
+    <bpmn:sequenceFlow id="Flow_B13" sourceRef="ServiceTask_ProcessPayment" targetRef="Gateway_PaymentStatus" />
+    <bpmn:sequenceFlow id="Flow_B14" sourceRef="Boundary_Error_ProhibitedData" targetRef="UserTask_CorrectPaymentRequest" />
+    <bpmn:sequenceFlow id="Flow_B15" sourceRef="Boundary_Error_PaymentRequest" targetRef="UserTask_CorrectPaymentRequest" />
+    <bpmn:sequenceFlow id="Flow_B16" sourceRef="UserTask_CorrectPaymentRequest" targetRef="ServiceTask_ProcessPayment" />
+    <bpmn:sequenceFlow id="Flow_B17" name="completed" sourceRef="Gateway_PaymentStatus" targetRef="Gateway_ConfirmationReceived">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentStatus = &quot;completed&quot;</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B18" name="declined, cancelled or incomplete" sourceRef="Gateway_PaymentStatus" targetRef="UserTask_NotifyPatientAndTeam" />
+    <bpmn:sequenceFlow id="Flow_B19" name="confirmation received" sourceRef="Gateway_ConfirmationReceived" targetRef="UserTask_RecordPaymentAndReleaseAppointment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= confirmationReceived = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B20" name="no confirmation" sourceRef="Gateway_ConfirmationReceived" targetRef="UserTask_MarkForInvestigation" />
+    <bpmn:sequenceFlow id="Flow_B21" sourceRef="UserTask_RecordPaymentAndReleaseAppointment" targetRef="UserTask_PrepareTreatmentBooking" />
+    <bpmn:sequenceFlow id="Flow_B22" sourceRef="UserTask_MarkForInvestigation" targetRef="UserTask_PrepareTreatmentBooking" />
+    <bpmn:sequenceFlow id="Flow_B23" sourceRef="UserTask_NotifyPatientAndTeam" targetRef="Gateway_ClinicalRisk" />
+    <bpmn:sequenceFlow id="Flow_B24" name="clinical risk" sourceRef="Gateway_ClinicalRisk" targetRef="UserTask_AuthoriseUrgentTreatment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= delayingCareIsClinicalRisk = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B25" name="no clinical risk" sourceRef="Gateway_ClinicalRisk" targetRef="Gateway_RetryPayment" />
+    <bpmn:sequenceFlow id="Flow_B26" sourceRef="UserTask_AuthoriseUrgentTreatment" targetRef="UserTask_ReferChargeToFinance" />
+    <bpmn:sequenceFlow id="Flow_B27" sourceRef="UserTask_ReferChargeToFinance" targetRef="UserTask_PrepareTreatmentBooking" />
+    <bpmn:sequenceFlow id="Flow_B28" name="retry" sourceRef="Gateway_RetryPayment" targetRef="UserTask_CalculateCharge">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= retryPayment = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B29" name="no retry" sourceRef="Gateway_RetryPayment" targetRef="EndEvent_AppointmentNotConfirmed" />
+    <bpmn:sequenceFlow id="Flow_B30" sourceRef="UserTask_PrepareTreatmentBooking" targetRef="ServiceTask_CheckTreatmentAvailability" />
+    <bpmn:sequenceFlow id="Flow_B31" sourceRef="ServiceTask_CheckTreatmentAvailability" targetRef="Gateway_ExternalServiceAvailable" />
+    <bpmn:sequenceFlow id="Flow_B32" sourceRef="Boundary_Error_UnauthorisedBooking" targetRef="UserTask_ReturnForAuthorisation" />
+    <bpmn:sequenceFlow id="Flow_B33" sourceRef="Boundary_Error_TreatmentRequest" targetRef="UserTask_CorrectTreatmentRequest" />
+    <bpmn:sequenceFlow id="Flow_B34" sourceRef="UserTask_ReturnForAuthorisation" targetRef="UserTask_AssessAndAuthoriseTreatment" />
+    <bpmn:sequenceFlow id="Flow_B35" sourceRef="UserTask_CorrectTreatmentRequest" targetRef="UserTask_PrepareTreatmentBooking" />
+    <bpmn:sequenceFlow id="Flow_B36" name="available" sourceRef="Gateway_ExternalServiceAvailable" targetRef="Gateway_FundingAndPaymentConfirmed">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= externalServiceAvailable = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B37" name="unavailable" sourceRef="Gateway_ExternalServiceAvailable" targetRef="UserTask_RecordPendingBooking" />
+    <bpmn:sequenceFlow id="Flow_B38" sourceRef="UserTask_RecordPendingBooking" targetRef="ServiceTask_CheckTreatmentAvailability" />
+    <bpmn:sequenceFlow id="Flow_B39" name="confirmed" sourceRef="Gateway_FundingAndPaymentConfirmed" targetRef="UserTask_ConfirmTreatmentAppointment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paymentStatus = &quot;completed&quot; or paymentStatus = &quot;not_required&quot; or exemptionApproved = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B40" name="not confirmed" sourceRef="Gateway_FundingAndPaymentConfirmed" targetRef="Gateway_PaymentRequired" />
+    <bpmn:sequenceFlow id="Flow_B41" sourceRef="UserTask_ConfirmTreatmentAppointment" targetRef="UserTask_PreTreatmentReview" />
+    <bpmn:sequenceFlow id="Flow_B42" sourceRef="UserTask_PreTreatmentReview" targetRef="Gateway_FitToContinue" />
+    <bpmn:sequenceFlow id="Flow_B43" name="fit" sourceRef="Gateway_FitToContinue" targetRef="Gateway_MoreCycles">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= fitToContinue = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B44" name="not fit" sourceRef="Gateway_FitToContinue" targetRef="UserTask_RequestTreatmentModification" />
+    <bpmn:sequenceFlow id="Flow_B45" sourceRef="UserTask_RequestTreatmentModification" targetRef="UserTask_AuthoriseTreatmentModification" />
+    <bpmn:sequenceFlow id="Flow_B46" sourceRef="UserTask_AuthoriseTreatmentModification" targetRef="Gateway_FinancialImpact" />
+    <bpmn:sequenceFlow id="Flow_B47" name="charge affected" sourceRef="Gateway_FinancialImpact" targetRef="UserTask_DetermineRefund">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= affectsCharge = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B48" name="no financial impact" sourceRef="Gateway_FinancialImpact" targetRef="EndEvent_TreatmentModified" />
+    <bpmn:sequenceFlow id="Flow_B49" sourceRef="UserTask_DetermineRefund" targetRef="UserTask_SendRefundRequest" />
+    <bpmn:sequenceFlow id="Flow_B50" sourceRef="UserTask_SendRefundRequest" targetRef="UserTask_RecordRefundResult" />
+    <bpmn:sequenceFlow id="Flow_B51" sourceRef="UserTask_RecordRefundResult" targetRef="EndEvent_RefundRecorded" />
+    <bpmn:sequenceFlow id="Flow_B52" name="more cycles" sourceRef="Gateway_MoreCycles" targetRef="UserTask_PreTreatmentReview">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= moreCyclesRequired = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_B53" name="treatment complete" sourceRef="Gateway_MoreCycles" targetRef="EndEvent_TreatmentComplete" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_Hospital_di" bpmnElement="Participant_Hospital" isHorizontal="true">
+        <dc:Bounds x="140" y="140" width="5920" height="700" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="150" y="846" width="200" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Clinical_di" bpmnElement="Lane_Clinical" isHorizontal="true">
+        <dc:Bounds x="140" y="170" width="5920" height="130" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_OtherClinical_di" bpmnElement="Lane_OtherClinical" isHorizontal="true">
+        <dc:Bounds x="140" y="300" width="5920" height="130" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_TreatmentBookings_di" bpmnElement="Lane_TreatmentBookings" isHorizontal="true">
+        <dc:Bounds x="140" y="430" width="5920" height="130" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Finance_di" bpmnElement="Lane_Finance" isHorizontal="true">
+        <dc:Bounds x="140" y="560" width="5920" height="130" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_PatientAdmin_di" bpmnElement="Lane_PatientAdmin" isHorizontal="true">
+        <dc:Bounds x="140" y="690" width="5920" height="130" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_TreatmentService_di" bpmnElement="Participant_TreatmentService" isHorizontal="true">
+        <dc:Bounds x="6260" y="465" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_PaymentProvider_di" bpmnElement="Participant_PaymentProvider" isHorizontal="true">
+        <dc:Bounds x="6260" y="595" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_FundingOrganisation_di" bpmnElement="Participant_FundingOrganisation" isHorizontal="true">
+        <dc:Bounds x="6260" y="685" width="330" height="60" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_NewPatientAppointment_di" bpmnElement="StartEvent_NewPatientAppointment">
+        <dc:Bounds x="227" y="217" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="90" y="259" width="310" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_AssessAndAuthoriseTreatment_di" bpmnElement="UserTask_AssessAndAuthoriseTreatment">
+        <dc:Bounds x="345" y="195" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="225" y="281" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_TreatmentAuthorised_di" bpmnElement="Gateway_TreatmentAuthorised" isMarkerVisible="true">
+        <dc:Bounds x="520" y="210" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="412" y="182" width="266" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_NoTreatmentAgreed_di" bpmnElement="EndEvent_NoTreatmentAgreed">
+        <dc:Bounds x="677" y="217" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="537" y="259" width="317" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_ClinicalRisk_di" bpmnElement="Gateway_ClinicalRisk" isMarkerVisible="true">
+        <dc:Bounds x="2920" y="210" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2790" y="182" width="310" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_AuthoriseUrgentTreatment_di" bpmnElement="UserTask_AuthoriseUrgentTreatment">
+        <dc:Bounds x="3045" y="195" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2925" y="281" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_PreTreatmentReview_di" bpmnElement="UserTask_PreTreatmentReview">
+        <dc:Bounds x="4395" y="195" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4275" y="281" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_FitToContinue_di" bpmnElement="Gateway_FitToContinue" isMarkerVisible="true">
+        <dc:Bounds x="4570" y="210" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4502" y="182" width="187" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_RequestTreatmentModification_di" bpmnElement="UserTask_RequestTreatmentModification">
+        <dc:Bounds x="4695" y="195" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4575" y="281" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_FinancialImpact_di" bpmnElement="Gateway_FinancialImpact" isMarkerVisible="true">
+        <dc:Bounds x="4870" y="210" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4725" y="182" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_TreatmentModified_di" bpmnElement="EndEvent_TreatmentModified">
+        <dc:Bounds x="5027" y="217" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4912" y="259" width="266" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_MoreCycles_di" bpmnElement="Gateway_MoreCycles" isMarkerVisible="true">
+        <dc:Bounds x="5170" y="210" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5109" y="182" width="173" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_TreatmentComplete_di" bpmnElement="EndEvent_TreatmentComplete">
+        <dc:Bounds x="5327" y="217" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5176" y="259" width="338" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_AuthoriseTreatmentModification_di" bpmnElement="UserTask_AuthoriseTreatmentModification">
+        <dc:Bounds x="4695" y="325" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4587" y="411" width="317" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_PrepareTreatmentBooking_di" bpmnElement="UserTask_PrepareTreatmentBooking">
+        <dc:Bounds x="3195" y="455" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3075" y="541" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_CheckTreatmentAvailability_di" bpmnElement="ServiceTask_CheckTreatmentAvailability">
+        <dc:Bounds x="3345" y="455" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3225" y="541" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_ReturnForAuthorisation_di" bpmnElement="UserTask_ReturnForAuthorisation">
+        <dc:Bounds x="3495" y="455" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3383" y="541" width="324" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_CorrectTreatmentRequest_di" bpmnElement="UserTask_CorrectTreatmentRequest">
+        <dc:Bounds x="3645" y="455" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3526" y="541" width="338" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_ExternalServiceAvailable_di" bpmnElement="Gateway_ExternalServiceAvailable" isMarkerVisible="true">
+        <dc:Bounds x="3820" y="470" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3748" y="442" width="194" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_RecordPendingBooking_di" bpmnElement="UserTask_RecordPendingBooking">
+        <dc:Bounds x="3945" y="455" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3825" y="541" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_FundingAndPaymentConfirmed_di" bpmnElement="Gateway_FundingAndPaymentConfirmed" isMarkerVisible="true">
+        <dc:Bounds x="4120" y="470" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4041" y="442" width="209" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_ConfirmTreatmentAppointment_di" bpmnElement="UserTask_ConfirmTreatmentAppointment">
+        <dc:Bounds x="4245" y="455" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4125" y="541" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_DetermineFundingRoute_di" bpmnElement="UserTask_DetermineFundingRoute">
+        <dc:Bounds x="795" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="708" y="671" width="274" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_FundingRoute_di" bpmnElement="Gateway_FundingRoute" isMarkerVisible="true">
+        <dc:Bounds x="970" y="600" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="935" y="572" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_RecordFundingApproval_di" bpmnElement="UserTask_RecordFundingApproval">
+        <dc:Bounds x="1095" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="975" y="671" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_PaymentRequired_di" bpmnElement="Gateway_PaymentRequired" isMarkerVisible="true">
+        <dc:Bounds x="1270" y="600" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1173" y="572" width="245" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_CalculateCharge_di" bpmnElement="UserTask_CalculateCharge">
+        <dc:Bounds x="1395" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1298" y="671" width="295" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_ProcessPayment_di" bpmnElement="ServiceTask_ProcessPayment">
+        <dc:Bounds x="1545" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1425" y="671" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_CorrectPaymentRequest_di" bpmnElement="UserTask_CorrectPaymentRequest">
+        <dc:Bounds x="1695" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1575" y="671" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_PaymentStatus_di" bpmnElement="Gateway_PaymentStatus" isMarkerVisible="true">
+        <dc:Bounds x="1870" y="600" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1835" y="572" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_ConfirmationReceived_di" bpmnElement="Gateway_ConfirmationReceived" isMarkerVisible="true">
+        <dc:Bounds x="2020" y="600" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1966" y="572" width="158" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_MarkForInvestigation_di" bpmnElement="UserTask_MarkForInvestigation">
+        <dc:Bounds x="2145" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2025" y="671" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_RecordPaymentAndReleaseAppointment_di" bpmnElement="UserTask_RecordPaymentAndReleaseAppointment">
+        <dc:Bounds x="2295" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2180" y="671" width="331" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_RetryPayment_di" bpmnElement="Gateway_RetryPayment" isMarkerVisible="true">
+        <dc:Bounds x="2470" y="600" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2376" y="572" width="238" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_AppointmentNotConfirmed_di" bpmnElement="EndEvent_AppointmentNotConfirmed">
+        <dc:Bounds x="2627" y="607" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2475" y="649" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_ReferChargeToFinance_di" bpmnElement="UserTask_ReferChargeToFinance">
+        <dc:Bounds x="2745" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2625" y="671" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_DetermineRefund_di" bpmnElement="UserTask_DetermineRefund">
+        <dc:Bounds x="5445" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5325" y="671" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_SendRefundRequest_di" bpmnElement="UserTask_SendRefundRequest">
+        <dc:Bounds x="5595" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5475" y="671" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_RecordRefundResult_di" bpmnElement="UserTask_RecordRefundResult">
+        <dc:Bounds x="5745" y="585" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5625" y="671" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_RefundRecorded_di" bpmnElement="EndEvent_RefundRecorded">
+        <dc:Bounds x="5927" y="607" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5790" y="649" width="310" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_NotifyPatientAndTeam_di" bpmnElement="UserTask_NotifyPatientAndTeam">
+        <dc:Bounds x="2445" y="715" width="100" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2325" y="801" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Boundary_Error_UnauthorisedBooking_di" bpmnElement="Boundary_Error_UnauthorisedBooking">
+        <dc:Bounds x="3357" y="517" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3274" y="559" width="202" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Boundary_Error_TreatmentRequest_di" bpmnElement="Boundary_Error_TreatmentRequest">
+        <dc:Bounds x="3397" y="517" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3355" y="559" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Boundary_Error_ProhibitedData_di" bpmnElement="Boundary_Error_ProhibitedData">
+        <dc:Bounds x="1557" y="647" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1485" y="689" width="180" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Boundary_Error_PaymentRequest_di" bpmnElement="Boundary_Error_PaymentRequest">
+        <dc:Bounds x="1597" y="647" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1555" y="689" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_B1_di" bpmnElement="Flow_B1">
+        <di:waypoint x="263" y="235" />
+        <di:waypoint x="345" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B2_di" bpmnElement="Flow_B2">
+        <di:waypoint x="445" y="235" />
+        <di:waypoint x="520" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B3_di" bpmnElement="Flow_B3">
+        <di:waypoint x="570" y="235" />
+        <di:waypoint x="683" y="235" />
+        <di:waypoint x="683" y="625" />
+        <di:waypoint x="795" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="623" y="601" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B4_di" bpmnElement="Flow_B4">
+        <di:waypoint x="570" y="235" />
+        <di:waypoint x="677" y="235" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="617" y="211" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B5_di" bpmnElement="Flow_B5">
+        <di:waypoint x="895" y="625" />
+        <di:waypoint x="970" y="625" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B6_di" bpmnElement="Flow_B6">
+        <di:waypoint x="1020" y="625" />
+        <di:waypoint x="1095" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="984" y="601" width="223" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B7_di" bpmnElement="Flow_B7">
+        <di:waypoint x="1020" y="625" />
+        <di:waypoint x="1270" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1180" y="601" width="180" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B8_di" bpmnElement="Flow_B8">
+        <di:waypoint x="1020" y="625" />
+        <di:waypoint x="1395" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1335" y="601" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B9_di" bpmnElement="Flow_B9">
+        <di:waypoint x="1195" y="625" />
+        <di:waypoint x="1395" y="625" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B10_di" bpmnElement="Flow_B10">
+        <di:waypoint x="1320" y="625" />
+        <di:waypoint x="2258" y="625" />
+        <di:waypoint x="2258" y="495" />
+        <di:waypoint x="3195" y="495" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2190" y="471" width="137" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B11_di" bpmnElement="Flow_B11">
+        <di:waypoint x="1320" y="625" />
+        <di:waypoint x="1395" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1335" y="601" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B12_di" bpmnElement="Flow_B12">
+        <di:waypoint x="1495" y="625" />
+        <di:waypoint x="1545" y="625" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B13_di" bpmnElement="Flow_B13">
+        <di:waypoint x="1645" y="625" />
+        <di:waypoint x="1870" y="625" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B14_di" bpmnElement="Flow_B14">
+        <di:waypoint x="1593" y="665" />
+        <di:waypoint x="1644" y="665" />
+        <di:waypoint x="1644" y="625" />
+        <di:waypoint x="1695" y="625" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B15_di" bpmnElement="Flow_B15">
+        <di:waypoint x="1633" y="665" />
+        <di:waypoint x="1664" y="665" />
+        <di:waypoint x="1664" y="625" />
+        <di:waypoint x="1695" y="625" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B16_di" bpmnElement="Flow_B16">
+        <di:waypoint x="1745" y="665" />
+        <di:waypoint x="1745" y="705" />
+        <di:waypoint x="1595" y="705" />
+        <di:waypoint x="1595" y="665" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B17_di" bpmnElement="Flow_B17">
+        <di:waypoint x="1920" y="625" />
+        <di:waypoint x="2020" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1960" y="601" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B18_di" bpmnElement="Flow_B18">
+        <di:waypoint x="1920" y="625" />
+        <di:waypoint x="2183" y="625" />
+        <di:waypoint x="2183" y="755" />
+        <di:waypoint x="2445" y="755" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2064" y="731" width="238" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B19_di" bpmnElement="Flow_B19">
+        <di:waypoint x="2070" y="625" />
+        <di:waypoint x="2295" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2220" y="601" width="151" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B20_di" bpmnElement="Flow_B20">
+        <di:waypoint x="2070" y="625" />
+        <di:waypoint x="2145" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2085" y="601" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B21_di" bpmnElement="Flow_B21">
+        <di:waypoint x="2395" y="625" />
+        <di:waypoint x="2795" y="625" />
+        <di:waypoint x="2795" y="495" />
+        <di:waypoint x="3195" y="495" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B22_di" bpmnElement="Flow_B22">
+        <di:waypoint x="2245" y="625" />
+        <di:waypoint x="2720" y="625" />
+        <di:waypoint x="2720" y="495" />
+        <di:waypoint x="3195" y="495" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B23_di" bpmnElement="Flow_B23">
+        <di:waypoint x="2545" y="755" />
+        <di:waypoint x="2733" y="755" />
+        <di:waypoint x="2733" y="235" />
+        <di:waypoint x="2920" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B24_di" bpmnElement="Flow_B24">
+        <di:waypoint x="2970" y="235" />
+        <di:waypoint x="3045" y="235" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2985" y="211" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B25_di" bpmnElement="Flow_B25">
+        <di:waypoint x="2945" y="260" />
+        <di:waypoint x="2945" y="690" />
+        <di:waypoint x="2495" y="690" />
+        <di:waypoint x="2495" y="650" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2435" y="666" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B26_di" bpmnElement="Flow_B26">
+        <di:waypoint x="3095" y="275" />
+        <di:waypoint x="3095" y="705" />
+        <di:waypoint x="2795" y="705" />
+        <di:waypoint x="2795" y="665" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B27_di" bpmnElement="Flow_B27">
+        <di:waypoint x="2845" y="625" />
+        <di:waypoint x="3020" y="625" />
+        <di:waypoint x="3020" y="495" />
+        <di:waypoint x="3195" y="495" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B28_di" bpmnElement="Flow_B28">
+        <di:waypoint x="2495" y="650" />
+        <di:waypoint x="2495" y="705" />
+        <di:waypoint x="1445" y="705" />
+        <di:waypoint x="1445" y="665" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1385" y="681" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B29_di" bpmnElement="Flow_B29">
+        <di:waypoint x="2520" y="625" />
+        <di:waypoint x="2627" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2567" y="601" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B30_di" bpmnElement="Flow_B30">
+        <di:waypoint x="3295" y="495" />
+        <di:waypoint x="3345" y="495" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B31_di" bpmnElement="Flow_B31">
+        <di:waypoint x="3445" y="495" />
+        <di:waypoint x="3820" y="495" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B32_di" bpmnElement="Flow_B32">
+        <di:waypoint x="3393" y="535" />
+        <di:waypoint x="3444" y="535" />
+        <di:waypoint x="3444" y="495" />
+        <di:waypoint x="3495" y="495" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B33_di" bpmnElement="Flow_B33">
+        <di:waypoint x="3433" y="535" />
+        <di:waypoint x="3539" y="535" />
+        <di:waypoint x="3539" y="495" />
+        <di:waypoint x="3645" y="495" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B34_di" bpmnElement="Flow_B34">
+        <di:waypoint x="3545" y="535" />
+        <di:waypoint x="3545" y="575" />
+        <di:waypoint x="395" y="575" />
+        <di:waypoint x="395" y="275" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B35_di" bpmnElement="Flow_B35">
+        <di:waypoint x="3695" y="535" />
+        <di:waypoint x="3695" y="575" />
+        <di:waypoint x="3245" y="575" />
+        <di:waypoint x="3245" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B36_di" bpmnElement="Flow_B36">
+        <di:waypoint x="3870" y="495" />
+        <di:waypoint x="4120" y="495" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4060" y="471" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B37_di" bpmnElement="Flow_B37">
+        <di:waypoint x="3870" y="495" />
+        <di:waypoint x="3945" y="495" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3885" y="471" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B38_di" bpmnElement="Flow_B38">
+        <di:waypoint x="3995" y="535" />
+        <di:waypoint x="3995" y="575" />
+        <di:waypoint x="3395" y="575" />
+        <di:waypoint x="3395" y="535" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B39_di" bpmnElement="Flow_B39">
+        <di:waypoint x="4170" y="495" />
+        <di:waypoint x="4245" y="495" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4185" y="471" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B40_di" bpmnElement="Flow_B40">
+        <di:waypoint x="4145" y="520" />
+        <di:waypoint x="4145" y="690" />
+        <di:waypoint x="1295" y="690" />
+        <di:waypoint x="1295" y="650" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1235" y="666" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B41_di" bpmnElement="Flow_B41">
+        <di:waypoint x="4345" y="495" />
+        <di:waypoint x="4370" y="495" />
+        <di:waypoint x="4370" y="235" />
+        <di:waypoint x="4395" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B42_di" bpmnElement="Flow_B42">
+        <di:waypoint x="4495" y="235" />
+        <di:waypoint x="4570" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B43_di" bpmnElement="Flow_B43">
+        <di:waypoint x="4620" y="235" />
+        <di:waypoint x="5170" y="235" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5110" y="211" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B44_di" bpmnElement="Flow_B44">
+        <di:waypoint x="4620" y="235" />
+        <di:waypoint x="4695" y="235" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4635" y="211" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B45_di" bpmnElement="Flow_B45">
+        <di:waypoint x="4745" y="275" />
+        <di:waypoint x="4745" y="445" />
+        <di:waypoint x="4745" y="445" />
+        <di:waypoint x="4745" y="405" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B46_di" bpmnElement="Flow_B46">
+        <di:waypoint x="4795" y="365" />
+        <di:waypoint x="4833" y="365" />
+        <di:waypoint x="4833" y="235" />
+        <di:waypoint x="4870" y="235" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B47_di" bpmnElement="Flow_B47">
+        <di:waypoint x="4920" y="235" />
+        <di:waypoint x="5183" y="235" />
+        <di:waypoint x="5183" y="625" />
+        <di:waypoint x="5445" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5123" y="601" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B48_di" bpmnElement="Flow_B48">
+        <di:waypoint x="4920" y="235" />
+        <di:waypoint x="5027" y="235" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4959" y="211" width="137" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B49_di" bpmnElement="Flow_B49">
+        <di:waypoint x="5545" y="625" />
+        <di:waypoint x="5595" y="625" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B50_di" bpmnElement="Flow_B50">
+        <di:waypoint x="5695" y="625" />
+        <di:waypoint x="5745" y="625" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B51_di" bpmnElement="Flow_B51">
+        <di:waypoint x="5845" y="625" />
+        <di:waypoint x="5927" y="625" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B52_di" bpmnElement="Flow_B52">
+        <di:waypoint x="5195" y="260" />
+        <di:waypoint x="5195" y="315" />
+        <di:waypoint x="4445" y="315" />
+        <di:waypoint x="4445" y="275" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4385" y="291" width="120" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B53_di" bpmnElement="Flow_B53">
+        <di:waypoint x="5220" y="235" />
+        <di:waypoint x="5327" y="235" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5262" y="211" width="130" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_B1_di" bpmnElement="MessageFlow_B1">
+        <di:waypoint x="1195" y="625" />
+        <di:waypoint x="3728" y="625" />
+        <di:waypoint x="3728" y="715" />
+        <di:waypoint x="6260" y="715" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3595" y="691" width="266" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_B2_di" bpmnElement="MessageFlow_B2">
+        <di:waypoint x="1645" y="625" />
+        <di:waypoint x="6260" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6090" y="601" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_B3_di" bpmnElement="MessageFlow_B3">
+        <di:waypoint x="5695" y="625" />
+        <di:waypoint x="6260" y="625" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6170" y="601" width="180" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_B4_di" bpmnElement="MessageFlow_B4">
+        <di:waypoint x="3445" y="495" />
+        <di:waypoint x="6260" y="495" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="6090" y="471" width="340" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

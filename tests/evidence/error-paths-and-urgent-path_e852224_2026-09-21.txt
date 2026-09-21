@@ -1,0 +1,117 @@
+Error paths, gateway defaults and the urgent referral path
+==========================================================
+Version under test : e852224 ("PB-004 / TB-006 make every gateway fall back and every worker error
+                     catchable"). Re-deploying the three models from this commit returned the
+                     existing process definitions unchanged, so the definitions exercised below are
+                     this commit's content.
+Component          : all three operational models
+                     - referral-to-appointment version 4, key 2251799813719865
+                     - treatment-authorisation-and-booking version 2, key 2251799813719867
+                     - clinic-letter-and-pathway-monitoring version 3, key 2251799813719869
+                     with the five workers in workers/
+Date               : 2026-09-21
+Tester             : automated, scripted calls to the Orchestration Cluster API
+Linked test case   : the normal path, the exception paths and the urgent path of the booking stage
+Linked AC          : AC-02, AC-04, AC-10 and the draft criteria in ../test-plan.md
+Environment        : Camunda 8 Run 8.9.19, gRPC gateway grpc://localhost:26500, Windows 11
+
+WHY THESE SCENARIOS
+-------------------
+Two defects had made parts of the models unreachable:
+
+1. Camunda does not treat a sequence flow that has no condition as a fallback. An exclusive gateway
+   whose conditionless "otherwise" flow is not declared with default="..." raises the incident
+   "Expected at least one condition to evaluate to true, or to have a default flow" as soon as no
+   condition matches. 21 gateways were in that state, so their otherwise branches could not be
+   taken. Scenario 3 first reproduced this: it stopped at Gateway_SlotWithinWindow with that
+   incident before the fix.
+
+2. Four service tasks could raise INVALID_VARIABLE with no catch event, so the worker's business
+   error became an incident. Scene 2 below is the exact input that produced an incident before the
+   fix, recorded in referral-to-appointment_normal-path_1b42bff_2026-09-21.txt.
+
+3. Gateway_UrgentReferral sent an urgent referral with no suitable slot straight back to the
+   availability check, and the scheduling service answers the same way every time, so the case could
+   only cycle. Scenario 3 drives the replacement path.
+
+METHOD
+------
+1. deploy the three models from this commit
+2. start the workers: `cd workers && npm start`
+3. for each scenario: start an instance, complete each open user task through
+   POST /v2/user-tasks/<key>/completion with the variables a validated form would supply, then read
+   the path, the final state and the incidents collection back from the engine.
+   forms/ is still empty, so the variables are passed with the completion call.
+
+TRANSCRIPT
+----------
+SCENARIO 1: referral validation input is unusable
+  model version 4, instance 2251799813721261
+  1. complete UserTask_CheckReferralDocuments          vars=[] -> HTTP 204
+  path: StartEvent_ReferralReceived -> UserTask_CheckReferralDocuments -> ServiceTask_ValidateReferral -> Boundary_Error_ReferralInput -> UserTask_ReviewReferralException
+  state=ACTIVE, incidents=0  =>  PASS
+
+SCENARIO 2: appointment notification request is unusable
+  model version 4, instance 2251799813721291
+  1. complete UserTask_CheckReferralDocuments          vars=['documentsComplete', 'referringOrganisation'] -> HTTP 204
+  2. complete UserTask_ClinicalReviewReferral          vars=['decision'] -> HTTP 204
+  3. complete UserTask_PrepareBookingRequest           vars=['priority', 'requestedWindow', 'speciality'] -> HTTP 204
+  path: StartEvent_ReferralReceived -> UserTask_CheckReferralDocuments -> ServiceTask_ValidateReferral -> Gateway_DocumentsComplete -> UserTask_ClinicalReviewReferral -> Gateway_ClinicalDecision -> UserTask_PrepareBookingRequest -> ServiceTask_CheckAppointmentAvailability -> Gateway_SlotWithinWindow -> ServiceTask_SendAppointmentNotification -> Boundary_Error_NotificationRequest -> UserTask_CorrectBookingRequest
+  state=ACTIVE, incidents=0  =>  PASS
+
+SCENARIO 3: urgent referral, no suitable slot (used to cycle for ever)
+  model version 4, instance 2251799813721376
+  1. complete UserTask_CheckReferralDocuments          vars=['documentsComplete', 'referringOrganisation'] -> HTTP 204
+  2. complete UserTask_ClinicalReviewReferral          vars=['decision'] -> HTTP 204
+  3. complete UserTask_PrepareBookingRequest           vars=['documentType', 'priority', 'recipients', 'requestedWindow', 'schedulingOutcome', 'speciality'] -> HTTP 204
+  4. complete UserTask_RecordNoSuitableSlot            vars=[] -> HTTP 204
+  5. complete UserTask_ArrangeExpeditedAppointment     vars=[] -> HTTP 204
+  path: StartEvent_ReferralReceived -> UserTask_CheckReferralDocuments -> ServiceTask_ValidateReferral -> Gateway_DocumentsComplete -> UserTask_ClinicalReviewReferral -> Gateway_ClinicalDecision -> UserTask_PrepareBookingRequest -> ServiceTask_CheckAppointmentAvailability -> Gateway_SlotWithinWindow -> UserTask_RecordNoSuitableSlot -> Gateway_UrgentReferral -> UserTask_ArrangeExpeditedAppointment -> UserTask_ReviewPathwayDelay
+  state=ACTIVE, incidents=0  =>  PASS
+
+SCENARIO 4: normal referral path still completes
+  model version 4, instance 2251799813721473
+  1. complete UserTask_CheckReferralDocuments          vars=['documentsComplete', 'referringOrganisation'] -> HTTP 204
+  2. complete UserTask_ClinicalReviewReferral          vars=['decision'] -> HTTP 204
+  3. complete UserTask_PrepareBookingRequest           vars=['documentType', 'priority', 'recipients', 'requestedWindow', 'schedulingOutcome', 'speciality'] -> HTTP 204
+  4. complete UserTask_TelephoneContactPatient         vars=['contactOutcome'] -> HTTP 204
+  path: StartEvent_ReferralReceived -> UserTask_CheckReferralDocuments -> ServiceTask_ValidateReferral -> Gateway_DocumentsComplete -> UserTask_ClinicalReviewReferral -> Gateway_ClinicalDecision -> UserTask_PrepareBookingRequest -> ServiceTask_CheckAppointmentAvailability -> Gateway_SlotWithinWindow -> ServiceTask_SendAppointmentNotification -> Gateway_WithinTwoWeeks -> UserTask_TelephoneContactPatient -> Gateway_ContactOutcome -> EndEvent_AppointmentArranged
+  state=COMPLETED, incidents=0  =>  PASS
+
+SCENARIO 5: clinic letter: dispatch request unusable, then follow-up booking unusable
+  model version 3, instance 2251799813721568
+  1. complete UserTask_PrepareAndApproveClinicLetter   vars=[] -> HTTP 204
+  2. complete UserTask_ProcessAndDistributeLetter      vars=[] -> HTTP 204
+  3. complete UserTask_ProcessAndDistributeLetter      vars=['documentType', 'letterWithinSevenDays', 'recipients'] -> HTTP 204
+  4. complete UserTask_ArrangeFollowUpAppointment      vars=[] -> HTTP 204
+  path: StartEvent_ConsultationCompleted -> UserTask_PrepareAndApproveClinicLetter -> UserTask_ProcessAndDistributeLetter -> ServiceTask_DispatchClinicLetter -> Boundary_Error_LetterDispatch -> UserTask_ProcessAndDistributeLetter -> ServiceTask_DispatchClinicLetter -> Gateway_LetterOnTime -> UserTask_ArrangeFollowUpAppointment -> ServiceTask_CheckFollowUpAvailability -> Boundary_Error_FollowUpBooking -> UserTask_ArrangeFollowUpAppointment
+  state=ACTIVE, incidents=0  =>  PASS
+
+SCENARIO 6: treatment not authorised takes the declared default branch
+  model version 2, instance 2251799813721647
+  1. complete UserTask_AssessAndAuthoriseTreatment     vars=['treatmentAuthorised'] -> HTTP 204
+  path: StartEvent_NewPatientAppointment -> UserTask_AssessAndAuthoriseTreatment -> Gateway_TreatmentAuthorised -> EndEvent_NoTreatmentAgreed
+  state=COMPLETED, incidents=0  =>  PASS
+
+RESULT: 6/6 scenarios passed, exit 0
+
+LIMITATIONS OF THIS EVIDENCE
+----------------------------
+- The variables are injected with the completion call because forms/ is empty. The forms must supply
+  the same variables before release 1.0, and these scenarios have to be repeated without injection.
+- Role-based access is not exercised: candidate groups are read back from the tasks, but no user is
+  authorised and no task is claimed through Tasklist.
+- Three of the six scenarios stop at the next human decision rather than at an end event, which is
+  the expected state for a process waiting on a user task. Two end states are asserted as COMPLETED.
+- The routes are exercised with the simulated services only, and one outcome per simulated service.
+  The remaining alternatives (a slot outside the requested window, a declined payment, a treatment
+  service that is unavailable) are covered at worker level in the other files in this directory.
+
+Reproduce with:
+  camunda-runtime\start-camunda.bat                     (wait for /v2/topology to return 200)
+  curl -X POST "http://localhost:8080/v2/deployments" \
+       -F "resources=@models/operational/referral-to-appointment.bpmn;type=application/xml"
+  repeat the deployment for treatment-authorisation-and-booking.bpmn and
+  clinic-letter-and-pathway-monitoring.bpmn
+  cd workers && npm install && npm start
+  then drive each scenario through POST /v2/process-instances and /v2/user-tasks/<key>/completion

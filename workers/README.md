@@ -97,13 +97,29 @@ in `referral-to-appointment.bpmn`; `treatment-authorisation-and-booking.bpmn` ca
 `UNAUTHORISED_BOOKING_REQUEST` and `INVALID_VARIABLE` on the treatment booking task and
 `PROHIBITED_FINANCIAL_DATA` and `INVALID_VARIABLE` on the payment task.
 
-**Coverage is not yet complete.** Four service tasks can raise `INVALID_VARIABLE` but have no catch
-event for it, so the error becomes an incident instead of a modelled path:
-`ServiceTask_SendAppointmentNotification`, `ServiceTask_DispatchClinicLetter`,
-`ServiceTask_CheckFollowUpAvailability` and (for `INVALID_VARIABLE` only)
-`ServiceTask_ValidateReferral`. This was observed, not inferred - the incident is recorded in
-`../tests/evidence/referral-to-appointment_normal-path_1b42bff_2026-09-21.txt`. Where each of those
-error paths should lead is a business decision and has not been made.
+**Every service task that can raise a business error now catches it.** Each error path returns the
+token to the task that owns the request, so the request can be corrected and the step retried - that
+is the pattern the models already used, and it is what the case study asks for: the recipient check
+belongs to the Medical Secretaries and the follow-up request to the Outpatient Bookings Team.
+
+| Catch event | Service task | Error code | Returns to |
+|---|---|---|---|
+| `Boundary_Error_Validation` | `ServiceTask_ValidateReferral` | `MISSING_INFORMATION_NOT_SPECIFIED` | `UserTask_ReviewReferralException` |
+| `Boundary_Error_ReferralInput` | `ServiceTask_ValidateReferral` | `INVALID_VARIABLE` | `UserTask_ReviewReferralException` |
+| `Boundary_Error_BookingRequest` | `ServiceTask_CheckAppointmentAvailability` | `INVALID_VARIABLE` | `UserTask_CorrectBookingRequest` |
+| `Boundary_Error_NotificationRequest` | `ServiceTask_SendAppointmentNotification` | `INVALID_VARIABLE` | `UserTask_CorrectBookingRequest` |
+| `Boundary_Error_TreatmentRequest` | `ServiceTask_CheckTreatmentAvailability` | `INVALID_VARIABLE` | `UserTask_CorrectTreatmentRequest` |
+| `Boundary_Error_UnauthorisedBooking` | `ServiceTask_CheckTreatmentAvailability` | `UNAUTHORISED_BOOKING_REQUEST` | `UserTask_ReturnForAuthorisation` |
+| `Boundary_Error_PaymentRequest` | `ServiceTask_ProcessPayment` | `INVALID_VARIABLE` | `UserTask_CorrectPaymentRequest` |
+| `Boundary_Error_ProhibitedData` | `ServiceTask_ProcessPayment` | `PROHIBITED_FINANCIAL_DATA` | `UserTask_CorrectPaymentRequest` |
+| `Boundary_Error_LetterDispatch` | `ServiceTask_DispatchClinicLetter` | `INVALID_VARIABLE` | `UserTask_ProcessAndDistributeLetter` |
+| `Boundary_Error_FollowUpBooking` | `ServiceTask_CheckFollowUpAvailability` | `INVALID_VARIABLE` | `UserTask_ArrangeFollowUpAppointment` |
+
+**The gateway's fallback must be declared.** Camunda does not treat a sequence flow without a
+condition as a fallback: an exclusive gateway only falls back to the flow named in its `default`
+attribute, and raises "Expected at least one condition to evaluate to true, or to have a default
+flow" when no condition matches. Every exclusive gateway in the three operational models now
+declares one.
 
 | Error code | Raised by | Meaning |
 |---|---|---|

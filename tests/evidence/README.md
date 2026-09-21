@@ -29,6 +29,7 @@ Example: `TC-01_normal-referral-accepted_release-1.0_2026-09-25.png`
 | TC-12 | `TC-12_external-service-unavailable_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (worker component) |
 | end to end | `workers_end-to-end-smoke_813fea6_2026-09-21.txt` | 2026-09-21 | `813fea6` | Pass (workers through the engine) |
 | normal path | `referral-to-appointment_normal-path_1b42bff_2026-09-21.txt` | 2026-09-21 | `1b42bff` | Pass (model and workers together, instance completed); one uncaught-error incident recorded inside the file |
+| error paths and urgent path | `error-paths-and-urgent-path_e852224_2026-09-21.txt` | 2026-09-21 | `e852224` | Pass (6 scenarios, no incident): four worker error paths, the urgent no-slot path, the normal path to completion and one declared-default branch |
 |  |  |  |  |  |
 
 ### Scope of the items above

@@ -1,39 +1,55 @@
 # Operational Models
 
-Executable BPMN models of the required business process.
+The executable BPMN processes: the models Camunda deploys and runs, and the ones the external
+workers are bound to.
 
-## Requirements
+Each process covers one part of the patient pathway, and between them they carry the whole pathway
+from the referral arriving to the refund of a cancelled paid appointment.
 
-- Represent participants, responsibilities, user tasks, service tasks, events, gateways and interactions
-- Use **more than one pool** where independent participants collaborate, with message flows between them
-- Configure the model for deployment
-- Demonstrate normal, alternative and exception paths
-- Keep clinical, administrative and financial responsibilities visibly separate
+`core-1-referral-and-new-patient-appointment.bpmn` covers the referral being received, the
+supporting documents being checked, the consultant's decision to accept, reject, query or redirect
+it, and the booking of the new patient appointment through the external scheduling service,
+including the rule that a patient whose appointment falls inside two weeks is telephoned as well as
+written to, and the case where no suitable slot exists.
 
-## Files
+`core-2-treatment-authorisation-funding-and-payment.bpmn` covers consent and the authorisation of
+treatment, the determination of the funding route, the payment request to the external payment
+service provider with its declined, duplicated and unconfirmed outcomes, the treatment booking
+itself with the external treatment service, and the clinical review that happens between treatment
+cycles.
 
-The first edition of this directory held three models (`referral-to-appointment`,
-`treatment-authorisation-and-booking`, `clinic-letter-and-pathway-monitoring`). They were replaced
-by the four `core-N` models below, which cover the same pathway plus the follow-up, enquiry and
-refund requirements. The superseded models are in the history only; they were removed because the
-form binding added to them used an undeclared `camunda:` namespace, which made them unparseable.
+`core-3-clinic-letter-and-pathway-escalation.bpmn` covers the clinic letter: its preparation and
+clinical approval, its administrative check and distribution through the external correspondence
+service, the target of completing it within seven days of the appointment, and the escalation of a
+letter that is late, first as a reminder to the consultant and then to higher management as the
+delay grows.
 
-| File | Description | Deployable | Status |
-|---|---|---|---|
-| `core-1-referral-and-new-patient-appointment.bpmn` | Referral receipt and document check, clinical decision, and the new patient appointment with the two-week telephone rule | Yes | Deployed, version 1 |
-| `core-2-treatment-authorisation-funding-and-payment.bpmn` | Consent and treatment authorisation, funding route, payment through the external provider, treatment booking and the between-cycle review | Yes | Deployed, version 1 |
-| `core-3-clinic-letter-and-pathway-escalation.bpmn` | Clinic letter preparation, approval and distribution, the seven-day target and escalation of delays | Yes | Deployed, version 2 |
-| `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | Follow-up booking, cancellation and non-attendance, enquiry handling, and the financial decision and refund | Yes | Deployed, version 1 |
+`core-4-follow-up-cancellation-enquiry-and-refund.bpmn` covers what happens after treatment: a
+follow-up appointment being requested and booked, the cancellation, decline or non-attendance of an
+appointment and the decision that follows it, the handling and routing of patient enquiries, and
+the financial decision on a paid appointment that has been cancelled or changed, ending in a refund
+where one is due.
 
-Each file holds one executable process. `core-4` has three start events: one none start event plus
-two message start events for the cancellation and the enquiry, which arrive unannounced and cannot
-share the single none start event Camunda allows.
+Each file holds one executable process. The processes are deployed and started separately, and
+`core-4` has three start events: one ordinary start event for the follow-up being requested, and
+two message start events for the cancellation and for the enquiry, which arrive unannounced and
+cannot share the single ordinary start event that Camunda allows a process.
 
-## Design decisions
+## What the models require
 
-| Decision | Rationale | Rule it satisfies |
-|---|---|---|
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
+- **Participants and lanes.** Every process has more than one pool where independent participants
+  collaborate, with message flows between them, and its lanes keep clinical, administrative and
+  financial responsibilities visibly separate.
+- **Camunda user tasks.** Every user task carries the Camunda user task marker so it appears in
+  Tasklist, and an assignment to the candidate group of its lane.
+- **Camunda Forms.** User tasks that need structured input bind a form by its key, and the matching
+  `.form` file in `../../forms/` has to be deployed with the model.
+- **Service tasks and job types.** Every automated step is a service task with a job type, and each
+  job type has a worker in `../../workers/` registered against it.
+- **Error catch events.** A service task that can raise a business error has a boundary error event
+  to catch it, and that error path returns the process to the task that owns the request, so the
+  request is corrected and the step retried rather than the process stalling.
+- **A default flow on every gateway.** An exclusive gateway falls back only to the flow named in
+  its `default` attribute. Without one, a gateway whose conditions all evaluate false raises an
+  incident instead of continuing, so every gateway in these models declares a fallback, and the
+  flow it names carries no condition of its own.

@@ -1,81 +1,92 @@
 # Hospital Patient Referral, Treatment and Administration System (HPRTAS)
 
-> Group project repository for the hospital patient administration system. The content is filled
-> in by the group as the project runs.
+HPRTAS is a hospital patient administration system covering the pathway from a referral arriving
+from a general practitioner or another hospital, through the clinical decision, the funding and
+payment of treatment, the treatment bookings themselves, the clinic letters that follow, and the
+follow-up, cancellation, enquiry and refund handling that comes after. It is built as a set of
+executable BPMN processes on Camunda 8, with external workers carrying out the automated steps
+that talk to systems outside the hospital.
 
-## Group members
+The repository holds the models, the forms the staff use, the workers, the documentation and the
+test evidence for that system.
 
-| Name | Student ID | Primary role (role slot used in all owner columns) | Second-owner coverage for | Contribution evidence |
-|---|---|---|---|---|
-| | | M1 - Coordinator; operational and strategic BPMN modelling; deployment configuration | Worker integration; requirements | `models/`, `docs/agile/contribution-matrix.md` |
-| | | M2 - Requirements and business rules; variable contract; i* SD and SR models | Financial and correspondence modelling; acceptance criteria | `docs/requirements/`, `models/socio-technical/`, `docs/agile/contribution-matrix.md` |
-| | | M3 - External workers; simulated services; failure handling; configuration management | BPMN integration; forms variable exchange | `workers/`, `README.md`, `docs/agile/contribution-matrix.md` |
-| | | M4 - Camunda Forms and task bindings; accessibility; demonstration | Testing; requirements | `forms/`, `docs/agile/contribution-matrix.md` |
-| | | M5 - Test plan and execution; acceptance criteria; planned versus actual | Requirements; forms | `tests/`, `docs/planning/`, `docs/agile/contribution-matrix.md` |
+## What is in the repository
 
-Replace M1-M5 with the real names. Every activity has a **first owner** (leads delivery) and a
-**second owner** (sufficiently up to date to continue if the first owner cannot).
+`models/` holds the BPMN. `models/strategic/` contains the high-level view of the wider process,
+`models/socio-technical/` the i\* Strategic Dependency and Strategic Rationale models, and
+`models/operational/` the four executable processes that Camunda runs.
 
-## Key dates
+`forms/` holds the Camunda Forms the user tasks are bound to, one `.form` file per form, each with
+the form key the model refers to.
 
-| Date | Milestone | Version tag |
-|---|---|---|
-| 15 Sep 2026 | Sprint 1 starts | |
-| 15 - 20 Sep 2026 | Sprint 1 | |
-| 21 - 27 Sep 2026 | Sprint 2 | |
-| 28 Sep 2026 | Initial release | `release-1.0` |
-| 29 Sep - 15 Oct 2026 | Sprint 3 | |
-| 16 - 21 Oct 2026 | Sprint 4 | |
-| 22 Oct 2026 | Second release | `release-2.0` |
+`workers/` holds the external workers as a Node.js project: the job workers themselves, the
+simulated external services they call, and their configuration.
 
-Sprint goals and sprint dates are recorded in `docs/backlog/sprint-backlogs.md`.
+`docs/` holds everything that describes the project rather than implements it: the case study
+summary, the requirements and their traceability, and the backlog, planning and working agreements
+that go with delivering it.
 
-## Repository structure
+`tests/` holds the test plan and the evidence of the runs.
 
-| Path | What goes here |
-|---|---|
-| `docs/case-study-summary.md` | Shared understanding of the case: participants, process, rules, exceptions, assumptions |
-| `docs/requirements/` | Functional and non-functional requirements, business rules, traceability |
-| `docs/deliverables.md` | What the group must produce, with owners and dates |
-| `docs/backlog/` | Product backlog, task breakdown, dependencies, sprint backlogs |
-| `docs/planning/` | Scope, estimates, allocation, risks, timeline, planned vs actual |
-| `docs/agile/` | Definition of done, contribution matrix |
-| `models/strategic/` | High-level business process models |
-| `models/socio-technical/` | i\* Strategic Dependency (SD) and Strategic Rationale (SR) models |
-| `models/operational/` | Executable operational BPMN models |
-| `forms/` | Camunda Forms and their task bindings |
-| `workers/` | External worker code, dependencies, configuration |
-| `tests/` | Test plan and test evidence |
-| `Enterprise Architecture/` | Portfolio deliverable: description of the enterprise and its information systems, and the Zachman Framework of Information Systems Architecture |
+`Enterprise Architecture/` holds the portfolio deliverable describing the enterprise and its
+information systems, and the Zachman Framework view of them.
 
-## Running the project
+## Running it
 
-| Item | Value |
-|---|---|
-| Camunda version | Camunda 8 Run 8.9.19 (Orchestration Cluster API, `/v2/`) |
-| JDK version | Java 21 (Temurin 21.0.12.1 LTS, in `camunda-runtime\jdk-21`); JDK 24 or newer is not supported |
-| Start the engine | `camunda-runtime\start-camunda.bat` (first start takes about 60 seconds); stop with `camunda-runtime\stop-camunda.bat` |
-| Modeler | `camunda-runtime\camunda-modeler\Camunda Modeler.exe` (launch the engine first so the connection is detected) |
-| Deploy a model | `cd models/operational && for f in core-*.bpmn; do curl -X POST "http://localhost:8080/v2/deployments" -F "resources=@$f;type=application/xml"; done` - and deploy `forms/*.form` the same way with `type=application/json`, so Tasklist can resolve the `formId` of each user task |
-| Start the workers | `cd workers && npm install && npm start` (Node.js 22 with the Camunda 8 Node SDK); copy `workers/.env.example` to `workers/.env` first |
-| Check or test the workers | `cd workers && npm run check` (configuration and wiring, no engine needed), `npm test` (38 unit tests, no engine needed), `npm run test:smoke` (the worker fixture against the running engine), `npm run test:e2e` (the four operational models and the forms against the running engine). See `workers/README.md` for the job types, variables, error codes and the simulated services |
-| Open the engine UI | http://localhost:8080/operate and http://localhost:8080/tasklist (login `demo` / `demo`) |
+The processes run on Camunda 8 Run 8.9.19, driven through the Orchestration Cluster API on `/v2/`.
+It needs Java 21: the runtime is bundled in `camunda-runtime\jdk-21`, and JDK 24 or newer is not
+supported by Camunda 8.9.
 
-The four operational models are separate processes, so they are deployed and started separately
-from Tasklist (Tasklist -> Processes): `core-1-referral-and-new-patient-appointment`,
-`core-2-treatment-authorisation-funding-and-payment`,
-`core-3-clinic-letter-and-pathway-escalation` and
-`core-4-follow-up-cancellation-enquiry-and-refund`. Complete the user tasks on each instance as it
-reaches them; the tasks are assigned to candidate groups that match the lanes. `core-4` also has
-two message start events, which are triggered by sending the cancellation or enquiry message rather
-than from the Processes page. The strategic model
-(`models/strategic/referral-to-treatment-pathway.bpmn`) is a non-executable view: do not deploy it,
-Camunda rejects a deployment that contains no executable process
-(`INVALID_ARGUMENT: Must contain at least one executable process`).
+Start the engine with `camunda-runtime\start-camunda.bat`; the first start takes about a minute.
+Stop it with `camunda-runtime\stop-camunda.bat`. Operate and Tasklist are then on
+http://localhost:8080/operate and http://localhost:8080/tasklist, both with the login `demo` /
+`demo`. Camunda Modeler is at `camunda-runtime\camunda-modeler\Camunda Modeler.exe`; start the
+engine before opening it so it detects the connection.
 
-## How we work
+Deploy the models and the forms together — a model points at its forms by key, so Tasklist needs
+both to resolve them:
 
-1. Every task has a first owner and a second owner (`docs/backlog/task-breakdown.md`).
-2. Work is done only when it meets the definition of done (`docs/agile/definition-of-done.md`).
-3. Integrate continuously. Commit messages name the item, for example `PB-006 add rejected referral path (TB-010)`.
-4. Releases are tagged `release-1.0` and `release-2.0`.
+```bash
+cd models/operational
+for f in core-*.bpmn; do
+  curl -X POST "http://localhost:8080/v2/deployments" -F "resources=@$f;type=application/xml"
+done
+cd ../../forms
+for f in *.form; do
+  curl -X POST "http://localhost:8080/v2/deployments" -F "resources=@$f;type=application/json"
+done
+```
+
+The workers are a separate Node.js project. Copy `workers/.env.example` to `workers/.env` first,
+then:
+
+```bash
+cd workers
+npm install
+npm start
+```
+
+The four operational processes are separate, so each is started separately from Tasklist under
+Processes. Complete the user tasks on an instance as it reaches them; each task is assigned to the
+candidate group its lane represents. `core-4-follow-up-cancellation-enquiry-and-refund` also has
+two message start events, for a cancellation arriving and for a patient enquiry arriving, which are
+started by sending that message rather than from the Processes page.
+
+The strategic model is a non-executable view of the process. Do not deploy it: Camunda rejects a
+deployment that contains no executable process.
+
+## Testing it
+
+The workers carry their own tests and they do not all need an engine:
+
+```bash
+cd workers
+npm run check        # the configuration and the worker wiring, no engine
+npm test             # the worker unit tests, no engine
+npm run test:smoke   # the workers against a purpose-built fixture, engine running
+npm run test:e2e     # the four operational models and the forms, engine running
+```
+
+`workers/README.md` describes the job types, the variables each worker reads and writes, the error
+codes and the simulated services. `tests/README.md` describes the test plan and where the evidence
+of each run is kept.

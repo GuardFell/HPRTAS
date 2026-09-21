@@ -1,14 +1,14 @@
 # Enterprise Architecture
 
-The components of the first portfolio deliverable.
+The portfolio view of the enterprise the system belongs to, and of the information systems that
+support it.
 
-The directory contains a file of Zachman Framework of Information Systems Architecture and a brief
-description of the enterprise and the role of the information systems.
+`Description of Enterprise and Information Systems.docx` describes the enterprise used in the
+portfolio and the part its information systems play in running its operations, in roughly 150 to
+300 words.
 
-| Path | Contents |
-|---|---|
-| `Description of Enterprise and Information Systems.docx` | A brief description (approx. 150-300 words) of the enterprise used in this portfolio and the role of its information systems to its operations |
-| `README.md` | This file |
+The Zachman Framework of Information Systems Architecture is kept here as well, once it is
+produced.
 
-The Zachman Framework artefact is added by a later deliverable; the description document and this
-README form the submission for this stage.
+The folder holds the enterprise-level description and the framework view. Neither is needed to run
+the processes in `../models/`; they describe the organisation those processes sit inside.

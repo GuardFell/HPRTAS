@@ -1,18 +1,11 @@
 # Camunda Forms
 
-Camunda Forms (`.form`) connected to the relevant user tasks.
-
-## Requirements
-
-- Capture the required information for each task
-- Use clear labels and appropriate controls
-- Validate inputs where the process depends on the value
-- Exchange variables correctly with the process
-- Consider the intended users, accessibility and consistency across the workflow
+The Camunda Forms the staff fill in, one `.form` file per form, and the user tasks in the
+operational models they are bound to.
 
 ## How a form is bound to a task
 
-Every `.form` file carries a top-level `id`, which is the form's key. The user task points at it
+Every `.form` file carries a top-level `id`, which is the form's key. A user task refers to that key
 from its extension elements:
 
 ```xml
@@ -25,58 +18,67 @@ from its extension elements:
 </bpmn:userTask>
 ```
 
-Two things have to hold for Tasklist to render the form, and both were got wrong in the first
-edition of this directory:
+Two things have to hold for Tasklist to render the form. The attribute is **`formId`**, and it sits
+on **`<zeebe:formDefinition>`** inside `<bpmn:extensionElements>`. An attribute named
+`camunda:formKey` on the task itself is Camunda 7 syntax: Camunda 8 ignores it, and because the
+`camunda:` prefix was never declared the models stopped being well-formed XML and would not deploy
+at all. The `.form` file must also declare the matching `id` and be deployed as a resource together
+with the model, or Tasklist has no form to resolve the key against.
 
-- the attribute is **`formId`** and it lives on **`<zeebe:formDefinition>`** inside
-  `<bpmn:extensionElements>`. An attribute named `camunda:formKey` on the task is Camunda 7 syntax:
-  Camunda 8 ignores it, and because the `camunda:` prefix was never declared the models stopped
-  being well-formed XML and would not deploy at all.
-- the `.form` file must declare the matching `id`, and must be deployed as a resource together with
-  the model, or Tasklist has no form to resolve the `formId` against.
+A form's field names are the process variables its task writes, so a field name and the name a
+gateway condition or a worker reads have to be the same word. Where a form and a model disagreed,
+the form was changed to match the model.
 
-## Form-to-task bindings
+## The forms and what they cover
 
-| Form file | Bound user task | Model | Variables written | Status |
-|---|---|---|---|---|
-| `referral-review.form` | `N_C_ClinicalReview` | `core-1-referral-and-new-patient-appointment.bpmn` | referralId, patientName, referringOrganisation, clinicalSummary, decision, decisionReason, speciality, priority, requestedWindow, patientRequirements | Done |
-| `booking-request.form` | `N_OB_PrepareRequest` | `core-1-referral-and-new-patient-appointment.bpmn` | referralId, patientId, speciality, priority, requestedWindow, patientRequirements | Done |
-| `booking-request.form` | `N_OB_CorrectRequest` | `core-1-referral-and-new-patient-appointment.bpmn` | referralId, patientId, speciality, priority, requestedWindow, patientRequirements | Done |
-| `patient-contact.form` | `N_OB_TelephonePatient` | `core-1-referral-and-new-patient-appointment.bpmn` | patientId, contactMethod, contactOutcome, contactNotes | Done |
-| `patient-contact.form` | `N_OB_RecordAttempt` | `core-1-referral-and-new-patient-appointment.bpmn` | patientId, contactMethod, contactOutcome, contactNotes | Done |
-| `treatment-booking.form` | `N_CL_AuthoriseTreatment` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | treatmentRequestId, proposedTreatment, treatmentStartDate, numberOfCycles, specialResources, clinicalAuthorised, authorisingClinician | Done |
-| `treatment-booking.form` | `N_CL_ModifyTreatment` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | treatmentRequestId, proposedTreatment, treatmentStartDate, numberOfCycles, specialResources, clinicalAuthorised, authorisingClinician | Done |
-| `treatment-booking.form` | `N_TB_CorrectBookingInput` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | treatmentRequestId, proposedTreatment, treatmentStartDate, numberOfCycles, specialResources, clinicalAuthorised, authorisingClinician | Done |
-| `funding-route.form` | `N_F_DetermineFunding` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | treatmentRequestId, fundingRoute, fundingNotes | Done |
-| `payment.form` | `N_F_CalculateCharge` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | treatmentRequestId, chargeAmount, fundingRoute, paymentReference | Done |
-| `payment.form` | `N_F_CorrectPaymentRequest` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | treatmentRequestId, chargeAmount, fundingRoute, paymentReference | Done |
-| `clinic-letter.form` | `N_C_PrepareLetter` | `core-3-clinic-letter-and-pathway-escalation.bpmn` | consultationId, letterContent, diagnosis, treatmentDecisions, followUpArrangements, recipients | Done |
-| `clinic-letter.form` | `N_C_ApproveLetter` | `core-3-clinic-letter-and-pathway-escalation.bpmn` | consultationId, letterContent, diagnosis, treatmentDecisions, followUpArrangements, recipients | Done |
-| `clinic-letter.form` | `N_MS_ConfirmRecipients` | `core-3-clinic-letter-and-pathway-escalation.bpmn` | consultationId, letterContent, diagnosis, treatmentDecisions, followUpArrangements, recipients | Done |
-| `booking-request.form` | `N_OB_ArrangeFollowUp` | `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | referralId, patientId, speciality, priority, requestedWindow, patientRequirements | Done |
-| `booking-request.form` | `N_OB_CorrectRequest` | `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | referralId, patientId, speciality, priority, requestedWindow, patientRequirements | Done |
-| `patient-contact.form` | `N_OB_RecordCancellation` | `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | patientId, contactMethod, contactOutcome, contactNotes | Done |
-| `refund.form` | `N_F_RetentionDecision` | `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | paymentReference, refundDecision, refundAmount, refundReason, refundNotes | Done |
-| `refund.form` | `N_F_CorrectRefundRequest` | `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | paymentReference, refundDecision, refundAmount, refundReason, refundNotes | Done |
+`referral-review.form` is bound to the consultant's clinical review of a referral in `core-1`. It
+records the patient and referral identifiers, the referring organisation, the clinical summary and
+the decision with its reason. It writes the decision as `decision`, with the values the gateway
+tests: `accepted`, `rejected`, `further_information` and `redirected`.
 
-A form's variable names are the process variables its task writes, so a field name and the name a
-gateway or a worker reads have to be the same word. `referral-review.form` writes `decision`
-because `N_C_ReferralDecision` reads `decision`; `refund.form` writes `refundDecision` because
-`N_F_RefundDecision` reads it and `refund-processing` validates it.
+`booking-request.form` is bound to preparing and correcting a booking request in `core-1`, and to
+arranging and correcting a follow-up request in `core-4`. It records the speciality, the priority,
+the time frame the clinician asked for and any requirements the patient has.
 
-## Design decisions
+`patient-contact.form` is bound to the telephone contact and the retry in `core-1`, and to recording
+a cancellation or non-attendance in `core-4`. It records the contact method, its outcome and any
+notes.
 
-| Decision | Rationale | Accessibility / usability consideration |
-|---|---|---|
-| Linked deployed forms through `zeebe:formDefinition formId` | The mechanism Camunda 8.9 resolves against a deployed `.form` resource | Forms render in Tasklist UI with standard HTML controls |
-| Grouped related fields with `<group>` components | Reduces visual clutter and helps users focus on sections | Clear section headings improve screen reader navigation |
-| Added `validate.required` on critical fields | Prevents incomplete submissions that would cause worker errors | Inline validation messages shown immediately |
-| Used `select` dropdowns for enumerated values | Enforces valid options and matches the gateway conditions and the worker `oneOf` constraints | Keyboard navigable; visible option labels instead of codes |
-| Kept `textarea` for free-text fields | Allows detailed clinical notes and decision reasons | Generous rows for comfortable editing |
-| Gave every form a short kebab-case `id` | The `id` is the key the model refers to, so it has to be stable and readable | Nothing user-facing; it keeps the model readable for a reviewer |
+`treatment-booking.form` is bound to recording consent and authorising a request, to authorising a
+treatment modification and to correcting a booking input in `core-2`. It records the proposed
+treatment, the start date, the number of cycles, any special resources, and the clinical
+authorisation with the clinician who gave it.
 
-## Testing
+`funding-route.form` is bound to determining the funding route in `core-2`: whether the treatment is
+funded by the hospital, covered by an approved insurer or funding organisation, or paid for by the
+patient, with notes on the decision.
 
-Forms are tested as part of the scenarios in `tests/test-plan.md` (TC-01 to TC-10, TC-13 to
-TC-16, TC-20); evidence is stored in `tests/evidence/`. The end-to-end runs in `tests/evidence/`
-that predate the forms passed the variables with the task completion call instead.
+`payment.form` is bound to calculating the charge and to correcting a payment request in `core-2`.
+It records the charge, the funding route and the payment reference the provider is asked to settle.
+
+`refund.form` is bound to the Finance Team's decision on a paid appointment and to correcting a
+refund request in `core-4`. It records the payment reference being refunded, the decision
+(`full`, `partial` or `none`), the amount where the refund is partial, the reason, and any notes.
+The decision is written as `refundDecision` because that is the variable the gateway tests and the
+refund worker validates.
+
+`clinic-letter.form` is bound to preparing and approving a clinic letter and to confirming its
+recipients in `core-3`. It records the consultation it follows, the letter content, the diagnosis,
+the treatment decisions, the follow-up arrangements and the recipients.
+
+## How the forms are built
+
+Related fields are grouped into sections, so a long form is read in parts rather than as one list of
+fields. Fields the process cannot proceed without are marked required, which stops an incomplete
+submission that would only fail later in a worker. Enumerated values use dropdowns, so the value a
+form writes is one the gateway condition or the worker's validation accepts, and the person filling
+it in sees a label rather than a code. Free-text clinical notes and decision reasons use text areas
+with room to write in. Each form has a short kebab-case `id`, because that id is the key the model
+refers to and it has to stay stable.
+
+## Testing the forms
+
+The forms are exercised as part of the scenarios in `../tests/test-plan.md`, and the end-to-end run
+described in `../tests/evidence/README.md` deploys them alongside the models so the bindings are
+proved to resolve. The runs in `../tests/evidence/` that predate the forms passed their variables
+with the task completion call instead, so they do not exercise the form bindings.

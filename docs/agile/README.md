@@ -1,10 +1,12 @@
 # Working Agreements
 
-| File | Contents |
-|---|---|
-| `definition-of-done.md` | What must be true before work is considered complete, agreed by the whole group |
-| `contribution-matrix.md` | Per-member contribution with evidence, recorded sprint by sprint |
+The agreements the project runs by, as opposed to the plan for what it builds.
 
-The contribution matrix is written as the project runs - it cannot be reconstructed at the end.
-Record the task IDs a member worked on and a repository path, a commit or an artefact that shows
-it.
+`definition-of-done.md` states what must be true before a piece of work is considered complete: a
+checklist that applies to every task regardless of what it produces.
+
+`contribution-matrix.md` records, sprint by sprint, the evidence behind each task: the backlog item
+it belongs to and a path, commit or artefact in this repository that demonstrates it.
+
+The contribution record is written as the project runs. It cannot be reconstructed afterwards,
+which is why it is updated at the end of each sprint rather than at the end of the project.

@@ -1,15 +1,16 @@
 # Planning
 
-`project-plan.md` is the single planning document:
+`project-plan.md` is the single planning document for the project. It carries:
 
-| Section | Contents |
-|---|---|
-| 1. Scope | What is in scope for each release, and what is deliberately excluded with a reason |
-| 2. Estimation approach | The estimation method, the scale used and the reference item used to calibrate |
-| 3. Task allocation | Who leads what, and who is the second owner |
-| 4. Risk register | Risks, likelihood, impact, mitigation and owner |
-| 5. Timeline | Sprints, releases and the evidence each produces |
-| 6. Planned vs actual | Filled in after each sprint from what actually happened |
-| 7. Plan revisions | Every change to the plan, with the reason |
+1. **Scope** — what is in scope for each release, and what is deliberately excluded, with the reason
+   for the exclusion.
+2. **Estimation approach** — the estimation method, the scale used, and the reference item used to
+   calibrate that scale.
+3. **Task allocation** — which tasks make up each area of work and how they are covered.
+4. **Risk register** — the risks, their likelihood, their impact and what is done about each.
+5. **Timeline** — the sprints and releases, and the evidence each one produces.
+6. **Planned versus actual** — filled in after each sprint from what actually happened rather than
+   from what was expected.
+7. **Plan revisions** — every change made to the plan, with the reason for it.
 
-Keep it current: it is compared against actual progress when the plan is evaluated.
+The plan is compared against actual progress, so it is kept current rather than written once.

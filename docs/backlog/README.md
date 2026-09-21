@@ -1,17 +1,20 @@
 # Backlog
 
-| File | Contents |
-|---|---|
-| `product-backlog.md` | The full prioritised list of work (`PB-###`) |
-| `task-breakdown.md` | Each backlog item broken into sprint-sized tasks (`TB-###`) |
-| `dependencies.md` | What must come first, what depends on what, who to inform, and the backup plan |
-| `sprint-backlogs.md` | The tasks selected for each sprint, with the sprint goal |
+The work to be done, from the whole product down to the sprint.
 
-## Rules
+`product-backlog.md` is the full prioritised list of work, one item per entry using the `PB-###`
+identifier.
 
-- Every item has a **first owner** and a **second owner**, an estimate, acceptance conditions,
-  dependencies and a status.
-- IDs are stable and are used in commit messages: `PB-006 add rejected referral path (TB-010)`.
-- Avoid vague items such as "Do BPMN" or "Do testing" - split them until each item can be
-  completed and demonstrated within one sprint.
-- Status values: `Not started` / `In progress` / `Blocked` / `In review` / `Done` / `Dropped`.
+`task-breakdown.md` breaks each backlog item into tasks small enough for a single sprint, using the
+`TB-###` identifier.
+
+`dependencies.md` records what has to come first, what depends on what, and what to do if an item
+that others depend on slips.
+
+`sprint-backlogs.md` records the tasks selected for each sprint together with that sprint's goal.
+
+Identifiers are stable once assigned and are used in commit messages, so a commit names the item it
+belongs to: `PB-006 add rejected referral path (TB-010)`. Items are split until each one can be
+completed and demonstrated within a single sprint; an item such as "do testing" is too broad to be
+useful and has to be broken down. An item's status is one of `Not started`, `In progress`,
+`Blocked`, `In review`, `Done` or `Dropped`.

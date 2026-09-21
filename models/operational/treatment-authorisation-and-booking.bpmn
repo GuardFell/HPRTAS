@@ -83,9 +83,9 @@
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_TreatmentAuthorised" name="Authorised?" />
+    <bpmn:exclusiveGateway id="Gateway_TreatmentAuthorised" name="Authorised?" default="Flow_B4" />
     <bpmn:endEvent id="EndEvent_NoTreatmentAgreed" name="No treatment agreed" />
-    <bpmn:exclusiveGateway id="Gateway_ClinicalRisk" name="Clinical risk?" />
+    <bpmn:exclusiveGateway id="Gateway_ClinicalRisk" name="Clinical risk?" default="Flow_B25" />
     <bpmn:userTask id="UserTask_AuthoriseUrgentTreatment" name="Authorise urgent treatment">
       <bpmn:extensionElements>
         <zeebe:userTask />
@@ -98,16 +98,16 @@
         <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_FitToContinue" name="Fit to continue?" />
+    <bpmn:exclusiveGateway id="Gateway_FitToContinue" name="Fit to continue?" default="Flow_B44" />
     <bpmn:userTask id="UserTask_RequestTreatmentModification" name="Request treatment change">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_FinancialImpact" name="Charge or payment affected?" />
+    <bpmn:exclusiveGateway id="Gateway_FinancialImpact" name="Charge or payment affected?" default="Flow_B48" />
     <bpmn:endEvent id="EndEvent_TreatmentModified" name="Treatment plan changed" />
-    <bpmn:exclusiveGateway id="Gateway_MoreCycles" name="More cycles?" />
+    <bpmn:exclusiveGateway id="Gateway_MoreCycles" name="More cycles?" default="Flow_B53" />
     <bpmn:endEvent id="EndEvent_TreatmentComplete" name="Treatment complete" />
     <bpmn:userTask id="UserTask_AuthoriseTreatmentModification" name="Authorise treatment change">
       <bpmn:extensionElements>
@@ -138,14 +138,14 @@
         <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_ExternalServiceAvailable" name="Service available?" />
+    <bpmn:exclusiveGateway id="Gateway_ExternalServiceAvailable" name="Service available?" default="Flow_B37" />
     <bpmn:userTask id="UserTask_RecordPendingBooking" name="Keep booking pending">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_FundingAndPaymentConfirmed" name="Funding or payment confirmed?" />
+    <bpmn:exclusiveGateway id="Gateway_FundingAndPaymentConfirmed" name="Funding or payment confirmed?" default="Flow_B40" />
     <bpmn:userTask id="UserTask_ConfirmTreatmentAppointment" name="Confirm treatment appointment">
       <bpmn:extensionElements>
         <zeebe:userTask />
@@ -158,14 +158,14 @@
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_FundingRoute" name="Funding route?" />
+    <bpmn:exclusiveGateway id="Gateway_FundingRoute" name="Funding route?" default="Flow_B8" />
     <bpmn:userTask id="UserTask_RecordFundingApproval" name="Record funding approval">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_PaymentRequired" name="Payment required?" />
+    <bpmn:exclusiveGateway id="Gateway_PaymentRequired" name="Payment required?" default="Flow_B11" />
     <bpmn:userTask id="UserTask_CalculateCharge" name="Calculate charge">
       <bpmn:extensionElements>
         <zeebe:userTask />
@@ -183,8 +183,8 @@
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_PaymentStatus" name="Payment status?" />
-    <bpmn:exclusiveGateway id="Gateway_ConfirmationReceived" name="Confirmation received?" />
+    <bpmn:exclusiveGateway id="Gateway_PaymentStatus" name="Payment status?" default="Flow_B18" />
+    <bpmn:exclusiveGateway id="Gateway_ConfirmationReceived" name="Confirmation received?" default="Flow_B20" />
     <bpmn:userTask id="UserTask_MarkForInvestigation" name="Mark for investigation">
       <bpmn:extensionElements>
         <zeebe:userTask />
@@ -197,7 +197,7 @@
         <zeebe:assignmentDefinition candidateGroups="finance" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_RetryPayment" name="Retry payment?" />
+    <bpmn:exclusiveGateway id="Gateway_RetryPayment" name="Retry payment?" default="Flow_B29" />
     <bpmn:endEvent id="EndEvent_AppointmentNotConfirmed" name="Appointment not confirmed" />
     <bpmn:userTask id="UserTask_ReferChargeToFinance" name="Resolve unpaid charge">
       <bpmn:extensionElements>

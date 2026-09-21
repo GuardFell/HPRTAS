@@ -9,8 +9,8 @@
     <bpmn:messageFlow id="MessageFlow_C2" name="availability request" sourceRef="ServiceTask_CheckFollowUpAvailability" targetRef="Participant_SchedulingService" />
     <bpmn:messageFlow id="MessageFlow_C3" name="refund request" sourceRef="UserTask_SendRefundRequest" targetRef="Participant_PaymentProvider" />
   </bpmn:collaboration>
-  <bpmn:process id="clinic-letter-and-pathway-monitoring" name="Clinic letter approval, distribution, pathway monitoring and follow-up" isExecutable="true">
-    <bpmn:laneSet id="LaneSet_1">
+  <bpmn:error id="Error_InvalidVariable" name="INVALID_VARIABLE" errorCode="INVALID_VARIABLE" />
+  <bpmn:process id="clinic-letter-and-pathway-monitoring" name="Clinic letter approval, distribution, pathway monitoring and follow-up" isExecutable="true">    <bpmn:laneSet id="LaneSet_1">
       <bpmn:lane id="Lane_Finance" name="Finance Team">
         <bpmn:flowNodeRef>UserTask_DetermineRefund</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>UserTask_SendRefundRequest</bpmn:flowNodeRef>
@@ -18,6 +18,7 @@
         <bpmn:flowNodeRef>EndEvent_RefundRecorded</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_OutpatientBookings" name="Outpatient Bookings">
+        <bpmn:flowNodeRef>Boundary_Error_FollowUpBooking</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>ServiceTask_CheckFollowUpAvailability</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_FollowUpWithinPeriod</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>EndEvent_FollowUpReferred</bpmn:flowNodeRef>
@@ -42,6 +43,7 @@
         <bpmn:flowNodeRef>EndEvent_ReminderIssued</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_Secretaries" name="Medical Secretaries">
+        <bpmn:flowNodeRef>Boundary_Error_LetterDispatch</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>UserTask_ProcessAndDistributeLetter</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>ServiceTask_DispatchClinicLetter</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Gateway_LetterOnTime</bpmn:flowNodeRef>
@@ -70,14 +72,14 @@
         <zeebe:taskDefinition type="send-correspondence" retries="3" />
       </bpmn:extensionElements>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="Gateway_LetterOnTime" name="Letter within 7 days?" />
+    <bpmn:exclusiveGateway id="Gateway_LetterOnTime" name="Letter within 7 days?" default="Flow_C6" />
     <bpmn:userTask id="UserTask_ReviewOutstandingCorrespondence" name="Review reminders">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_OverdueDuration" name="Overdue how long?" />
+    <bpmn:exclusiveGateway id="Gateway_OverdueDuration" name="Overdue how long?" default="Flow_C11" />
     <bpmn:endEvent id="EndEvent_ReminderIssued" name="Reminder issued" />
     <bpmn:userTask id="UserTask_ContactResponsibleConsultant" name="Contact responsible consultant">
       <bpmn:extensionElements>
@@ -101,7 +103,7 @@
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1csb1ko</bpmn:incoming>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_FollowUpStatus" name="Appointment status?" />
+    <bpmn:exclusiveGateway id="Gateway_FollowUpStatus" name="Appointment status?" default="Flow_C20" />
     <bpmn:endEvent id="EndEvent_PathwayCompleted" name="Pathway completed" />
     <bpmn:userTask id="UserTask_RecordCancellationOrNonAttendance" name="Record cancellation">
       <bpmn:extensionElements>
@@ -109,8 +111,8 @@
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_PaidAppointmentAffected" name="Paid appointment?" />
-    <bpmn:exclusiveGateway id="Gateway_OfferAnotherAppointment" name="Offer another?" />
+    <bpmn:exclusiveGateway id="Gateway_PaidAppointmentAffected" name="Paid appointment?" default="Flow_C23" />
+    <bpmn:exclusiveGateway id="Gateway_OfferAnotherAppointment" name="Offer another?" default="Flow_C28" />
     <bpmn:endEvent id="EndEvent_PathwayClosed" name="Pathway closed" />
     <bpmn:userTask id="UserTask_DetermineRefund" name="Determine refund">
       <bpmn:extensionElements>
@@ -150,6 +152,13 @@
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">P7D</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="Boundary_Error_LetterDispatch" name="invalid dispatch request" attachedToRef="ServiceTask_DispatchClinicLetter">
+      <bpmn:errorEventDefinition errorRef="Error_InvalidVariable" />
+    </bpmn:boundaryEvent>
+
+    <bpmn:boundaryEvent id="Boundary_Error_FollowUpBooking" name="invalid follow-up booking" attachedToRef="ServiceTask_CheckFollowUpAvailability">
+      <bpmn:errorEventDefinition errorRef="Error_InvalidVariable" />
+    </bpmn:boundaryEvent>
     <bpmn:sequenceFlow id="Flow_C1" sourceRef="StartEvent_ConsultationCompleted" targetRef="UserTask_PrepareAndApproveClinicLetter" />
     <bpmn:sequenceFlow id="Flow_C2" sourceRef="UserTask_PrepareAndApproveClinicLetter" targetRef="UserTask_ProcessAndDistributeLetter" />
     <bpmn:sequenceFlow id="Flow_C3" sourceRef="UserTask_ProcessAndDistributeLetter" targetRef="ServiceTask_DispatchClinicLetter" />
@@ -159,6 +168,8 @@
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_C6" name="delayed" sourceRef="Gateway_LetterOnTime" targetRef="UserTask_ReviewOutstandingCorrespondence" />
     <bpmn:sequenceFlow id="Flow_C7" sourceRef="Boundary_Timer_Letter" targetRef="UserTask_ReviewOutstandingCorrespondence" />
+    <bpmn:sequenceFlow id="Flow_C28_LetterDispatchError" sourceRef="Boundary_Error_LetterDispatch" targetRef="UserTask_ProcessAndDistributeLetter" />
+    <bpmn:sequenceFlow id="Flow_C29_FollowUpBookingError" sourceRef="Boundary_Error_FollowUpBooking" targetRef="UserTask_ArrangeFollowUpAppointment" />
     <bpmn:sequenceFlow id="Flow_C8" sourceRef="UserTask_ReviewOutstandingCorrespondence" targetRef="Gateway_OverdueDuration" />
     <bpmn:sequenceFlow id="Flow_C9" name="1 month" sourceRef="Gateway_OverdueDuration" targetRef="UserTask_ContactResponsibleConsultant">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= overdueDuration = "over_one_month"</bpmn:conditionExpression>
@@ -261,6 +272,12 @@
       <bpmndi:BPMNShape id="ServiceTask_DispatchClinicLetter_di" bpmnElement="ServiceTask_DispatchClinicLetter">
         <dc:Bounds x="885" y="1190" width="150" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_C28_LetterDispatchError_di" bpmnElement="Flow_C28_LetterDispatchError">
+        <di:waypoint x="960" y="1270" />
+        <di:waypoint x="960" y="1295" />
+        <di:waypoint x="780" y="1295" />
+        <di:waypoint x="780" y="1270" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Gateway_LetterOnTime_di" bpmnElement="Gateway_LetterOnTime" isMarkerVisible="true">
         <dc:Bounds x="1115" y="1205" width="50" height="50" />
         <bpmndi:BPMNLabel>
@@ -300,6 +317,12 @@
       <bpmndi:BPMNShape id="ServiceTask_CheckFollowUpAvailability_di" bpmnElement="ServiceTask_CheckFollowUpAvailability">
         <dc:Bounds x="2505" y="590" width="150" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_C29_FollowUpBookingError_di" bpmnElement="Flow_C29_FollowUpBookingError">
+        <di:waypoint x="2580" y="670" />
+        <di:waypoint x="2580" y="700" />
+        <di:waypoint x="2445" y="700" />
+        <di:waypoint x="2445" y="670" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Gateway_FollowUpWithinPeriod_di" bpmnElement="Gateway_FollowUpWithinPeriod" isMarkerVisible="true">
         <dc:Bounds x="2735" y="605" width="50" height="50" />
         <bpmndi:BPMNLabel>
@@ -373,6 +396,19 @@
         <dc:Bounds x="582" y="1452" width="36" height="36" />
         <bpmndi:BPMNLabel>
         <dc:Bounds x="555" y="1494" width="90" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Boundary_Error_LetterDispatch_di" bpmnElement="Boundary_Error_LetterDispatch">
+        <dc:Bounds x="942" y="1252" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="860" y="1294" width="200" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Boundary_Error_FollowUpBooking_di" bpmnElement="Boundary_Error_FollowUpBooking">
+        <dc:Bounds x="2562" y="652" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="2483" y="694" width="194" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_C1_di" bpmnElement="Flow_C1">

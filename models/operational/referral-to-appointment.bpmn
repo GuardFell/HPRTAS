@@ -34,6 +34,7 @@
         <bpmn:flowNodeRef>EndEvent_ReferralRedirected</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_OutpatientBookings" name="Outpatient Bookings">
+        <bpmn:flowNodeRef>UserTask_ArrangeExpeditedAppointment</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>UserTask_PrepareBookingRequest</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>ServiceTask_CheckAppointmentAvailability</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>UserTask_CorrectBookingRequest</bpmn:flowNodeRef>
@@ -104,27 +105,33 @@
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_SlotWithinWindow" name="Slot in window?" />
+    <bpmn:exclusiveGateway id="Gateway_SlotWithinWindow" name="Slot in window?" default="Flow_A19" />
     <bpmn:userTask id="UserTask_RecordNoSuitableSlot" name="Record no suitable slot">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_UrgentReferral" name="Urgent referral?" />
+    <bpmn:userTask id="UserTask_ArrangeExpeditedAppointment" name="Arrange an expedited appointment">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_UrgentReferral" name="Urgent referral?" default="Flow_A22" />
     <bpmn:serviceTask id="ServiceTask_SendAppointmentNotification" name="Send notification">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="send-correspondence" retries="3" />
       </bpmn:extensionElements>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="Gateway_WithinTwoWeeks" name="Within two weeks?" />
+    <bpmn:exclusiveGateway id="Gateway_WithinTwoWeeks" name="Within two weeks?" default="Flow_A26" />
     <bpmn:userTask id="UserTask_TelephoneContactPatient" name="Telephone the patient">
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_ContactOutcome" name="Contact outcome?" />
+    <bpmn:exclusiveGateway id="Gateway_ContactOutcome" name="Contact outcome?" default="Flow_A30" />
     <bpmn:userTask id="UserTask_RecordUnsuccessfulAttempt" name="Record and retry contact">
       <bpmn:extensionElements>
         <zeebe:userTask />
@@ -143,6 +150,13 @@
       <bpmn:errorEventDefinition errorRef="Error_MissingInformation" />
     </bpmn:boundaryEvent>
     <bpmn:boundaryEvent id="Boundary_Error_BookingRequest" name="invalid input" attachedToRef="ServiceTask_CheckAppointmentAvailability">
+      <bpmn:errorEventDefinition errorRef="Error_InvalidVariable" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="Boundary_Error_ReferralInput" name="invalid referral input" attachedToRef="ServiceTask_ValidateReferral">
+      <bpmn:errorEventDefinition errorRef="Error_InvalidVariable" />
+    </bpmn:boundaryEvent>
+
+    <bpmn:boundaryEvent id="Boundary_Error_NotificationRequest" name="invalid notification request" attachedToRef="ServiceTask_SendAppointmentNotification">
       <bpmn:errorEventDefinition errorRef="Error_InvalidVariable" />
     </bpmn:boundaryEvent>
     <bpmn:sequenceFlow id="Flow_A1" sourceRef="StartEvent_ReferralReceived" targetRef="UserTask_CheckReferralDocuments" />
@@ -175,15 +189,18 @@
     <bpmn:sequenceFlow id="Flow_A14" sourceRef="UserTask_PrepareBookingRequest" targetRef="ServiceTask_CheckAppointmentAvailability" />
     <bpmn:sequenceFlow id="Flow_A15" sourceRef="ServiceTask_CheckAppointmentAvailability" targetRef="Gateway_SlotWithinWindow" />
     <bpmn:sequenceFlow id="Flow_A16" sourceRef="Boundary_Error_BookingRequest" targetRef="UserTask_CorrectBookingRequest" />
+    <bpmn:sequenceFlow id="Flow_A34_ReferralInputError" sourceRef="Boundary_Error_ReferralInput" targetRef="UserTask_ReviewReferralException" />
+    <bpmn:sequenceFlow id="Flow_A35_NotificationError" sourceRef="Boundary_Error_NotificationRequest" targetRef="UserTask_CorrectBookingRequest" />
     <bpmn:sequenceFlow id="Flow_A17" sourceRef="UserTask_CorrectBookingRequest" targetRef="UserTask_PrepareBookingRequest" />
     <bpmn:sequenceFlow id="Flow_A18" name="in window" sourceRef="Gateway_SlotWithinWindow" targetRef="ServiceTask_SendAppointmentNotification">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= slotAvailable = true and withinRequestedWindow = true</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_A19" name="outside window" sourceRef="Gateway_SlotWithinWindow" targetRef="UserTask_RecordNoSuitableSlot" />
     <bpmn:sequenceFlow id="Flow_A20" sourceRef="UserTask_RecordNoSuitableSlot" targetRef="Gateway_UrgentReferral" />
-    <bpmn:sequenceFlow id="Flow_A21" name="urgent" sourceRef="Gateway_UrgentReferral" targetRef="ServiceTask_CheckAppointmentAvailability">
+    <bpmn:sequenceFlow id="Flow_A21" name="urgent" sourceRef="Gateway_UrgentReferral" targetRef="UserTask_ArrangeExpeditedAppointment">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= priority = &quot;urgent&quot;</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_A33_ExpeditedThenPathway" name="expedited" sourceRef="UserTask_ArrangeExpeditedAppointment" targetRef="UserTask_ReviewPathwayDelay" />
     <bpmn:sequenceFlow id="Flow_A22" name="routine" sourceRef="Gateway_UrgentReferral" targetRef="UserTask_ReviewPathwayDelay" />
     <bpmn:sequenceFlow id="Flow_A23" sourceRef="UserTask_ReviewPathwayDelay" targetRef="EndEvent_ReferredToPathwayTeam" />
     <bpmn:sequenceFlow id="Flow_A24" sourceRef="ServiceTask_SendAppointmentNotification" targetRef="Gateway_WithinTwoWeeks" />
@@ -305,6 +322,9 @@
       <bpmndi:BPMNShape id="UserTask_RecordNoSuitableSlot_di" bpmnElement="UserTask_RecordNoSuitableSlot">
         <dc:Bounds x="2865" y="790" width="150" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_ArrangeExpeditedAppointment_di" bpmnElement="UserTask_ArrangeExpeditedAppointment">
+        <dc:Bounds x="3200" y="740" width="150" height="80" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_UrgentReferral_di" bpmnElement="Gateway_UrgentReferral" isMarkerVisible="true">
         <dc:Bounds x="3095" y="805" width="50" height="50" />
         <bpmndi:BPMNLabel>
@@ -353,10 +373,22 @@
         <dc:Bounds x="735" y="494" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Boundary_Error_ReferralInput_di" bpmnElement="Boundary_Error_ReferralInput">
+        <dc:Bounds x="722" y="452" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="666" y="494" width="148" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Boundary_Error_BookingRequest_di" bpmnElement="Boundary_Error_BookingRequest">
         <dc:Bounds x="2382" y="852" width="36" height="36" />
         <bpmndi:BPMNLabel>
         <dc:Bounds x="2353" y="894" width="93" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Boundary_Error_NotificationRequest_di" bpmnElement="Boundary_Error_NotificationRequest">
+        <dc:Bounds x="3462" y="852" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="3382" y="894" width="196" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_A1_di" bpmnElement="Flow_A1">
@@ -407,6 +439,12 @@
         <di:waypoint x="932" y="470" />
         <di:waypoint x="932" y="430" />
         <di:waypoint x="1065" y="430" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A34_ReferralInputError_di" bpmnElement="Flow_A34_ReferralInputError">
+        <di:waypoint x="740" y="470" />
+        <di:waypoint x="740" y="505" />
+        <di:waypoint x="1140" y="505" />
+        <di:waypoint x="1140" y="470" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A8_di" bpmnElement="Flow_A8">
         <di:waypoint x="1215" y="430" />
@@ -471,6 +509,13 @@
         <di:waypoint x="2462" y="830" />
         <di:waypoint x="2505" y="830" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A35_NotificationError_di" bpmnElement="Flow_A35_NotificationError">
+        <di:waypoint x="3480" y="870" />
+        <di:waypoint x="3480" y="890" />
+        <di:waypoint x="2690" y="890" />
+        <di:waypoint x="2690" y="830" />
+        <di:waypoint x="2655" y="830" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A17_di" bpmnElement="Flow_A17">
         <di:waypoint x="2580" y="870" />
         <di:waypoint x="2580" y="916" />
@@ -496,12 +541,18 @@
         <di:waypoint x="3095" y="830" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A21_di" bpmnElement="Flow_A21">
-        <di:waypoint x="3120" y="855" />
-        <di:waypoint x="3120" y="916" />
-        <di:waypoint x="2400" y="916" />
-        <di:waypoint x="2400" y="870" />
+        <di:waypoint x="3120" y="805" />
+        <di:waypoint x="3120" y="780" />
+        <di:waypoint x="3200" y="780" />
         <bpmndi:BPMNLabel>
-        <dc:Bounds x="2355" y="922" width="90" height="16" />
+        <dc:Bounds x="3120" y="748" width="60" height="16" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_A33_ExpeditedThenPathway_di" bpmnElement="Flow_A33_ExpeditedThenPathway">
+        <di:waypoint x="3275" y="820" />
+        <di:waypoint x="3275" y="990" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="3285" y="890" width="76" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A22_di" bpmnElement="Flow_A22">

@@ -7,14 +7,14 @@
   <bpmn:error id="Error_InvalidVariable" name="INVALID_VARIABLE" errorCode="INVALID_VARIABLE" />
   <bpmn:error id="Error_MissingInformation" name="MISSING_INFORMATION_NOT_SPECIFIED" errorCode="MISSING_INFORMATION_NOT_SPECIFIED" />
   <bpmn:collaboration id="Collaboration_1">
-    <bpmn:participant id="Participant_Hospital" name="Hospital Trust (specialist service)" processRef="referral-to-appointment" />
-    <bpmn:participant id="Participant_ReferringOrganisation" name="Referring GP or another hospital" />
-    <bpmn:participant id="Participant_SchedulingService" name="External scheduling service" />
-    <bpmn:participant id="Participant_CorrespondenceService" name="External correspondence service" />
-    <bpmn:messageFlow id="MessageFlow_A1" name="referral letter and supporting documents" sourceRef="Participant_ReferringOrganisation" targetRef="StartEvent_ReferralReceived" />
-    <bpmn:messageFlow id="MessageFlow_A2" name="request for missing information" sourceRef="UserTask_RequestMissingInformation" targetRef="Participant_ReferringOrganisation" />
-    <bpmn:messageFlow id="MessageFlow_A3" name="availability request and response" sourceRef="ServiceTask_CheckAppointmentAvailability" targetRef="Participant_SchedulingService" />
-    <bpmn:messageFlow id="MessageFlow_A4" name="appointment letter or digital notification" sourceRef="ServiceTask_SendAppointmentNotification" targetRef="Participant_CorrespondenceService" />
+    <bpmn:participant id="Participant_Hospital" name="Hospital Trust" processRef="referral-to-appointment" />
+    <bpmn:participant id="Participant_ReferringOrganisation" name="Referring GP or hospital" />
+    <bpmn:participant id="Participant_SchedulingService" name="Scheduling service" />
+    <bpmn:participant id="Participant_CorrespondenceService" name="Correspondence service" />
+    <bpmn:messageFlow id="MessageFlow_A1" name="referral and documents" sourceRef="Participant_ReferringOrganisation" targetRef="StartEvent_ReferralReceived" />
+    <bpmn:messageFlow id="MessageFlow_A2" name="missing information" sourceRef="UserTask_RequestMissingInformation" targetRef="Participant_ReferringOrganisation" />
+    <bpmn:messageFlow id="MessageFlow_A3" name="availability request" sourceRef="ServiceTask_CheckAppointmentAvailability" targetRef="Participant_SchedulingService" />
+    <bpmn:messageFlow id="MessageFlow_A4" name="appointment letter" sourceRef="ServiceTask_SendAppointmentNotification" targetRef="Participant_CorrespondenceService" />
   </bpmn:collaboration>
   <bpmn:process id="referral-to-appointment" name="Referral receipt, clinical review and new patient appointment" isExecutable="true">
     <bpmn:laneSet id="LaneSet_1">
@@ -33,7 +33,7 @@
         <bpmn:flowNodeRef>EndEvent_ReferralRejected</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>EndEvent_ReferralRedirected</bpmn:flowNodeRef>
       </bpmn:lane>
-      <bpmn:lane id="Lane_OutpatientBookings" name="Outpatient Bookings Team">
+      <bpmn:lane id="Lane_OutpatientBookings" name="Outpatient Bookings">
         <bpmn:flowNodeRef>UserTask_PrepareBookingRequest</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>ServiceTask_CheckAppointmentAvailability</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>UserTask_CorrectBookingRequest</bpmn:flowNodeRef>
@@ -48,91 +48,91 @@
         <bpmn:flowNodeRef>EndEvent_AppointmentArranged</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Boundary_Error_BookingRequest</bpmn:flowNodeRef>
       </bpmn:lane>
-      <bpmn:lane id="Lane_PathwayCoordinators" name="Patient Pathway Coordinators">
+      <bpmn:lane id="Lane_PathwayCoordinators" name="Pathway Coordinators">
         <bpmn:flowNodeRef>UserTask_ReviewPathwayDelay</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>EndEvent_ReferredToPathwayTeam</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
-    <bpmn:startEvent id="StartEvent_ReferralReceived" name="Referral received from a GP or another hospital" />
-    <bpmn:userTask id="UserTask_CheckReferralDocuments" name="Check the referral and its supporting information">
+    <bpmn:startEvent id="StartEvent_ReferralReceived" name="Referral received" />
+    <bpmn:userTask id="UserTask_CheckReferralDocuments" name="Check referral and documents">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:serviceTask id="ServiceTask_ValidateReferral" name="Validate the referral against the expected supporting information">
+    <bpmn:serviceTask id="ServiceTask_ValidateReferral" name="Validate referral">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="validate-referral" retries="3" />
       </bpmn:extensionElements>
     </bpmn:serviceTask>
     <bpmn:exclusiveGateway id="Gateway_DocumentsComplete" name="Documents complete?" />
-    <bpmn:userTask id="UserTask_ReviewReferralException" name="Review the validation exception and correct the referral record">
+    <bpmn:userTask id="UserTask_ReviewReferralException" name="Review validation exception">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:userTask id="UserTask_RequestMissingInformation" name="Request the missing information from the referring organisation">
+    <bpmn:userTask id="UserTask_RequestMissingInformation" name="Request missing information">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:userTask id="UserTask_ClinicalReviewReferral" name="Clinically review the referral and record the decision and the decision maker">
+    <bpmn:userTask id="UserTask_ClinicalReviewReferral" name="Clinical review and decision">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_ClinicalDecision" name="Clinical decision?" />
-    <bpmn:endEvent id="EndEvent_ReferralRejected" name="Referral rejected with the reason recorded" />
-    <bpmn:endEvent id="EndEvent_ReferralRedirected" name="Referral redirected to another specialist service" />
-    <bpmn:userTask id="UserTask_PrepareBookingRequest" name="Record the speciality, priority, preferred timeframe and patient requirements">
+    <bpmn:exclusiveGateway id="Gateway_ClinicalDecision" name="Decision?" />
+    <bpmn:endEvent id="EndEvent_ReferralRejected" name="Referral rejected" />
+    <bpmn:endEvent id="EndEvent_ReferralRedirected" name="Referral redirected" />
+    <bpmn:userTask id="UserTask_PrepareBookingRequest" name="Record booking request">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:serviceTask id="ServiceTask_CheckAppointmentAvailability" name="Request appointment availability from the external scheduling service">
+    <bpmn:serviceTask id="ServiceTask_CheckAppointmentAvailability" name="Check availability">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="check-appointment-availability" retries="3" />
       </bpmn:extensionElements>
     </bpmn:serviceTask>
-    <bpmn:userTask id="UserTask_CorrectBookingRequest" name="Correct the booking request and retry the availability check">
+    <bpmn:userTask id="UserTask_CorrectBookingRequest" name="Correct request">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:exclusiveGateway id="Gateway_SlotWithinWindow" name="Slot within the requested period?" />
-    <bpmn:userTask id="UserTask_RecordNoSuitableSlot" name="Record that no suitable appointment was found and refer the case to the pathway team">
+    <bpmn:exclusiveGateway id="Gateway_SlotWithinWindow" name="Slot in window?" />
+    <bpmn:userTask id="UserTask_RecordNoSuitableSlot" name="Record no suitable slot">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_UrgentReferral" name="Urgent referral?" />
-    <bpmn:serviceTask id="ServiceTask_SendAppointmentNotification" name="Send the appointment notification through the correspondence service">
+    <bpmn:serviceTask id="ServiceTask_SendAppointmentNotification" name="Send notification">
       <bpmn:extensionElements>
         <zeebe:taskDefinition type="send-correspondence" retries="3" />
       </bpmn:extensionElements>
     </bpmn:serviceTask>
-    <bpmn:exclusiveGateway id="Gateway_WithinTwoWeeks" name="Appointment within two weeks?" />
-    <bpmn:userTask id="UserTask_TelephoneContactPatient" name="Telephone the patient and record the contact attempt and its outcome">
+    <bpmn:exclusiveGateway id="Gateway_WithinTwoWeeks" name="Within two weeks?" />
+    <bpmn:userTask id="UserTask_TelephoneContactPatient" name="Telephone the patient">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
     <bpmn:exclusiveGateway id="Gateway_ContactOutcome" name="Contact outcome?" />
-    <bpmn:userTask id="UserTask_RecordUnsuccessfulAttempt" name="Record the unsuccessful attempt and retry the contact">
+    <bpmn:userTask id="UserTask_RecordUnsuccessfulAttempt" name="Record and retry contact">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:endEvent id="EndEvent_AppointmentArranged" name="New patient appointment arranged and the patient informed" />
-    <bpmn:userTask id="UserTask_ReviewPathwayDelay" name="Review the delay and re-plan the appointment with the pathway team">
+    <bpmn:endEvent id="EndEvent_AppointmentArranged" name="Appointment arranged" />
+    <bpmn:userTask id="UserTask_ReviewPathwayDelay" name="Review the delay">
       <bpmn:extensionElements>
         <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:endEvent id="EndEvent_ReferredToPathwayTeam" name="Case referred to the pathway team" />
-    <bpmn:boundaryEvent id="Boundary_Error_Validation" name="MISSING_INFORMATION_NOT_SPECIFIED" attachedToRef="ServiceTask_ValidateReferral">
+    <bpmn:endEvent id="EndEvent_ReferredToPathwayTeam" name="Referred to pathway team" />
+    <bpmn:boundaryEvent id="Boundary_Error_Validation" name="missing info" attachedToRef="ServiceTask_ValidateReferral">
       <bpmn:errorEventDefinition errorRef="Error_MissingInformation" />
     </bpmn:boundaryEvent>
-    <bpmn:boundaryEvent id="Boundary_Error_BookingRequest" name="INVALID_VARIABLE" attachedToRef="ServiceTask_CheckAppointmentAvailability">
+    <bpmn:boundaryEvent id="Boundary_Error_BookingRequest" name="invalid input" attachedToRef="ServiceTask_CheckAppointmentAvailability">
       <bpmn:errorEventDefinition errorRef="Error_InvalidVariable" />
     </bpmn:boundaryEvent>
     <bpmn:sequenceFlow id="Flow_A1" sourceRef="StartEvent_ReferralReceived" targetRef="UserTask_CheckReferralDocuments" />
@@ -157,17 +157,17 @@
     <bpmn:sequenceFlow id="Flow_A12" name="redirected" sourceRef="Gateway_ClinicalDecision" targetRef="EndEvent_ReferralRedirected">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= decision = &quot;redirected&quot;</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_A13" name="further information" sourceRef="Gateway_ClinicalDecision" targetRef="UserTask_RequestMissingInformation">
+    <bpmn:sequenceFlow id="Flow_A13" name="further info" sourceRef="Gateway_ClinicalDecision" targetRef="UserTask_RequestMissingInformation">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= decision = &quot;further_information&quot;</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_A14" sourceRef="UserTask_PrepareBookingRequest" targetRef="ServiceTask_CheckAppointmentAvailability" />
     <bpmn:sequenceFlow id="Flow_A15" sourceRef="ServiceTask_CheckAppointmentAvailability" targetRef="Gateway_SlotWithinWindow" />
     <bpmn:sequenceFlow id="Flow_A16" sourceRef="Boundary_Error_BookingRequest" targetRef="UserTask_CorrectBookingRequest" />
     <bpmn:sequenceFlow id="Flow_A17" sourceRef="UserTask_CorrectBookingRequest" targetRef="UserTask_PrepareBookingRequest" />
-    <bpmn:sequenceFlow id="Flow_A18" name="available in window" sourceRef="Gateway_SlotWithinWindow" targetRef="ServiceTask_SendAppointmentNotification">
+    <bpmn:sequenceFlow id="Flow_A18" name="in window" sourceRef="Gateway_SlotWithinWindow" targetRef="ServiceTask_SendAppointmentNotification">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= slotAvailable = true and withinRequestedWindow = true</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_A19" name="not available in window" sourceRef="Gateway_SlotWithinWindow" targetRef="UserTask_RecordNoSuitableSlot" />
+    <bpmn:sequenceFlow id="Flow_A19" name="outside window" sourceRef="Gateway_SlotWithinWindow" targetRef="UserTask_RecordNoSuitableSlot" />
     <bpmn:sequenceFlow id="Flow_A20" sourceRef="UserTask_RecordNoSuitableSlot" targetRef="Gateway_UrgentReferral" />
     <bpmn:sequenceFlow id="Flow_A21" name="urgent" sourceRef="Gateway_UrgentReferral" targetRef="ServiceTask_CheckAppointmentAvailability">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= priority = &quot;urgent&quot;</bpmn:conditionExpression>
@@ -175,7 +175,7 @@
     <bpmn:sequenceFlow id="Flow_A22" name="routine" sourceRef="Gateway_UrgentReferral" targetRef="UserTask_ReviewPathwayDelay" />
     <bpmn:sequenceFlow id="Flow_A23" sourceRef="UserTask_ReviewPathwayDelay" targetRef="EndEvent_ReferredToPathwayTeam" />
     <bpmn:sequenceFlow id="Flow_A24" sourceRef="ServiceTask_SendAppointmentNotification" targetRef="Gateway_WithinTwoWeeks" />
-    <bpmn:sequenceFlow id="Flow_A25" name="within two weeks" sourceRef="Gateway_WithinTwoWeeks" targetRef="UserTask_TelephoneContactPatient">
+    <bpmn:sequenceFlow id="Flow_A25" name="within 2 weeks" sourceRef="Gateway_WithinTwoWeeks" targetRef="UserTask_TelephoneContactPatient">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= appointmentWithinTwoWeeks = true</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_A26" name="later" sourceRef="Gateway_WithinTwoWeeks" targetRef="EndEvent_AppointmentArranged" />
@@ -183,416 +183,389 @@
     <bpmn:sequenceFlow id="Flow_A28" name="contacted" sourceRef="Gateway_ContactOutcome" targetRef="EndEvent_AppointmentArranged">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= contactOutcome = &quot;contacted&quot;</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_A29" name="alternative requested" sourceRef="Gateway_ContactOutcome" targetRef="UserTask_PrepareBookingRequest">
+    <bpmn:sequenceFlow id="Flow_A29" name="another date" sourceRef="Gateway_ContactOutcome" targetRef="UserTask_PrepareBookingRequest">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= contactOutcome = &quot;alternative_requested&quot;</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="Flow_A30" name="not contacted" sourceRef="Gateway_ContactOutcome" targetRef="UserTask_RecordUnsuccessfulAttempt" />
+    <bpmn:sequenceFlow id="Flow_A30" name="no contact" sourceRef="Gateway_ContactOutcome" targetRef="UserTask_RecordUnsuccessfulAttempt" />
     <bpmn:sequenceFlow id="Flow_A31" sourceRef="UserTask_RecordUnsuccessfulAttempt" targetRef="UserTask_TelephoneContactPatient" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
       <bpmndi:BPMNShape id="Participant_Hospital_di" bpmnElement="Participant_Hospital" isHorizontal="true">
-        <dc:Bounds x="140" y="140" width="3520" height="570" />
+        <dc:Bounds x="140" y="140" width="4450" height="1110" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="150" y="716" width="200" height="20" />
+        <dc:Bounds x="146" y="1256" width="260" height="20" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_Secretaries_di" bpmnElement="Lane_Secretaries" isHorizontal="true">
-        <dc:Bounds x="140" y="170" width="3520" height="130" />
+        <dc:Bounds x="140" y="330" width="4450" height="200" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="148" y="338" width="174" height="20" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_Consultants_di" bpmnElement="Lane_Consultants" isHorizontal="true">
-        <dc:Bounds x="140" y="300" width="3520" height="130" />
+        <dc:Bounds x="140" y="530" width="4450" height="200" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="148" y="538" width="174" height="20" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_OutpatientBookings_di" bpmnElement="Lane_OutpatientBookings" isHorizontal="true">
-        <dc:Bounds x="140" y="430" width="3520" height="130" />
+        <dc:Bounds x="140" y="730" width="4450" height="200" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="148" y="738" width="174" height="20" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_PathwayCoordinators_di" bpmnElement="Lane_PathwayCoordinators" isHorizontal="true">
-        <dc:Bounds x="140" y="560" width="3520" height="130" />
+        <dc:Bounds x="140" y="930" width="4450" height="200" />
+        <bpmndi:BPMNLabel>
+        <dc:Bounds x="148" y="938" width="174" height="20" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_ReferringOrganisation_di" bpmnElement="Participant_ReferringOrganisation" isHorizontal="true">
-        <dc:Bounds x="3860" y="205" width="330" height="60" />
+        <dc:Bounds x="4790" y="400" width="330" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_SchedulingService_di" bpmnElement="Participant_SchedulingService" isHorizontal="true">
-        <dc:Bounds x="3860" y="465" width="330" height="60" />
+        <dc:Bounds x="4790" y="800" width="330" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_CorrespondenceService_di" bpmnElement="Participant_CorrespondenceService" isHorizontal="true">
-        <dc:Bounds x="3860" y="555" width="330" height="60" />
+        <dc:Bounds x="4790" y="890" width="330" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="StartEvent_ReferralReceived_di" bpmnElement="StartEvent_ReferralReceived">
-        <dc:Bounds x="227" y="217" width="36" height="36" />
+        <dc:Bounds x="402" y="412" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="76" y="259" width="338" height="20" />
+        <dc:Bounds x="359" y="454" width="122" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_CheckReferralDocuments_di" bpmnElement="UserTask_CheckReferralDocuments">
-        <dc:Bounds x="345" y="195" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="225" y="281" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="525" y="390" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_ValidateReferral_di" bpmnElement="ServiceTask_ValidateReferral">
-        <dc:Bounds x="495" y="195" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="375" y="281" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="705" y="390" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_DocumentsComplete_di" bpmnElement="Gateway_DocumentsComplete" isMarkerVisible="true">
-        <dc:Bounds x="670" y="210" width="50" height="50" />
+        <dc:Bounds x="935" y="405" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="627" y="182" width="137" height="20" />
+        <dc:Bounds x="892" y="461" width="136" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_ReviewReferralException_di" bpmnElement="UserTask_ReviewReferralException">
-        <dc:Bounds x="795" y="195" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="675" y="281" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="1065" y="390" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_RequestMissingInformation_di" bpmnElement="UserTask_RequestMissingInformation">
-        <dc:Bounds x="945" y="195" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="825" y="281" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="1245" y="390" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_ClinicalReviewReferral_di" bpmnElement="UserTask_ClinicalReviewReferral">
-        <dc:Bounds x="1095" y="325" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="975" y="411" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="1425" y="590" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_ClinicalDecision_di" bpmnElement="Gateway_ClinicalDecision" isMarkerVisible="true">
-        <dc:Bounds x="1270" y="340" width="50" height="50" />
+        <dc:Bounds x="1655" y="605" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1230" y="312" width="130" height="20" />
+        <dc:Bounds x="1635" y="661" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_ReferralRejected_di" bpmnElement="EndEvent_ReferralRejected">
-        <dc:Bounds x="1427" y="347" width="36" height="36" />
+        <dc:Bounds x="1842" y="612" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1294" y="389" width="302" height="20" />
+        <dc:Bounds x="1799" y="654" width="122" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_ReferralRedirected_di" bpmnElement="EndEvent_ReferralRedirected">
-        <dc:Bounds x="1577" y="347" width="36" height="36" />
+        <dc:Bounds x="2022" y="612" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1425" y="389" width="340" height="20" />
+        <dc:Bounds x="1972" y="654" width="136" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_PrepareBookingRequest_di" bpmnElement="UserTask_PrepareBookingRequest">
-        <dc:Bounds x="1695" y="455" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1575" y="541" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="2145" y="790" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_CheckAppointmentAvailability_di" bpmnElement="ServiceTask_CheckAppointmentAvailability">
-        <dc:Bounds x="1845" y="455" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1725" y="541" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="2325" y="790" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_CorrectBookingRequest_di" bpmnElement="UserTask_CorrectBookingRequest">
-        <dc:Bounds x="1995" y="455" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1875" y="541" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="2505" y="790" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_SlotWithinWindow_di" bpmnElement="Gateway_SlotWithinWindow" isMarkerVisible="true">
-        <dc:Bounds x="2170" y="470" width="50" height="50" />
+        <dc:Bounds x="2735" y="805" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2076" y="442" width="238" height="20" />
+        <dc:Bounds x="2706" y="861" width="108" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_RecordNoSuitableSlot_di" bpmnElement="UserTask_RecordNoSuitableSlot">
-        <dc:Bounds x="2295" y="455" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2175" y="541" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="2865" y="790" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_UrgentReferral_di" bpmnElement="Gateway_UrgentReferral" isMarkerVisible="true">
-        <dc:Bounds x="2470" y="470" width="50" height="50" />
+        <dc:Bounds x="3095" y="805" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2435" y="442" width="120" height="20" />
+        <dc:Bounds x="3062" y="861" width="115" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ServiceTask_SendAppointmentNotification_di" bpmnElement="ServiceTask_SendAppointmentNotification">
-        <dc:Bounds x="2745" y="455" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2625" y="541" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="3405" y="790" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_WithinTwoWeeks_di" bpmnElement="Gateway_WithinTwoWeeks" isMarkerVisible="true">
-        <dc:Bounds x="2920" y="470" width="50" height="50" />
+        <dc:Bounds x="3635" y="805" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2841" y="442" width="209" height="20" />
+        <dc:Bounds x="3599" y="861" width="122" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_TelephoneContactPatient_di" bpmnElement="UserTask_TelephoneContactPatient">
-        <dc:Bounds x="3045" y="455" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2925" y="541" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="3765" y="790" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_ContactOutcome_di" bpmnElement="Gateway_ContactOutcome" isMarkerVisible="true">
-        <dc:Bounds x="3220" y="470" width="50" height="50" />
+        <dc:Bounds x="3995" y="805" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3185" y="442" width="120" height="20" />
+        <dc:Bounds x="3962" y="861" width="115" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_RecordUnsuccessfulAttempt_di" bpmnElement="UserTask_RecordUnsuccessfulAttempt">
-        <dc:Bounds x="3345" y="455" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="3225" y="541" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="4125" y="790" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_AppointmentArranged_di" bpmnElement="EndEvent_AppointmentArranged">
-        <dc:Bounds x="3527" y="477" width="36" height="36" />
+        <dc:Bounds x="4362" y="812" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3375" y="519" width="340" height="20" />
+        <dc:Bounds x="4308" y="854" width="144" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="UserTask_ReviewPathwayDelay_di" bpmnElement="UserTask_ReviewPathwayDelay">
-        <dc:Bounds x="2595" y="585" width="100" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2475" y="671" width="340" height="20" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="3225" y="990" width="150" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="EndEvent_ReferredToPathwayTeam_di" bpmnElement="EndEvent_ReferredToPathwayTeam">
-        <dc:Bounds x="2777" y="607" width="36" height="36" />
+        <dc:Bounds x="3462" y="1012" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2676" y="649" width="238" height="20" />
+        <dc:Bounds x="3394" y="1054" width="172" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Boundary_Error_Validation_di" bpmnElement="Boundary_Error_Validation">
-        <dc:Bounds x="527" y="257" width="36" height="36" />
+        <dc:Bounds x="762" y="452" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="426" y="299" width="238" height="20" />
+        <dc:Bounds x="735" y="494" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Boundary_Error_BookingRequest_di" bpmnElement="Boundary_Error_BookingRequest">
-        <dc:Bounds x="1877" y="517" width="36" height="36" />
+        <dc:Bounds x="2382" y="852" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1835" y="559" width="120" height="20" />
+        <dc:Bounds x="2353" y="894" width="93" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_A1_di" bpmnElement="Flow_A1">
-        <di:waypoint x="263" y="235" />
-        <di:waypoint x="345" y="235" />
+        <di:waypoint x="438" y="430" />
+        <di:waypoint x="525" y="430" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A2_di" bpmnElement="Flow_A2">
-        <di:waypoint x="445" y="235" />
-        <di:waypoint x="495" y="235" />
+        <di:waypoint x="675" y="430" />
+        <di:waypoint x="705" y="430" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A3_di" bpmnElement="Flow_A3">
-        <di:waypoint x="595" y="235" />
-        <di:waypoint x="670" y="235" />
+        <di:waypoint x="855" y="430" />
+        <di:waypoint x="935" y="430" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A4_di" bpmnElement="Flow_A4">
-        <di:waypoint x="720" y="235" />
-        <di:waypoint x="908" y="235" />
-        <di:waypoint x="908" y="365" />
-        <di:waypoint x="1095" y="365" />
+        <di:waypoint x="985" y="430" />
+        <di:waypoint x="1205" y="430" />
+        <di:waypoint x="1205" y="630" />
+        <di:waypoint x="1425" y="630" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="848" y="341" width="120" height="20" />
+        <dc:Bounds x="1160" y="636" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A5_di" bpmnElement="Flow_A5">
-        <di:waypoint x="720" y="235" />
-        <di:waypoint x="945" y="235" />
+        <di:waypoint x="985" y="430" />
+        <di:waypoint x="1245" y="430" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="885" y="211" width="120" height="20" />
+        <dc:Bounds x="1200" y="436" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A6_di" bpmnElement="Flow_A6">
-        <di:waypoint x="995" y="275" />
-        <di:waypoint x="995" y="315" />
-        <di:waypoint x="395" y="315" />
-        <di:waypoint x="395" y="275" />
+        <di:waypoint x="1320" y="470" />
+        <di:waypoint x="1320" y="516" />
+        <di:waypoint x="600" y="516" />
+        <di:waypoint x="600" y="470" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A7_di" bpmnElement="Flow_A7">
-        <di:waypoint x="563" y="275" />
-        <di:waypoint x="679" y="275" />
-        <di:waypoint x="679" y="235" />
-        <di:waypoint x="795" y="235" />
+        <di:waypoint x="798" y="470" />
+        <di:waypoint x="932" y="470" />
+        <di:waypoint x="932" y="430" />
+        <di:waypoint x="1065" y="430" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A8_di" bpmnElement="Flow_A8">
-        <di:waypoint x="895" y="235" />
-        <di:waypoint x="945" y="235" />
+        <di:waypoint x="1215" y="430" />
+        <di:waypoint x="1245" y="430" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A9_di" bpmnElement="Flow_A9">
-        <di:waypoint x="1195" y="365" />
-        <di:waypoint x="1270" y="365" />
+        <di:waypoint x="1575" y="630" />
+        <di:waypoint x="1655" y="630" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A10_di" bpmnElement="Flow_A10">
-        <di:waypoint x="1320" y="365" />
-        <di:waypoint x="1508" y="365" />
-        <di:waypoint x="1508" y="495" />
-        <di:waypoint x="1695" y="495" />
+        <di:waypoint x="1705" y="630" />
+        <di:waypoint x="1925" y="630" />
+        <di:waypoint x="1925" y="830" />
+        <di:waypoint x="2145" y="830" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1448" y="471" width="120" height="20" />
+        <dc:Bounds x="1880" y="836" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A11_di" bpmnElement="Flow_A11">
-        <di:waypoint x="1320" y="365" />
-        <di:waypoint x="1427" y="365" />
+        <di:waypoint x="1705" y="630" />
+        <di:waypoint x="1842" y="630" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1367" y="341" width="120" height="20" />
+        <dc:Bounds x="1797" y="636" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A12_di" bpmnElement="Flow_A12">
-        <di:waypoint x="1320" y="365" />
-        <di:waypoint x="1577" y="365" />
+        <di:waypoint x="1705" y="630" />
+        <di:waypoint x="2022" y="630" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1517" y="341" width="120" height="20" />
+        <dc:Bounds x="1977" y="636" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A13_di" bpmnElement="Flow_A13">
-        <di:waypoint x="1295" y="390" />
-        <di:waypoint x="1295" y="430" />
-        <di:waypoint x="995" y="430" />
-        <di:waypoint x="995" y="275" />
+        <di:waypoint x="1680" y="655" />
+        <di:waypoint x="1680" y="701" />
+        <di:waypoint x="1320" y="701" />
+        <di:waypoint x="1320" y="470" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="927" y="406" width="137" height="20" />
+        <dc:Bounds x="1275" y="707" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A14_di" bpmnElement="Flow_A14">
-        <di:waypoint x="1795" y="495" />
-        <di:waypoint x="1845" y="495" />
+        <di:waypoint x="2295" y="830" />
+        <di:waypoint x="2325" y="830" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A15_di" bpmnElement="Flow_A15">
-        <di:waypoint x="1945" y="495" />
-        <di:waypoint x="2170" y="495" />
+        <di:waypoint x="2475" y="830" />
+        <di:waypoint x="2735" y="830" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A16_di" bpmnElement="Flow_A16">
-        <di:waypoint x="1913" y="535" />
-        <di:waypoint x="1954" y="535" />
-        <di:waypoint x="1954" y="495" />
-        <di:waypoint x="1995" y="495" />
+        <di:waypoint x="2418" y="870" />
+        <di:waypoint x="2462" y="870" />
+        <di:waypoint x="2462" y="830" />
+        <di:waypoint x="2505" y="830" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A17_di" bpmnElement="Flow_A17">
-        <di:waypoint x="2045" y="535" />
-        <di:waypoint x="2045" y="575" />
-        <di:waypoint x="1745" y="575" />
-        <di:waypoint x="1745" y="535" />
+        <di:waypoint x="2580" y="870" />
+        <di:waypoint x="2580" y="916" />
+        <di:waypoint x="2220" y="916" />
+        <di:waypoint x="2220" y="870" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A18_di" bpmnElement="Flow_A18">
-        <di:waypoint x="2220" y="495" />
-        <di:waypoint x="2745" y="495" />
+        <di:waypoint x="2785" y="830" />
+        <di:waypoint x="3405" y="830" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2677" y="471" width="137" height="20" />
+        <dc:Bounds x="3360" y="836" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A19_di" bpmnElement="Flow_A19">
-        <di:waypoint x="2220" y="495" />
-        <di:waypoint x="2295" y="495" />
+        <di:waypoint x="2785" y="830" />
+        <di:waypoint x="2865" y="830" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2212" y="471" width="166" height="20" />
+        <dc:Bounds x="2815" y="836" width="100" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A20_di" bpmnElement="Flow_A20">
-        <di:waypoint x="2395" y="495" />
-        <di:waypoint x="2470" y="495" />
+        <di:waypoint x="3015" y="830" />
+        <di:waypoint x="3095" y="830" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A21_di" bpmnElement="Flow_A21">
-        <di:waypoint x="2495" y="520" />
-        <di:waypoint x="2495" y="575" />
-        <di:waypoint x="1895" y="575" />
-        <di:waypoint x="1895" y="535" />
+        <di:waypoint x="3120" y="855" />
+        <di:waypoint x="3120" y="916" />
+        <di:waypoint x="2400" y="916" />
+        <di:waypoint x="2400" y="870" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1835" y="551" width="120" height="20" />
+        <dc:Bounds x="2355" y="922" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A22_di" bpmnElement="Flow_A22">
-        <di:waypoint x="2520" y="495" />
-        <di:waypoint x="2558" y="495" />
-        <di:waypoint x="2558" y="625" />
-        <di:waypoint x="2595" y="625" />
+        <di:waypoint x="3145" y="830" />
+        <di:waypoint x="3185" y="830" />
+        <di:waypoint x="3185" y="1030" />
+        <di:waypoint x="3225" y="1030" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2498" y="601" width="120" height="20" />
+        <dc:Bounds x="3140" y="1036" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A23_di" bpmnElement="Flow_A23">
-        <di:waypoint x="2695" y="625" />
-        <di:waypoint x="2777" y="625" />
+        <di:waypoint x="3375" y="1030" />
+        <di:waypoint x="3462" y="1030" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A24_di" bpmnElement="Flow_A24">
-        <di:waypoint x="2845" y="495" />
-        <di:waypoint x="2920" y="495" />
+        <di:waypoint x="3555" y="830" />
+        <di:waypoint x="3635" y="830" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A25_di" bpmnElement="Flow_A25">
-        <di:waypoint x="2970" y="495" />
-        <di:waypoint x="3045" y="495" />
+        <di:waypoint x="3685" y="830" />
+        <di:waypoint x="3765" y="830" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2985" y="471" width="120" height="20" />
+        <dc:Bounds x="3715" y="836" width="100" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A26_di" bpmnElement="Flow_A26">
-        <di:waypoint x="2970" y="495" />
-        <di:waypoint x="3527" y="495" />
+        <di:waypoint x="3685" y="830" />
+        <di:waypoint x="4362" y="830" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3467" y="471" width="120" height="20" />
+        <dc:Bounds x="4317" y="836" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A27_di" bpmnElement="Flow_A27">
-        <di:waypoint x="3145" y="495" />
-        <di:waypoint x="3220" y="495" />
+        <di:waypoint x="3915" y="830" />
+        <di:waypoint x="3995" y="830" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A28_di" bpmnElement="Flow_A28">
-        <di:waypoint x="3270" y="495" />
-        <di:waypoint x="3527" y="495" />
+        <di:waypoint x="4045" y="830" />
+        <di:waypoint x="4362" y="830" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3467" y="471" width="120" height="20" />
+        <dc:Bounds x="4317" y="836" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A29_di" bpmnElement="Flow_A29">
-        <di:waypoint x="3245" y="520" />
-        <di:waypoint x="3245" y="575" />
-        <di:waypoint x="1745" y="575" />
-        <di:waypoint x="1745" y="535" />
+        <di:waypoint x="4020" y="855" />
+        <di:waypoint x="4020" y="916" />
+        <di:waypoint x="2220" y="916" />
+        <di:waypoint x="2220" y="870" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1670" y="551" width="151" height="20" />
+        <dc:Bounds x="2175" y="922" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A30_di" bpmnElement="Flow_A30">
-        <di:waypoint x="3270" y="495" />
-        <di:waypoint x="3345" y="495" />
+        <di:waypoint x="4045" y="830" />
+        <di:waypoint x="4125" y="830" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3285" y="471" width="120" height="20" />
+        <dc:Bounds x="4080" y="836" width="90" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_A31_di" bpmnElement="Flow_A31">
-        <di:waypoint x="3395" y="535" />
-        <di:waypoint x="3395" y="575" />
-        <di:waypoint x="3095" y="575" />
-        <di:waypoint x="3095" y="535" />
+        <di:waypoint x="4200" y="870" />
+        <di:waypoint x="4200" y="916" />
+        <di:waypoint x="3840" y="916" />
+        <di:waypoint x="3840" y="870" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_A1_di" bpmnElement="MessageFlow_A1">
-        <di:waypoint x="3860" y="235" />
-        <di:waypoint x="263" y="235" />
+        <di:waypoint x="4790" y="430" />
+        <di:waypoint x="438" y="430" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="119" y="211" width="288" height="20" />
+        <dc:Bounds x="359" y="436" width="158" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_A2_di" bpmnElement="MessageFlow_A2">
-        <di:waypoint x="1045" y="235" />
-        <di:waypoint x="3860" y="235" />
+        <di:waypoint x="1395" y="430" />
+        <di:waypoint x="4790" y="430" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3749" y="211" width="223" height="20" />
+        <dc:Bounds x="4722" y="436" width="136" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_A3_di" bpmnElement="MessageFlow_A3">
-        <di:waypoint x="1945" y="495" />
-        <di:waypoint x="3860" y="495" />
+        <di:waypoint x="2475" y="830" />
+        <di:waypoint x="4790" y="830" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3741" y="471" width="238" height="20" />
+        <dc:Bounds x="4718" y="836" width="144" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_A4_di" bpmnElement="MessageFlow_A4">
-        <di:waypoint x="2845" y="495" />
-        <di:waypoint x="3353" y="495" />
-        <di:waypoint x="3353" y="585" />
-        <di:waypoint x="3860" y="585" />
+        <di:waypoint x="3555" y="830" />
+        <di:waypoint x="4172" y="830" />
+        <di:waypoint x="4172" y="920" />
+        <di:waypoint x="4790" y="920" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3202" y="561" width="302" height="20" />
+        <dc:Bounds x="4108" y="926" width="129" height="16" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>

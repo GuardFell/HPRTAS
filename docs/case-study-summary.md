@@ -93,12 +93,12 @@
 
 ## 5. Key business rules
 
-> **Note on IDs.** The external workers and the test evidence already cite IDs from an earlier,
-> coarser allocation of the same numbering (BR-03 for the two-week telephone rule, BR-04 for
-> clinical authorisation of treatment requests, BR-06 for card data, BR-07 for a payment taken
-> without a confirmation, BR-17 for an appointment outside the requested period). Check the
-> reconciliation table in `docs/requirements/requirements.md` before assigning new IDs, so that one
-> allocation is used across the whole repository.
+> **Note on IDs.** These `BR-###` IDs are the ones the models and the workers cite: the element
+> documentation inside the four `core-N` models in `models/operational/` names the rules, exceptions
+> and requirements each element implements, using this list's numbering. The only place that still
+> uses the earlier, coarser allocation is the test evidence recorded at commit `813fea6` (for
+> example `BR-03` for the two-week telephone rule there, which is BR-07 here). The mapping is in the
+> reconciliation table at the top of `docs/requirements/requirements.md`.
 
 | # | Business rule (as stated in the case) | Where it affects the model (gateway / validation / permission) |
 |---|---|---|
@@ -187,9 +187,9 @@
 | External Payment Service Provider | Receives secure payment requests and approved refund requests; returns payment status, transaction reference, payment date and amount. | Simulated: `workers/src/services/payment-service-provider.js`, called by `workers/src/workers/payment-processing.js`; returns `completed`, `declined` or `success_no_confirmation`. |
 | Funding organisations and approved insurers | Provide funding authorisation references, approved amounts and any limitations. | Simulated: recorded as data on the funding approval task; no live interface. A hospital, insurer or exempt route means the payment provider is not called at all. |
 | External treatment, laboratory, imaging and scheduling services | Provide availability for treatment appointments and the assessments (including blood tests) needed between chemotherapy cycles. | Simulated: `workers/src/services/treatment-service.js`, called by `workers/src/workers/treatment-availability.js`; can return `unavailable`. |
-| Referring organisation - General Practitioner or another hospital | Sends the referral and supporting documentation; may be asked for missing information. | Modelled as an external pool (`Participant_ReferringOrganisation`) in the strategic model and in `referral-to-appointment.bpmn`; no worker. |
-| Letter recipients - patient's GP, other hospitals, healthcare providers and other professionals | Receive clinic letters after they are approved and distributed. | Modelled as recipients on the letter task; distribution simulated by the correspondence service. |
-| The patient | Attends appointments, consents to treatment, pays chargeable amounts, raises enquiries, and may cancel or fail to attend. | Modelled as an external participant; reached through the correspondence service and the contact tasks; the patient is not a pool in the current models. |
+| Referring organisation - General Practitioner or another hospital | Sends the referral and supporting documentation; may be asked for missing information. | Modelled as its own black-box pool (`Participant_Referring`) in the strategic all-entities model and in core-1, core-3 and core-4; the referral arrives as a message flow. |
+| Letter recipients - patient's GP, other hospitals, healthcare providers and other professionals | Receive clinic letters after they are approved and distributed. | Modelled as recipients on the letter tasks in core-3 and reached through the correspondence pool; distribution simulated by the correspondence service. |
+| The patient | Attends appointments, consents to treatment, pays chargeable amounts, raises enquiries, and may cancel or fail to attend. | Modelled as its own black-box pool (`Participant_Patient`, named "Patient or authorised representative") in the strategic all-entities model and in all four core models; the patient's steps are outside the hospital's control, so they are messages rather than lanes. |
 | Existing hospital systems and manually maintained records | Current sources and destinations of information that the HPAS is intended to replace or coordinate with. | Out of scope for the prototype; recorded as an assumption about the current state (AS-12). |
 
 ## 8. Information captured, stored, transferred or validated
@@ -284,7 +284,7 @@
 | AS-11 | The Consultant's approval of a clinic letter covers distribution to the recipients the Consultant identified. | The case makes the Consultant responsible for clinical content and recipients. | Additional consent steps would be needed if sharing requires separate patient consent. |
 | AS-12 | Integration with existing hospital systems is limited to the interfaces needed for the pathway (patient identification, charging, correspondence); the prototype simulates all external services. | The case does not define the integration scope, and the module uses simulated services. | Underestimated integration effort in later deliverables. |
 | AS-13 | The seven-day letter target and the escalation thresholds (one month, three months) are calendar periods measured from the appointment date. | The case states the periods without defining how they are counted. | Monitoring and reminder dates could be wrong by a day or more. |
-| AS-14 | The first release implements a subset of the pathway (referral through to the new patient appointment), as defined by the group's Sprint 1 goal. | The group's sprint plan targets a deployable model of the referral-to-appointment pathway first. | Requirements outside the subset are still documented but implemented later. |
+| AS-14 | The first release covers the pathway through the four `core-N` operational models (referral to appointment, treatment authorisation, funding and payment, clinic letters and escalation, follow-up, enquiry and refund). | The four core models were built and deployed for the initial release, replacing the first edition's three models. | If a requirement is demonstrated outside these four models, state where it is demonstrated instead. |
 
 ## Change log
 
@@ -292,3 +292,4 @@
 |---|---|---|
 | 17 Sep 2026 | Sections 1-10 completed from the case study text as a first draft for group discussion and confirmation. | Eason050109 |
 | 17 Sep 2026 | Section 7 now names the simulated services in `workers/src/services/`; section 5 carries a note on the two ID allocations in use, with the reconciliation table in `docs/requirements/requirements.md`. | Eason050109 |
+| 21 Sep 2026 | Re-pointed at the current models after the first operational edition was replaced by the four `core-N` models: section 7 now names the party pool ids including the patient pool, section 5 records that the models cite this list's rule IDs, and AS-14 reflects the four-model scope. | Eason050109 |

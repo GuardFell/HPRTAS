@@ -4,109 +4,166 @@
 > Cover the main workflow, alternatives, exceptions and relevant non-functional expectations.
 > Test against an **identified version** of the solution.
 
+## Version under test
+
+There are no release tags in this repository yet, so **the version under test is the commit**. A
+result is only meaningful with the commit it was produced at, and every evidence file in
+`evidence/` carries one in its name.
+
+| What | Value |
+|---|---|
+| Current version | `c8556ba` - "Correct the note on where the model migration is recorded" |
+| Artefact versions in that commit | the four `core-N` models, the eight forms and the six workers, last changed at `a7f0dd6`; only documentation changed between `a7f0dd6` and `c8556ba` |
+| Requirement basis for the criteria | `../docs/requirements/requirements.md` (FR-001 - FR-052, NFR-001 - NFR-013) |
+| Rule and exception basis | `../docs/case-study-summary.md` section 5 (BR-01 - BR-47) and section 6 (EX-01 - EX-23) |
+
+The IDs in this plan are stable. Test case numbers are the ones the worker test suite and the
+worker source cite, so `TC-06` in a test name and `TC-06` here are the same scenario.
+
 ## 1. Scope
 
 | Item | Detail |
 |---|---|
-|  |  |
-|  |  |
-|  |  |
-|  |  |
+| Solution under test | The four executable processes in `models/operational/` (`core-1` to `core-4`), the eight Camunda Forms in `forms/`, and the six external workers in `workers/` with their simulated external services. |
+| Levels of testing | Worker level (`npm test`, no engine); worker through the engine (`npm run test:smoke`, a purpose-built fixture); solution level (`npm run test:e2e`, the delivered models and forms with the real workers). |
+| Main workflow | The referral being received and checked, the Consultant's decision, the new patient appointment being found and confirmed, the patient being informed, consent and clinical authorisation, the funding route, payment, the treatment booking, the clinic letter, the follow-up, the cancellation and the refund. |
+| Alternative paths | Rejected, queried and redirected referrals; a slot outside the requested period; a funded or exempt patient who is not asked to pay; a declined payment that may be retried; a patient contacted by telephone with an outcome other than a successful call; a treatment modification; an enquiry that is administrative, financial or clinical; a letter returned for suspected clinical error. |
+| Exception paths | `EX-01` - `EX-23` of the case study summary, and in particular missing supporting information, no suitable appointment, an unavailable external service, a declined payment, a payment taken without a returned confirmation, a suspected clinical error, a delayed letter and a cancellation or non-attendance. |
+| Non-functional expectations | Data minimisation, that complete card details never reach the provider and are never stored (NFR-007); reliable exchange with the external services and a defined behaviour when one fails (NFR-008); configurability of the rules that are not yet fixed (NFR-012); the recording burden placed on clinical staff, reviewed against the forms (NFR-009). |
+| Delivery gate | Every service task in the four models must be reached by at least one scenario, and every gateway must route on what a worker or a form actually returned, with no incident left open. |
+| Evidence | `evidence/`, named `TC-<id>_<description>_<version>_<yyyy-mm-dd>.<ext>`, or, for a run that spans several test cases, `<description>_<version>_<yyyy-mm-dd>.<ext>` with the coverage stated in its header. |
 
 ## 2. Out of scope
 
 | Item | Reason |
 |---|---|
-|  |  |
-|  |  |
-|  |  |
-|  |  |
+| The strategic and the socio-technical models | They are views, not executables. Camunda rejects a deployment containing no executable process, so they are reviewed as documents rather than run; see `models/README.md`. |
+| Real external services | The scheduling, correspondence, treatment and payment services are simulated (`AS-12`). There is no live interface to test, and no real card processing, clearing or settlement exists behind the provider. |
+| Role-based access control and the audit trail (FR-045, FR-046, FR-047, NFR-001, NFR-002, NFR-003) | Not implemented. User tasks carry the candidate group of their lane, but no user is authenticated, no task is claimed through Tasklist and no audit record is produced. These are Must requirements that cannot currently be accepted; recorded as `DEF-07` rather than quietly omitted. |
+| Management reporting (FR-050, NFR-010) | Not implemented in the prototype; there is no reporting surface to test against. |
+| The downtime procedure (FR-049, NFR-006) | Not modelled. The pending-booking and dispatch-failure paths record the recording side only, and no procedure document exists. |
+| Patient identification and duplicate-patient matching (FR-048, NFR-004) | Not implemented. `N_MS_CheckReferral` records an identification check as a task field, but no matching or duplicate check runs behind it. |
+| Performance, load, availability targets and record retention (NFR-005, NFR-013) | No availability target or retention period has been agreed (`AS-10`), so neither is measurable against this prototype. |
+| Visual rendering and layout of the Tasklist forms | The forms are exercised through the variables they write; nothing checks how they look or how a long form is read on screen. |
+| The Enterprise Architecture portfolio deliverable | Assessed separately, and it describes the enterprise rather than implementing it. |
 
 ## 3. Acceptance criteria
 
 | AC ID | Acceptance criterion (clear and measurable) | Linked requirement | Linked business rule |
 |---|---|---|---|
-| AC-01 |  |  |  |
-| AC-02 |  |  |  |
-| AC-03 |  |  |  |
-| AC-04 |  |  |  |
-| AC-05 |  |  |  |
-| AC-06 |  |  |  |
-| AC-07 |  |  |  |
-| AC-08 |  |  |  |
-| AC-09 |  |  |  |
-| AC-10 |  |  |  |
+| AC-01 | A referral is registered with its referring organisation, date and reference, and its supporting information is checked against the expected list; where information is missing it is recorded and requested from the referring organisation and the referral does not go for clinical review until it is available. An accepted referral reaches a booked appointment found through the scheduling service, the booking is confirmed, and the patient is informed by letter and, where the appointment falls within the following two weeks, also contacted by telephone, with every contact attempt and its outcome recorded. | FR-001, FR-002, FR-003, FR-011, FR-012, FR-013, FR-014 | BR-01, BR-05, BR-06, BR-07, BR-08 |
+| AC-02 | Clinical decisions are made and recorded by an authorised clinical professional and by no other role, and no step that depends on one is reached without it: no New Patient Appointment is arranged until an authorised Consultant has accepted the referral, a Treatment Booking Request without clinical authorisation is not processed and creates no appointment, the decision on fitness to continue between chemotherapy cycles is a clinical decision, and a change to a treatment schedule is accepted only as an authorised Treatment Modification Request submitted through the system. | FR-004, FR-005, FR-006, FR-008, FR-009, FR-020 | BR-02, BR-03, BR-04, BR-10, BR-22, BR-25 |
+| AC-03 | The funding route is determined before a treatment appointment is confirmed, and where a charge applies the payment request is sent to the Payment Service Provider and the outcome it returns - status, transaction reference, payment date and amount - is recorded; the appointment is confirmed only once the payment is complete or an authorised exemption, funding approval or payment arrangement is recorded, a funded or exempt route results in the provider not being called at all, and a declined payment leaves no amount recorded and is reported so the patient and the responsible administrative team can be notified. | FR-025, FR-026, FR-027, FR-029, FR-030 | BR-13, BR-14, BR-15, BR-17 |
+| AC-04 | A step that cannot complete takes its modelled exception path instead of stalling the pathway or repeating the external action: unusable input and an unavailable external service both leave the process able to continue with the attempt recorded, and a payment taken without a returned confirmation is marked for investigation and is not automatically re-requested. | FR-018, FR-031 | BR-12, BR-18 |
+| AC-05 | Where no suitable appointment is available within the period the clinician requested, or the slot found falls outside it, the situation is recorded and highlighted rather than the patient being silently booked outside the requested period, and an urgent referral is handled outside the normal administrative timescales. | FR-015, FR-016, FR-023 | BR-09, BR-34 |
+| AC-06 | The clinic letter is prepared and clinically approved by the Consultant, administratively checked and distributed to the confirmed recipients, with the correspondence timeline recorded; a suspected clinical error is returned to the Consultant and no administrative change is made to clinical meaning; and a letter not completed and approved within seven days of the appointment is flagged as delayed and enters the reminder and escalation path, which stops once the letter is complete. | FR-036, FR-037, FR-038, FR-039, FR-040, FR-052 | BR-26, BR-27, BR-28, BR-29, BR-30, BR-31, BR-32, BR-33 |
+| AC-07 | A follow-up appointment is arranged within the period the clinician requested, and where none can be found in that period the case is highlighted and referred rather than booked outside it. A cancellation, decline or non-attendance is recorded together with the decision that follows it, and an enquiry is recorded, classified, prioritised and routed, with clinical matters going to a clinical professional rather than being answered by the call handler, payment and funding matters going to the Finance Team, and urgent clinical concerns highlighted. | FR-010, FR-023, FR-041, FR-042, FR-043, FR-044 | BR-35, BR-36, BR-37, BR-38, BR-39 |
+| AC-08 | Where a paid appointment is cancelled, postponed or changed, the Finance Team determines whether the payment is retained, transferred or refunded, an approved refund is sent to the Payment Service Provider and the result is recorded against the patient's account; and no role can both make a decision about clinical necessity and approve a refund. | FR-024, FR-033, FR-034 | BR-20, BR-21, BR-40 |
+| AC-09 | Only the payment status, transaction reference, payment date and amount are retained. Complete card information and security details are refused before the provider is called, and the field names found are reported so the form that supplied them can be corrected. | FR-028, NFR-007 | BR-16, BR-45 |
+| AC-10 | Unusable input produces a controlled business error or a job failure rather than a crash, and a repeated or retried request against a booking, payment or refund reference that has already been settled does not create a second appointment, take a second charge or pay a second refund. | FR-018, FR-030, FR-033 | BR-12, BR-17, BR-20 |
 
 ## 4. Test scenarios
 
 | TC ID | Scenario | Type (main / alternative / exception / non-functional) | Preconditions | Test data | Actions | Expected outcome | Pass / fail condition | Linked AC |
 |---|---|---|---|---|---|---|---|---|
-| TC-01 |  |  |  |  |  |  |  |  |
-| TC-02 |  |  |  |  |  |  |  |  |
-| TC-03 |  |  |  |  |  |  |  |  |
-| TC-04 |  |  |  |  |  |  |  |  |
-| TC-05 |  |  |  |  |  |  |  |  |
-| TC-06 |  |  |  |  |  |  |  |  |
-| TC-07 |  |  |  |  |  |  |  |  |
-| TC-08 |  |  |  |  |  |  |  |  |
-| TC-09 |  |  |  |  |  |  |  |  |
-| TC-10 |  |  |  |  |  |  |  |  |
-| TC-11 |  |  |  |  |  |  |  |  |
-| TC-12 |  |  |  |  |  |  |  |  |
-| TC-13 |  |  |  |  |  |  |  |  |
-| TC-14 |  |  |  |  |  |  |  |  |
-| TC-15 |  |  |  |  |  |  |  |  |
-| TC-16 |  |  |  |  |  |  |  |  |
-| TC-17 |  |  |  |  |  |  |  |  |
-| TC-18 |  |  |  |  |  |  |  |  |
-| TC-19 |  |  |  |  |  |  |  |  |
-| TC-20 |  |  |  |  |  |  |  |  |
-| TC-21 |  |  |  |  |  |  |  |  |
+| TC-01 | A referral arrives with its supporting information complete, the Consultant accepts it, a slot inside the requested window is found and the booking is confirmed. | main | Workers running; `core-1` deployed with the forms; engine available | `documentsComplete=true`, `referringOrganisation="St Mary GP Surgery"`, `decision="accepted"`, `speciality="Oncology"`, `priority="routine"`, `requestedWindow=14` | Start the instance, complete each user task as a Tasklist user would, read the path back from the engine | The instance reaches `N_OB_AppointmentArranged` with no incident; `validationResult="complete"`, `slotAvailable=true`, `bookingStatus="confirmed"` | All three service tasks complete, every gateway routes on what a worker returned, and the element path is the expected one | AC-01 |
+| TC-02 | The Consultant rejects the referral, asks for further information, or redirects it to another specialist service, recording the reason. | alternative | An accepted-for-review referral is waiting on the consultant's decision | `decision="rejected"`, then `"further_information"`, then `"redirected"` | Complete the clinical review task once per decision | Each decision follows its own branch, the reason and decision maker are recorded on the task, and no booking is reached for a referral that was not accepted | No path reaches the booking step without `decision="accepted"` | AC-02 |
+| TC-03 | A referral arrives without some of the expected supporting information. | alternative | Workers running; `core-1` deployed | `documentsComplete=false`, `missingItems=["diagnostic report"]` | Run the validation worker and complete the exception task | The missing items are recorded and requested from the referring organisation; the referral does not proceed to clinical review | `validationResult="incomplete"` and `requestedItems` names the missing item | AC-01 |
+| TC-04 | The appointment found falls within the following two weeks. | alternative | A slot inside the window is returned | slot date within 14 days; `appointmentWithinTwoWeeks` recomputed by the worker from the slot actually found, not from the form | Run the availability worker and follow the gate | The telephone contact path is added to the letter path | `appointmentWithinTwoWeeks=true` and `N_OB_TelephonePatient` is reached | AC-01 |
+| TC-05 | No slot is available inside the requested period. | exception | The scheduling service returns no slot in the window | `requestedWindow=14`, scheduling outcome `none` | Run the availability worker and follow the gate | The alternative is offered and the appointment is not booked silently | `slotAvailable=false`, `withinRequestedWindow=false`, and no confirmation is reached | AC-05 |
+| TC-06 | A Treatment Booking Request reaches the booking step without clinical authorisation. | exception | An authorised-looking request with `clinicalAuthorised=false` | `proposedTreatment="FOLFOX cycle 1"`, `treatmentStartDate="2026-10-01"`, `clinicalAuthorised=false` | Run the treatment worker, then the fixture and the model scenario | The worker raises `UNAUTHORISED_BOOKING_REQUEST`, makes no call to the treatment service and returns `bookingStatus="not_processed"`; the boundary event catches it and no payment follows | The error path is taken and no appointment reference is returned | AC-02 |
+| TC-07 | A charge applies, the provider completes the payment, and no card data is captured. | main | Funding route `patient`; provider approves | `chargeAmount=250`, `fundingRoute="patient"`, `paymentReference="PAY-SMOKE-001"` | Run the payment worker in isolation and in the full model scenario | The status, transaction reference, date and amount are returned and recorded; the appointment is confirmed only after payment; a funded patient is not asked to pay and the provider is not called | `paymentStatus="completed"`, `paidAmount=250`, `transactionReference` returned, no card field anywhere in the variables returned | AC-03, AC-09 |
+| TC-08 | The provider declines the payment. | exception | Same request as TC-07 with the provider set to decline | `paymentOutcome="declined"`, then a retry with `"completed"` | Run the payment worker twice against the same payment reference | The decline is reported with its status so the patient and the administrative team can be notified, no amount is recorded, the appointment is not confirmed, and the retry succeeds without a second charge | `paymentStatus="declined"` and `paidAmount=null` on attempt 1; attempt 2 completes and is not reported as a duplicate | AC-03, AC-10 |
+| TC-09 | The provider takes the payment but the confirmation does not come back. | exception | Communication failure after the money moved | `paymentOutcome="success_no_confirmation"` | Run the payment worker, then inspect what the model does with the flag | The transaction is recorded as taken but marked for investigation rather than settled, and no automatic request for another payment is issued | `paymentStatus="completed"`, `paidAmount=250`, `confirmationReceived=false`, `requiresInvestigation=true`, and the model routes to investigation rather than back to the payment activity | AC-04 |
+| TC-10 | A repeated request is made against a booking, payment or refund reference that has already been settled. | exception | A reference is already in the service ledger | The same `paymentReference` and booking key sent twice | Run the availability, payment and refund workers a second time with the same key | The first result is returned and nothing new is created | `duplicateAttempt=true` and no second appointment, charge or refund is recorded | AC-10 |
+| TC-11 | Unusable input is sent to a worker or supplied to a task. | exception | None; the handlers are called directly | `{}`; `documentsComplete=true` with `missingItems` listed; `requestedWindow=0`; `priority="soon"`; `chargeAmount="two hundred and fifty"`; `chargeAmount=-5`; `fundingRoute="charity"`; `paymentReference=""`; `recipients=""`; `channelPreference="sms"` | Call every worker handler with input that is missing, mistyped or self-contradictory and inspect the job action chosen | Every case produces a controlled outcome and nothing throws out of a handler: invalid data becomes a BPMN error carrying `INVALID_VARIABLE`, and only a genuine defect fails the job so the broker retries it | 30 or more assertions pass with no throw escaping a handler, and a payment carrying card or security details is refused with `PROHIBITED_FINANCIAL_DATA` without the provider being called | AC-09, AC-10 |
+| TC-12 | An external treatment, laboratory or imaging service is temporarily unavailable. | exception | An authorised Treatment Booking Request | `treatmentOutcome="unavailable"` twice, then `"available"`; all three attempts resolving to the same booking key | Run the treatment worker three times on one process instance | The booking stays pending, the attempt is recorded, and the recovery creates no duplicate appointment | `bookingStatus="pending"` with `appointmentReference=null` and `treatmentRetryCount` incremented on attempts 1 and 2; attempt 3 confirms and a further attempt returns the same reference with `duplicateAttempt=true` | AC-04, AC-10 |
+| TC-13 | The patient is telephoned and the call is unanswered, the number is wrong, or the patient asks for an alternative appointment. | alternative | The appointment is inside two weeks, so the telephone path is active | `contactOutcome="unanswered"`, then `"wrong_number"`, then `"alternative_requested"` | Complete the contact task once per outcome | Each attempt and its outcome is recorded and the pathway continues; the patient has already been informed by letter | Each outcome is recorded and the process records the attempt without losing the appointment | AC-01 |
+| TC-14 | Before a later chemotherapy cycle the patient is reviewed, or the treatment plan has to change. | alternative | Treatment under way; `core-2` deployed | `fitToContinue=false`; `affectsCharge=true`; a modification submitted informally rather than through the system | Complete the clinical review and modification tasks | The clinical decision is recorded by a clinical professional and is not reachable from an administrative or financial task; a formal, authorised modification is accepted; one that affects the charge, funding or payment is referred to the Finance Team; a change requested only informally is not processed | The decision is recorded, `N_F_ReviewFinancialImpact` is reached for the charge-affecting modification, and no administrative lane can record the clinical decision | AC-02 |
+| TC-15 | The clinic letter is prepared and approved by the Consultant, checked administratively (including a suspected clinical error), distributed to the confirmed recipients and its timeline recorded. | main | A consultation is complete; `core-3` deployed with the forms | Consultation id, recipients `["patient","GP"]`, `suspectedClinicalError=false`, then a run with `true` | Complete the letter tasks and follow the error decision | The letter is approved before distribution, the timeline records the appointment, authorship, approval, processing and distribution dates, and a suspected clinical error returns the letter to the Consultant instead of being changed administratively | The distribution step is reached only after approval, and the error run returns to the Consultant lane | AC-06 |
+| TC-16 | A clinic letter is not completed and approved within seven days of the appointment. | exception | A letter is outstanding past the seven-day target | Appointment date more than seven days before the letter is approved | Let the timer boundary event on the approval task fire, then follow the reminder and escalation path | The letter is flagged as delayed and included in pathway monitoring, a reminder is issued, escalation reaches the Administrative Manager after more than a month and higher management after more than three months, and the reminders stop once the letter is complete | The delayed path is entered without a worker being involved, and completing the letter stops further reminders | AC-06 |
+| TC-17 | A follow-up appointment is requested and booked within the period asked for. | alternative | `core-4` deployed; a follow-up has been requested clinically | `speciality="Oncology"`, `priority="routine"`, `requestedWindow=21`, `documentType="follow_up_clinic_letter"` | Complete the follow-up tasks | The appointment is arranged through the scheduling service within the requested period and the patient is informed | The instance reaches `N_OB_FollowUpBooked` with no incident | AC-07 |
+| TC-18 | The only slot found falls outside the period the clinician asked for. | exception | The scheduling service returns a slot later than the window | scheduling outcome `outside_window` | Run the availability worker and follow the gate | The slot is not silently accepted; the case is recorded and highlighted for the pathway team | `withinRequestedWindow=false` and no confirmation is reached on the requested period | AC-05 |
+| TC-19 | A patient cancels, declines or fails to attend an appointment. | exception | An appointment exists | `paidAppointment=true`, `offerAnotherAppointment=false`, `pathwayReviewRequired=false` | Send the cancellation message and complete the recording task | The event is recorded together with the decision that follows it - another appointment, a clinical pathway review, or informing the referring organisation - and a paid appointment is referred to the Finance Team | The recorded decision matches the branch taken and the payment reference reaches the Finance Team | AC-07 |
+| TC-20 | A patient enquiry arrives and is recorded, classified, prioritised and routed. | alternative | `core-4` deployed | One administrative, one clinical and one payment enquiry; one flagged urgent | Send the enquiry message and complete the classification and routing tasks | Every enquiry is recorded with when it was received, who handled it, the team responsible, the response and whether it is resolved; an administrative question is answered, a clinical matter is routed to a clinical professional and not answered by the call handler, a payment enquiry goes to the Finance Team, and an urgent clinical concern is highlighted | No clinical enquiry is answered from the call handling lane and the record carries the handler, team, response and resolution status | AC-07 |
+| TC-21 | A paid appointment is cancelled, postponed or changed and a refund is due. | exception | A payment was settled with the provider earlier in the session | `paymentReference="PAY-E2E-0001"`, `refundDecision="full"`, `refundReason="cancelled"`; then a partial refund, then a second refund of the same payment | Complete the Finance tasks and run the refund worker | Only the Finance Team decides retention, transfer or refund; the approved refund is sent to the provider and the result recorded against the patient's account, and the refund is made only against a payment that really was settled | `N_F_RefundRecorded` is reached with the refund recorded by the provider against the settled reference, and a repeat refund returns the first one as a duplicate | AC-08 |
 
 ## 5. Test execution record
 
 > Filled in when the tests are run - it is evidence of testing, not a plan.
+>
+> `Result` is `Pass`, `Fail`, `Partial` (part of the scenario ran) or `Not run`. A version is a
+> commit, because there are no release tags. Nothing in this table is a claim about a version other
+> than the one in its row.
 
 | TC ID | Date | Tester | Version tested | Result | Evidence path | Defect raised |
 |---|---|---|---|---|---|---|
-| TC-01 |  |  |  |  |  |  |
-| TC-02 |  |  |  |  |  |  |
-| TC-03 |  |  |  |  |  |  |
-| TC-04 |  |  |  |  |  |  |
-| TC-05 |  |  |  |  |  |  |
-| TC-06 |  |  |  |  |  |  |
-| TC-07 |  |  |  |  |  |  |
-| TC-08 |  |  |  |  |  |  |
-| TC-09 |  |  |  |  |  |  |
-| TC-10 |  |  |  |  |  |  |
-| TC-11 |  |  |  |  |  |  |
-| TC-12 |  |  |  |  |  |  |
-| TC-13 |  |  |  |  |  |  |
-| TC-14 |  |  |  |  |  |  |
-| TC-15 |  |  |  |  |  |  |
-| TC-16 |  |  |  |  |  |  |
-| TC-17 |  |  |  |  |  |  |
-| TC-18 |  |  |  |  |  |  |
-| TC-19 |  |  |  |  |  |  |
-| TC-20 |  |  |  |  |  |  |
-| TC-21 |  |  |  |  |  |  |
+| TC-01 | 2026-09-21 | automated, `cd workers && npm test` | `c8556ba` | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; model level at `a7f0dd6` in `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` | - |
+| TC-02 | - | - | - | Not run | - | - |
+| TC-03 | 2026-09-21 | automated, `cd workers && npm test` | `c8556ba` | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt` | - |
+| TC-04 | 2026-09-21 | automated, `cd workers && npm test` | `c8556ba` | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt` | - |
+| TC-05 | 2026-09-21 | automated, `cd workers && npm test` | `c8556ba` | Partial - the worker reports no slot and does not book correctly; the urgent variant of this branch loops for ever in the model | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt` | `DEF-11` |
+| TC-06 | 2026-09-21 | automated, `npm test` and `npm run test:smoke` | `c8556ba` (unit); `813fea6` (through the engine) | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; `evidence/TC-06_booking-without-clinical-authorisation_813fea6_2026-09-21.txt`; `evidence/workers_end-to-end-smoke_813fea6_2026-09-21.txt` | - |
+| TC-07 | 2026-09-21 | automated, `npm test`, `npm run test:smoke`, `npm run test:e2e` | `c8556ba` (unit); `813fea6` (engine); `a7f0dd6` (models) | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; `evidence/TC-07_payment-completed_813fea6_2026-09-21.txt`; `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` | - |
+| TC-08 | 2026-09-21 | automated, `npm test` | `c8556ba`; `813fea6` | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; `evidence/TC-08_payment-declined_813fea6_2026-09-21.txt` | - |
+| TC-09 | 2026-09-21 | automated, `npm test` | `c8556ba`; `813fea6` | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; `evidence/TC-09_payment-taken-without-confirmation_813fea6_2026-09-21.txt` | - |
+| TC-10 | 2026-09-21 | automated, `npm test` | `c8556ba` | Partial - the duplicate guards pass at worker level; a repeated request has not been driven through a model as its own scenario | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt` | - |
+| TC-11 | 2026-09-21 | automated, `npm test` | `c8556ba`; `813fea6` | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; `evidence/TC-11_worker-invalid-input_813fea6_2026-09-21.txt` | - |
+| TC-12 | 2026-09-21 | automated, `npm test` | `c8556ba`; `813fea6` | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; `evidence/TC-12_external-service-unavailable_813fea6_2026-09-21.txt` | - |
+| TC-13 | - | - | - | Not run - the contact outcomes are user tasks, and no scenario has completed one through Tasklist | - | `DEF-08` |
+| TC-14 | 2026-09-21 | automated, `npm run test:e2e` | `a7f0dd6` | Partial - the between-cycle review, the modification and the financial referral ran; the informal-request and not-fit-to-continue refusals did not | `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (scenario 2) | - |
+| TC-15 | 2026-09-21 | automated, `npm run test:e2e` | `a7f0dd6` | Partial - preparation, approval, processing and distribution ran; the suspected-clinical-error return path did not | `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (scenario 3) | - |
+| TC-16 | - | - | - | Not run - needs a letter left outstanding past seven days so the timer fires | - | `DEF-08` |
+| TC-17 | 2026-09-21 | automated, `npm run test:e2e` and `npm test` | `a7f0dd6` | Partial - the follow-up booked as expected; the no-slot-in-period case is covered at worker level only | `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (scenario 4); `evidence/workers_unit-suite_c8556ba_2026-09-21.txt` | - |
+| TC-18 | 2026-09-21 | automated, `cd workers && npm test` | `c8556ba` | Pass at worker level - a slot outside the requested period is not silently accepted. The model-level branch is only reachable through the same defective urgent path, so its model-level result is covered by `DEF-11`. | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt` | `DEF-11` |
+| TC-19 | 2026-09-21 | automated, `npm run test:e2e` | `a7f0dd6` | Partial - the cancellation was received and recorded with its decisions; the another-appointment and pathway-review branches did not run | `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (scenario 5) | - |
+| TC-20 | - | - | - | Not run | - | `DEF-08` |
+| TC-21 | 2026-09-21 | automated, `npm run test:e2e` and `npm test` | `a7f0dd6` | Pass | `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (scenario 5); `evidence/workers_unit-suite_c8556ba_2026-09-21.txt` | - |
+
+Summary at `c8556ba`: 17 of the 21 scenarios have a recorded result - 11 pass, 6 pass only in part.
+Four scenarios (TC-02, TC-13, TC-16, TC-20) have not been run at all. Seven of the ten acceptance
+criteria have a fully passing result: AC-01, AC-02, AC-03, AC-04, AC-08, AC-09 and AC-10.
+
+Three criteria are not met. **AC-05** passes at worker level but the urgent half of it cannot be
+accepted: an urgent referral with no slot loops for ever in `core-1` (`DEF-11`), and that branch has
+no evidence in the current models at all - the only record of it describes the superseded first
+edition. **AC-06** and **AC-07** are supported by the model-level run at `a7f0dd6` but each still has
+an unrun branch, and the parts of AC-01 and AC-07 that need a signed-in user (TC-13 and TC-20)
+cannot be met until role-based access exists (`DEF-07`, `DEF-08`).
+
+Two further faults were found while checking the models against the requirements rather than by
+running them, and both are the kind that running the current scenarios would not have caught:
+`N_F_ProcessRefund` cannot catch the `PROHIBITED_FINANCIAL_DATA` its worker raises (`DEF-12`), and
+36 of the 55 user tasks bind no form, so the variables they must write are recorded nowhere
+(`DEF-13`). Both are recorded in section 6 because a finding that only exists in a conversation is
+not evidence of anything.
 
 ## 6. Defects and limitations
 
 | ID | Description | Severity | Status | Workaround | Backlog item raised |
 |---|---|---|---|---|---|
-|  |  |  |  |  |  |
-|  |  |  |  |  |  |
-|  |  |  |  |  |  |
-|  |  |  |  |  |  |
-|  |  |  |  |  |  |
-|  |  |  |  |  |  |
+| DEF-01 | 21 exclusive gateways declared no `default` flow. Camunda does not treat a conditionless sequence flow as a fallback, so their otherwise-branches were unreachable and any non-matching condition raised the incident "Expected at least one condition to evaluate to true, or to have a default flow". Reproduced at `e852224` before the fix, stopping at `Gateway_SlotWithinWindow`. | High | Fixed at `e852224`; every gateway in the four `core-N` models now declares one | - | PB-004 / TB-006 |
+| DEF-02 | Four service tasks could raise `INVALID_VARIABLE` with no error catch event, so a worker's business error became an `UNHANDLED_ERROR_EVENT` incident and the process stopped instead of following an error path. Instance 2251799813718510, element `ServiceTask_SendAppointmentNotification`, recorded at `1b42bff`. | High | Fixed at `e852224` and carried into the `core-N` models; every service task that can raise a business error now has a catch event | - | PB-004 / TB-006 |
+| DEF-03 | The variables attached to a BPMN error are written to the scope of the activity that raised it and are not visible in the process scope once a boundary event catches the error. An assertion written against the error's variables therefore fails even when the path is correct, and a model has to distinguish the reason for a failure by which catch event was taken. | Medium | Documented, not a code defect; found while testing TC-06 | Assert on the element path instead of on the error's variables | Recorded in `../workers/README.md` |
+| DEF-04 | The evidence recorded at `813fea6` cites the first, coarser allocation of rule, exception and requirement IDs (for example `BR-03` there for the two-week rule, which is BR-07 now). | Low | Documented, not corrected - the files are a record of what was run at that commit | Reconciliation table at the top of `../docs/requirements/requirements.md` | - |
+| DEF-05 | FR-021, the urgent postponement of treatment, is not cited by the element documentation of the `core-2` elements that implement it (`N_CL_ClinicalRisk`, `N_CL_UrgentAuthorise`), so the mapping cannot be confirmed from the model. | Low | Open | - | Traceability gap recorded in `../docs/requirements/requirements.md` |
+| DEF-06 | The claim in `../docs/requirements/requirements.md` that the earlier ID allocation survives "only" in the `813fea6` test evidence is not accurate: the worker source comments and the worker test names still cite it too (for example `treatment-availability.js` cites `BR-04` and `FR-014`, which are BR-10 and FR-017 now; `workers.test.js` cites `BR-03` and `BR-17`, which are BR-07 and BR-34 now). | Low | Open | Reconciliation table; the requirement IDs a reader needs are resolved by it | Correction recorded in `../docs/requirements/requirements.md` |
+| DEF-07 | Role-based access control and the audit trail are Must requirements (FR-045, FR-046, FR-047, NFR-001, NFR-002, NFR-003) and are not implemented. No user is authenticated, candidate groups are not enforced anywhere, and no audit record is produced, so the separation of duties the case requires rests on the lane structure alone. | High | Open - cannot be accepted against this release | None; the lane structure and the candidate group on each task are the only separation present | - |
+| DEF-08 | The forms are deployed with the models and their bindings resolve, but no scenario has been completed by a signed-in user through Tasklist, so every user task variable in the evidence was supplied with the task completion call. The form contract is proved by the variables the model expects, not by a person filling a form in. | Medium | Open | The end-to-end run supplies the same variables a validated form would | - |
+| DEF-09 | The worker project declares `node >=20.12.0 <23` in `package.json`, but the run recorded here was made on Node 24.21.0, which npm reports as an unsupported engine. | Low | Open | None needed for the unit tests, which pass; runs on a supported Node release should be repeated before release | - |
+| DEF-10 | Each simulated service keeps its ledger in memory, so it is per worker process and is cleared when the worker restarts. A duplicate-prevention result is therefore only valid within one worker process. | Medium | Accepted limitation of the simulation (`AS-12`) | State the limitation wherever a duplicate result is claimed | - |
+| DEF-11 | An urgent referral with no slot in the requested period loops for ever in `core-1`. `N_OB_SlotAvailable` takes its default flow to `N_OB_RecordNoSlot`, whose only successor `N_OB_UrgentReferral` sends `priority = "urgent"` back to `N_OB_CheckAvailability`. The scheduling service returns the same outcome for the same input, and there is no attempt counter, no timer and no escalation on that branch, so the instance cannot leave it. A routine referral on the same branch terminates correctly at `N_PC_Referred`, which is why the fault is confined to the urgent case. | High | Open | None. Do not demonstrate an urgent referral with no suitable slot until this is fixed. | - |
+| DEF-12 | `N_F_ProcessRefund` in `core-4` catches only `Error_INVALID_VARIABLE`, but `refund-processing` also raises `PROHIBITED_FINANCIAL_DATA` when card or security details are supplied. A refund request carrying card details therefore becomes an `UNHANDLED_ERROR_EVENT` incident and stops the process, which is the same fault as `DEF-02` on a task that did not exist when that was fixed. The worker test for it passes, so the worker level gives no warning. | High | Open | None; the refund path must not be given card details. | - |
+| DEF-13 | 36 of the 55 user tasks in the four models bind no form: 7 in `core-1`, 12 in `core-2`, 7 in `core-3` and 10 in `core-4`. A task with no form has no defined variable contract, so the variables it must write are recorded nowhere and a downstream gateway that reads them can only be satisfied by injecting the variables with the completion call. The tasks affected include the ones the case requires a record from: the missing-information request, the funding approval details (`N_F_RecordApproval`, FR-026), the payment investigation, the clinic-letter processing and clinical-error review, the reminder and both escalations, and the whole enquiry path (`N_CH_ClassifyEnquiry`, `N_CH_AnswerAdmin`, FR-041). | High | Open | The end-to-end run supplies the variables a validated form would; the gap is that for these tasks there is no form to supply them from. | - |
 
 ## 7. Simulated components
 
 | Simulated item | Behaviour simulated | Limitations |
 |---|---|---|
-|  |  |  |
-|  |  |  |
-|  |  |  |
-|  |  |  |
+| External scheduling service (`workers/src/services/scheduling-service.js`) | Returns `available` for a slot inside the requested window, `outside_window` for a slot later than the period the clinician asked for, or `none`. | Lead times are fixed. There is no clinic capacity, room, clinician availability or real diary behind it, and it answers the same way every time for the same input. |
+| External treatment, laboratory and imaging service (`workers/src/services/treatment-service.js`) | Returns `available` or `unavailable`; an unavailable attempt leaves the booking pending and is recorded. | No capacity data and no clinical constraints. The appointment reference is generated rather than scheduled, and it can be produced without any real facility existing. |
+| External Payment Service Provider (`workers/src/services/payment-service-provider.js`) | A payment returns `completed`, `declined` or `success_no_confirmation` with a reference, date and amount; a repeat request for the same reference returns the original transaction as a duplicate. A refund returns `refunded`, `duplicate`, `no_settled_payment`, `amount_too_high` or `invalid_amount`. | No real card processing, clearing, settlement, 3-D Secure or fraud checking. Refunds are recorded rather than executed, and a refund is only possible against a payment this same process settled. |
+| External correspondence service (`workers/src/services/correspondence-service.js`) | Records a dispatch with its channel, date and reference. | No printing, no postage and no delivery confirmation. The channel preference is recorded and echoed but is not honoured end to end, so accessibility and translation needs (`NFR-011`, FR-051) cannot be shown to be met. |
+| Funding organisations and approved insurers | Recorded as data on the funding approval task; an approval, hospital or exempt route means the provider is not called at all. | There is no live interface and no approval workflow, so the approval reference and amount are supplied by whoever completes the task. |
+| The engine itself in the model-level runs | Camunda 8 Run 8.9.19, real process instances, real user tasks and real job activation. | Not simulated, but the runtime is a local unsecured installation: no authentication is configured, which is why `CAMUNDA_AUTH_STRATEGY` is `NONE` and why role-based access cannot be exercised (DEF-07). |
+| The operator completing the user tasks | In every engine-level run the user tasks were completed through `POST /v2/user-tasks/<key>/completion` with the variables a validated form would supply. | Not a real person and not a form submission, so task claiming, form validation and the candidate-group restriction are not tested (DEF-08). |

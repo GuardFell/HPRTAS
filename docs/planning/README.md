@@ -14,3 +14,10 @@
 7. **Plan revisions** — every change made to the plan, with the reason for it.
 
 The plan is compared against actual progress, so it is kept current rather than written once.
+
+`plan-evaluation.md` is the evaluation made against it, and against the requirements: the criteria
+the evaluation is made against, a verdict for every requirement the strategic model carries, the
+structural alignment of the models with the forms and the workers, and the comparison of planned
+against actual progress with the cause of each variance. It is a companion to the plan and to
+`../../tests/test-plan.md`, not a summary of either - it is where the plan, the requirements and the
+test results are read together and judged.

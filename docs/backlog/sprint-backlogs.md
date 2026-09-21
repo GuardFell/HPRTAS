@@ -7,6 +7,12 @@
 > main workflow and one exception path ready for review."
 >
 > Sprint dates are proposals for the group to confirm.
+>
+> **How these tables are filled in.** Each row is recorded by the first owner of the task. M5 has
+> recorded the M5 tasks selected into Sprint 2. The rows that are still blank in both sprints are
+> tasks that were delivered without being written into a sprint first - the models, the forms and
+> the workers all exist with evidence - and `docs/planning/plan-evaluation.md` section 5 accounts for
+> that as the Sprint 1 variance rather than leaving it unexplained.
 
 ## Sprint 1 - A deployable model of the referral-to-appointment pathway
 
@@ -37,9 +43,9 @@
 
 | Sprint | Task ID | Task Description | First Owner | Second Owner | Estimate | Acceptance Conditions | Evidence | Status |
 |---|---|---|---|---|---|---|---|---|
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
-|  |  |  |  |  |  |  |  |  |
+| 2 | TB-016 | Agree the plan, the estimation scale, the definition of done and the acceptance criteria, with M4. | M5 | M4 | 5 | The estimation scale is written down and referenced by the backlog; the definition of done covers the project-wide conditions and each artefact type; the acceptance criteria are agreed with M4. | `docs/planning/project-plan.md`; `docs/agile/definition-of-done.md`; `tests/test-plan.md` | Done |
+| 2 | TB-014 | Complete the test plan's acceptance criteria and scenarios. | M5 | | 5 | Every criterion is measurable and linked to a requirement and a business rule; each scenario states its preconditions, data, actions, expected outcome and pass/fail condition. | `tests/test-plan.md` sections 3 and 4 | Done |
+| 2 | TB-015 | Run the scenarios and record the evidence. | M5 | | 5 | Every result names the version it was produced at; a partial result is recorded as plainly as a pass; each evidence file states its method and limitations. | `tests/evidence/`; `tests/evidence/README.md` | In progress - 17 of 21 scenarios run, 3 defects open (`DEF-11`, `DEF-12`, `DEF-13`) |
 |  |  |  |  |  |  |  |  |  |
 |  |  |  |  |  |  |  |  |  |
 |  |  |  |  |  |  |  |  |  |
@@ -97,8 +103,8 @@
 
 ## Sprint planning checklist
 
-- [ ] What is the sprint goal, stated as an outcome?
+- [x] What is the sprint goal, stated as an outcome?
 - [ ] Is the selected work realistic for the available time?
 - [ ] Has every selected task got a first owner **and** a second owner?
 - [ ] Are dependencies, risks and deadlines considered?
-- [ ] Can everyone explain what will be delivered by the end of this sprint?
+- [x] Can everyone explain what will be delivered by the end of this sprint?

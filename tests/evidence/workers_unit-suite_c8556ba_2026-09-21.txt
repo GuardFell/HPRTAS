@@ -1,0 +1,157 @@
+External workers - the unit suite, every worker and the job contract
+==========================================================================================
+Version under test : c8556ba ("Correct the note on where the model migration is
+                     recorded"). Only documentation changed between a7f0dd6 and
+                     this commit: `git diff --stat a7f0dd6 HEAD -- models workers
+                     forms` lists README files only, so the models, the forms and
+                     the worker source under test are the ones recorded at
+                     a7f0dd6. No tracked file changed between this commit and the
+                     run.
+Component          : workers/src - all six workers, the four simulated external
+                     services and the job handler contract
+Date               : 2026-09-21
+Tester             : automated, `cd workers && npm install && npm run check &&
+                     npm test`
+Linked test case   : TC-01, TC-03, TC-04, TC-05, TC-06, TC-07, TC-08, TC-09,
+                     TC-10, TC-11, TC-12, TC-18, and the parts of TC-14, TC-15,
+                     TC-17 and TC-21 that belong to a worker
+Linked AC          : AC-01, AC-02, AC-03, AC-04, AC-05, AC-09, AC-10
+Linked rule        : BR-01, BR-04, BR-06, BR-07, BR-17, BR-20, EX-06, EX-07,
+                     EX-08, FR-020, FR-023, FR-033, FR-037, NFR-007, NFR-012 -
+                     in the ID allocation the worker source still cites, which is
+                     the earlier one; see DEF-06 in ../test-plan.md
+Environment        : Node.js v24.21.0, npm 11.19.0, @camunda8/sdk 8.8.x, no engine
+                     required, Windows 11
+
+WHAT THIS RUN ADDS
+------------------
+The evidence already in this directory was recorded at 813fea6 (worker level),
+1b42bff and e852224 (the first operational edition, since superseded) and
+a7f0dd6 (the four core-N models end to end). This run re-executes the unit suite
+against the current version, which is the only level that needs no engine, and
+it is the first record at c8556ba.
+
+The suite has grown from 30 tests to 38 since the 813fea6 run: the refund worker
+was split out of the payment worker and has its own tests, and three refund
+edge cases were added.
+
+METHOD
+------
+1. `npm install` - 164 packages, 0 vulnerabilities.
+2. `npm run check` - loads the configuration and reports the workers that would
+   register. Result: all six workers register, job types match the service tasks
+   in the models, "Configuration and wiring are valid." (exit 0).
+3. `npm test` - `node --test "test/**/*.test.js"` with no engine. The tests call
+   the same handlers the workers call, with the simulated services running for
+   real rather than mocked, so the ledger behaviour that the duplicate checks
+   depend on is exercised.
+
+FULL RUN
+--------
+
+> hprtas-external-workers@1.0.0 test
+> node --test "test/**/*.test.js"
+
+✔ referral-validation: a complete referral is accepted for clinical review (TC-01) (1.4602ms)
+✔ referral-validation: missing supporting information is requested from the referring organisation (TC-03) (1.0822ms)
+✔ referral-validation: an incomplete referral that names no missing items is a business error (0.1957ms)
+✔ referral-validation: unusable input produces a controlled error, not a crash (TC-11) (0.3294ms)
+✔ referral-validation: the check is administrative and returns no clinical judgement (BR-01) (0.3526ms)
+✔ appointment-availability: a slot inside the requested window is offered (TC-01) (3.1968ms)
+✔ appointment-availability: an appointment inside two weeks is flagged for telephone contact (TC-04, BR-03) (0.5428ms)
+✔ appointment-availability: no slot inside the requested period is offered as an alternative and not booked (TC-05, BR-17) (16.3727ms)
+✔ appointment-availability: a slot outside the requested period is not silently accepted (TC-18, EX-06) (15.4779ms)
+✔ appointment-availability: asking twice for the same instance returns the same appointment (30.8335ms)
+✔ appointment-availability: an unusable booking request produces a controlled error (TC-11) (0.5983ms)
+✔ treatment-availability: an authorised request is booked (TC-07) (14.8367ms)
+✔ treatment-availability: a request without clinical authorisation is not processed (TC-06, BR-04, AC-02) (0.2394ms)
+✔ treatment-availability: an unavailable service leaves the booking pending and records the attempt (TC-12, EX-07) (30.8433ms)
+✔ treatment-availability: retrying after an outage creates no second appointment (AC-10) (45.384ms)
+✔ payment-processing: a completed payment returns the reference, date and amount (TC-07, FR-020) (14.826ms)
+✔ payment-processing: a declined payment is reported so the patient and team can be notified (TC-08, EX-08) (15.8936ms)
+✔ payment-processing: a payment taken without a confirmation is marked for investigation (TC-09, BR-07, AC-04) (15.1738ms)
+✔ payment-processing: the same reference is never charged twice (FR-023, AC-10) (15.0938ms)
+✔ payment-processing: a declined attempt may be retried without a double charge (EX-08) (31.2054ms)
+✔ payment-processing: card details are refused and never passed on (BR-06, NFR-007, AC-09) (0.2604ms)
+✔ payment-processing: a funded patient is not asked to pay (0.149ms)
+✔ payment-processing: an unusable payment request produces a controlled error (TC-11) (0.1582ms)
+✔ correspondence-dispatch: a letter is dispatched and the date, channel and reference are recorded (FR-037) (14.796ms)
+✔ correspondence-dispatch: a recorded channel preference is used (NFR-012) (0.5019ms)
+✔ correspondence-dispatch: an unusable dispatch request produces a controlled error (TC-11) (0.2372ms)
+✔ refund-processing: a full refund returns the amount the provider actually took (BR-20, FR-033) (29.3688ms)
+✔ refund-processing: a partial refund returns only the amount the Finance Team decided (30.8759ms)
+✔ refund-processing: the same payment is never refunded twice (FR-023, AC-10) (45.8395ms)
+✔ refund-processing: a payment that was never settled cannot be refunded (BR-20) (0.4512ms)
+✔ refund-processing: a refund larger than the amount paid is refused (30.0545ms)
+✔ refund-processing: a partial refund that names no amount is refused (15.8881ms)
+✔ refund-processing: card details are refused and never passed on (BR-06, NFR-007, AC-09) (14.6214ms)
+✔ refund-processing: an unusable refund request produces a controlled error (TC-11) (15.4054ms)
+✔ the worker turns a completed outcome into a job completion (0.464ms)
+✔ the worker turns a broken business rule into a BPMN error the model can catch (0.1412ms)
+✔ the worker fails the job when the handler throws, so the broker retries (0.2893ms)
+✔ the worker fails the job when a handler returns something that is not an outcome (0.1096ms)
+ℹ tests 38
+ℹ suites 0
+ℹ pass 38
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1008.2132
+
+RESULT
+------
+PASS. 38 tests, 38 pass, 0 fail, 0 cancelled, 0 skipped, 0 todo, exit code 0.
+
+  ℹ tests 38
+  ℹ pass 38
+  ℹ fail 0
+  ℹ duration_ms 899.809
+
+UNUSABLE INPUT IS CONTROLLED, NOT FATAL
+---------------------------------------
+Every worker is called with input that is missing, mistyped or self-contradictory
+and produces a BPMN business error carrying INVALID_VARIABLE, so the process can
+take its modelled error path. Only a genuine defect fails the job (job.fail),
+which is what the last two tests check, so an unexpected exception is retried by
+the broker instead of leaving the job stalled.
+
+Card and security details are refused with PROHIBITED_FINANCIAL_DATA and the
+provider is not called - asserted, not assumed - on both the payment and the
+refund path (AC-09).
+
+DUPLICATES AND SECOND CHARGES
+-----------------------------
+The guards that AC-10 rests on all pass in this run: the same payment reference
+is never charged twice, a declined attempt may be retried without a double
+charge, retrying a booking after an outage creates no second appointment, and the
+same payment is never refunded twice.
+
+A MATTER OF RECORD, NOT A FAILURE
+---------------------------------
+The test names and the worker source comments cite the earlier, coarser
+allocation of rule and requirement IDs, so a name such as "(TC-06, BR-04, AC-02)"
+means BR-10 in the current list, and "(TC-04, BR-03)" means BR-07. This was
+already true before this run; it is reported here because testing is where it
+becomes visible. It is DEF-06 in ../test-plan.md, and the reconciliation table at
+the top of ../../docs/requirements/requirements.md resolves each ID.
+
+NOT COVERED HERE
+----------------
+- Anything needing the engine or a human: job activation and binding to the
+  models (see the smoke and end-to-end evidence), the user tasks, the forms, the
+  timers, the gateways and the boundary events. The unit tests call handlers
+  directly and cannot reach those.
+- Role-based access, task claiming and the audit trail (DEF-07), and a form
+  filled in by a signed-in user (DEF-08).
+- TC-02, TC-13, TC-16 and TC-20 have no worker-side behaviour to exercise.
+- `npm run test:smoke` and `npm run test:e2e` were not run in this session: the
+  engine (Camunda 8 Run) is not installed on the machine used, and
+  `camunda-runtime/` is not part of the repository. Those two levels stand on the
+  a7f0dd6 evidence. Both must be re-run before release 1.0.
+- The suite was run on Node 24.21.0, outside the `>=20.12.0 <23` range the worker
+  project declares; npm reported EBADENGINE. It passed, but the claim "tested on
+  the declared engine" cannot be made (DEF-09).
+
+Reproduce with:
+  cd workers && npm install && npm run check && npm test

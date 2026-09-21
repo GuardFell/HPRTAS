@@ -22,8 +22,17 @@
 > split, merged and re-identified, so every reference here was re-pointed by hand against the
 > element documentation of the current models rather than by text substitution.
 >
-> The models and the current workers now cite this list's IDs. The one remaining mismatch is the
-> **earlier test evidence**, recorded at commit `813fea6` against an earlier, coarser allocation:
+> The models and the current workers now cite this list's IDs. Two mismatches remain, and testing
+> found the second one:
+>
+> 1. The **earlier test evidence**, recorded at commit `813fea6` against an earlier, coarser
+>    allocation.
+> 2. The **worker source comments and the worker test names**, which also cite that earlier
+>    allocation. For example `workers/src/workers/treatment-availability.js` cites `BR-04` and
+>    `FR-014`, which are BR-10 and FR-017 here, and `workers/test/workers.test.js` cites `BR-03` and
+>    `BR-17`, which are BR-07 and BR-34 here. `BR-01` in `workers.test.js` is the one that does still
+>    mean BR-01. This is recorded as `DEF-06` in `../../tests/test-plan.md`; an earlier version of
+>    this note said the `813fea6` evidence was the only place affected, which was not accurate.
 >
 > | Earlier evidence cites | Meaning in that evidence | This list |
 > |---|---|---|
@@ -122,6 +131,11 @@
 > then the implementation and the evidence. `Status` becomes Supported / Partially supported /
 > Unsupported when the group evaluates the models against the requirement; until then each row is
 > recorded as modelled but not yet evaluated.
+>
+> **The evaluation has now been made.** Every row below was checked element by element against the
+> models rather than carried forward, and the verdicts, with the gap named in each case, are in
+> `../planning/plan-evaluation.md` section 3. Read the two together: this table says where a
+> requirement is carried, and that document says whether carrying it is enough.
 
 | Requirement | Strategic model element | Operational model element | Implementation | Test | Status (Supported / Partially supported / Unsupported) | Justification or gap |
 |---|---|---|---|---|---|---|

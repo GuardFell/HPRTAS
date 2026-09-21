@@ -26,6 +26,12 @@ Files are kept small: text logs are preferred over recordings or screenshots.
 
 ## The runs recorded here
 
+**Worker component, at `c8556ba`.** The unit suite re-run against the current version, which is the
+one level that needs no engine. Thirty-eight tests, all passing, covering twelve of the twenty-one
+test cases. It is the current worker-level evidence, and the only record produced at `c8556ba`.
+
+- `workers_unit-suite_c8556ba_2026-09-21.txt` — pass, 38 of 38.
+
 **Worker component, at `813fea6`.** Six test cases executed against the external workers before the
 operational models existed. Each file says plainly what it does not cover.
 
@@ -54,7 +60,9 @@ split out of the payment worker by then.
 **The operational models, at `a7f0dd6`.** Five scenarios driven through the four `core-N` models
 with the real workers: the normal referral path, authorisation and payment through the provider the
 clinic letter, the follow-up, and the refund. Every instance reached an end event. This is the
-current model-level evidence.
+current model-level evidence, and it still describes the delivered artefacts: nothing in `models/`,
+`forms/` or `workers/src/` changed between `a7f0dd6` and `c8556ba`, only documentation did, so the
+file's version string names an older commit than the version now under test.
 
 - `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` — pass.
 
@@ -65,11 +73,22 @@ operational models of the first edition, which the four `core-N` models have sin
   the workers together. Pass, with one uncaught-error incident recorded inside the file.
 - `error-paths-and-urgent-path_e852224_2026-09-21.txt` — six scenarios covering four worker error
   paths, the urgent no-slot path, the normal path to completion and one declared-default branch. No
-  incident.
+  incident. **The urgent no-slot path it covers is now the one that loops for ever in `core-1`; the
+  fix it describes was in the models that were replaced, not in the ones delivered.**
 
 ## What is still open
 
-The worker-level test cases above were executed against the external workers only. What is still to
-be evidenced is the part of a test case that belongs to the **forms** or to role-based access in
-Tasklist, which has to be run end to end against a release, and the execution record in
-`../test-plan.md` stays blank until then.
+Three things, and the first two are why the execution record in `../test-plan.md` is not complete.
+
+- **The forms and role-based access.** No scenario has been completed by a signed-in user through
+  Tasklist, so every user task variable in every run above was supplied with the completion call.
+  The form contract is proved by the variables the model expects, not by a person filling a form in
+  (`DEF-08`), and 36 of the 55 user tasks bind no form at all, so for those tasks there is no form
+  to prove (`DEF-13`). Role-based access cannot be exercised at all (`DEF-07`).
+- **The engine runs have not been repeated at the current version.** `npm run test:smoke` and
+  `npm run test:e2e` stand on the `a7f0dd6` record. Nothing in the models, the forms or the workers
+  has changed since, which is why that record is still current, but it has not been re-run and the
+  engine was not installed on the machine that produced the `c8556ba` record. Both must be re-run
+  before release 1.0.
+- **Four scenarios have never been run**: `TC-02`, `TC-13`, `TC-16` and `TC-20`.
+

@@ -26,9 +26,21 @@ Files are kept small: text logs are preferred over recordings or screenshots.
 
 ## The runs recorded here
 
-**Worker component, at `c8556ba`.** The unit suite re-run against the current version, which is the
+**The Java implementation, at `76a7fdc`.** The workers were rewritten in Java, and this is the first
+record made against that implementation. It covers all three levels at one version — the
+configuration check, the unit suite with no engine, and both engine runs — and it is the current
+worker-level and model-level evidence. It replaces the `c8556ba` unit record and the `a7f0dd6`
+engine record as the current ones; both are kept below as the record of what the Node.js
+implementation did.
+
+- `workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt` — pass at all three levels: 38 of 38
+  unit tests, and 7 of 7 engine tests (2 the smoke fixture, 5 the operational models). The file
+  states the three places where the Java implementation behaves differently from the Node.js one,
+  and which of them this run does and does not prove.
+
+**Worker component, at `c8556ba`.** The unit suite re-run against the Node.js version, which is the
 one level that needs no engine. Thirty-eight tests, all passing, covering twelve of the twenty-one
-test cases. It is the current worker-level evidence, and the only record produced at `c8556ba`.
+test cases. It was the current worker-level evidence until `76a7fdc`.
 
 - `workers_unit-suite_c8556ba_2026-09-21.txt` — pass, 38 of 38.
 
@@ -58,11 +70,10 @@ split out of the payment worker by then.
 - `workers_end-to-end-smoke_a7f0dd6_2026-09-21.txt` — pass.
 
 **The operational models, at `a7f0dd6`.** Five scenarios driven through the four `core-N` models
-with the real workers: the normal referral path, authorisation and payment through the provider the
-clinic letter, the follow-up, and the refund. Every instance reached an end event. This is the
-current model-level evidence, and it still describes the delivered artefacts: nothing in `models/`,
-`forms/` or `workers/src/` changed between `a7f0dd6` and `c8556ba`, only documentation did, so the
-file's version string names an older commit than the version now under test.
+with the real workers: the normal referral path, authorisation and payment through the provider, the
+clinic letter, the follow-up, and the refund. Every instance reached an end event. It was the current
+model-level evidence until `76a7fdc`; the workers have since been rewritten in Java, so it now
+describes the Node.js implementation rather than the one under test.
 
 - `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` — pass.
 
@@ -78,17 +89,20 @@ operational models of the first edition, which the four `core-N` models have sin
 
 ## What is still open
 
-Three things, and the first two are why the execution record in `../test-plan.md` is not complete.
-
 - **The forms and role-based access.** No scenario has been completed by a signed-in user through
   Tasklist, so every user task variable in every run above was supplied with the completion call.
   The form contract is proved by the variables the model expects, not by a person filling a form in
   (`DEF-08`), and 36 of the 55 user tasks bind no form at all, so for those tasks there is no form
   to prove (`DEF-13`). Role-based access cannot be exercised at all (`DEF-07`).
-- **The engine runs have not been repeated at the current version.** `npm run test:smoke` and
-  `npm run test:e2e` stand on the `a7f0dd6` record. Nothing in the models, the forms or the workers
-  has changed since, which is why that record is still current, but it has not been re-run and the
-  engine was not installed on the machine that produced the `c8556ba` record. Both must be re-run
-  before release 1.0.
+- **The exception paths that no engine run has driven.** The between-cycle review's refusals, the
+  suspected-clinical-error return in `core-3`, the another-appointment and pathway-review branches
+  of the cancellation, and the no-slot-in-period case at model level. The unit suite covers the
+  worker side of several of them, which is not the same as covering the model's branch. The
+  `76a7fdc` record lists them.
+- **The job-failure path and the shutdown path are unproven end to end.** No run has driven a job
+  failure through the engine, so the retry behaviour the Java client had to express explicitly is
+  only covered at handler level, and no run has sent the workers a Ctrl-C.
 - **Four scenarios have never been run**: `TC-02`, `TC-13`, `TC-16` and `TC-20`.
+- **The engine runs stand on one machine's engine.** The deployment versions printed in the
+  `76a7fdc` record are that development instance's, not first deployments.
 

@@ -15,6 +15,11 @@ models/
 Everything in `operational/` is meant to be deployed and executed. The strategic and
 socio-technical models are views for analysis and are not deployed.
 
+`exports/` holds a readable PDF export of every model, one page per model, drawn from the diagram
+interchange in the `.bpmn` itself, together with the same diagram as a PNG for use in a slide deck.
+The page is sized to the diagram with element labels at 10 pt, because a diagram this wide cannot be
+read at A4. Regenerate them with `python tools\export_hprtas_bpmn_pdf.py` from the workspace root.
+
 ## Rules for a model
 
 - Name elements meaningfully. `Task_1`, `Gateway_2` and `Process_3` say nothing to a reader.

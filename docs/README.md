@@ -9,6 +9,11 @@ itself, the business rules, the exceptions and the assumptions made where the ca
 from the case study, and the traceability that links each one to where it is implemented and where
 it is tested.
 
+`justification-of-decisions.md` explains why the operational process is structured the way it is:
+the participant boundaries, the task allocation, the gateway fallbacks, the external interactions,
+the exception handling, the assumptions, the alternatives rejected and the trade-offs accepted,
+including the parts that are not done.
+
 `backlog/` holds the product backlog, the task breakdown that follows from it, and the dependencies
 between the items.
 

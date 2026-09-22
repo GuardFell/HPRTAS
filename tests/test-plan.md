@@ -6,17 +6,24 @@
 
 ## Version under test
 
-The first release is tagged `release-1.0` (`9ef26df`). The results recorded in this plan were
-produced before that tag was made, so **each result names the commit it was produced at** rather
-than the tag, and every evidence file in `evidence/` carries one in its name. Nothing in `models/`,
-`forms/` or `workers/src/` changed between `a7f0dd6`, where the artefacts were last changed, and
-`release-1.0`, so the results still describe the released artefacts.
+The release is tagged `release-1.0` (`3a98be7`). This tag was re-pointed from the original
+Node.js version (`9ef26df`) to the current Java implementation after the workers were rewritten
+in commit `4eb3fee`. The results recorded in this plan's execution table were produced against
+the Node.js version and **each result names the commit it was produced at**; they no longer
+describe the current code.
+
+**The forms were completed after this tag.** `release-1.0` carries 14 forms - the 8 originals and
+6 of the forms `DEF-13` calls for. That defect was closed at `a62e783`, where the set was reworked
+and completed to 40 forms covering all 55 user tasks; the 8 originals had in fact never rendered a
+field. The tag therefore describes the forms as they stood rather than as they are now, and the
+second release is the first that can be compared against the completed set.
 
 | What | Value |
 |---|---|
-| Release under test | `release-1.0` - commit `9ef26df` |
-| Commit each result was produced at | `c8556ba` at worker level, `a7f0dd6` at model level |
-| Artefact versions | the four `core-N` models, the eight forms and the six workers, last changed at `a7f0dd6`; only documentation changed between `a7f0dd6` and `release-1.0` |
+| Release under test | `release-1.0` - commit `3a98be7` (Java workers, the first 6 of the DEF-13 forms) |
+| Previous tag target | `9ef26df` (Node.js workers, superseded) |
+| Commit each result was produced at | `c8556ba` at worker level (Node.js), `a7f0dd6` at model level |
+| Artefact versions | the four `core-N` models; 14 Camunda Forms at the tag, 40 in the current tree (`a62e783`); workers in Java (`4eb3fee`) |
 | Requirement basis for the criteria | `../docs/requirements/requirements.md` (FR-001 - FR-052, NFR-001 - NFR-013) |
 | Rule and exception basis | `../docs/case-study-summary.md` section 5 (BR-01 - BR-47) and section 6 (EX-01 - EX-23) |
 

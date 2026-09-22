@@ -265,6 +265,24 @@ say to separate the entries with commas, because the worker reads a comma-separa
 list; one entry per line would arrive as a single entry. Each form has a short kebab-case `id`,
 because that id is the key the model refers to and it has to stay stable.
 
+## How this set was arrived at
+
+The first attempt at closing `DEF-13` added six forms for the tasks the defect calls critical -
+`missing-information-request`, `funding-approval`, `payment-investigation`,
+`enquiry-classification`, `enquiry-response` and `escalation` (commit `129ad7f`). It was a correct
+reading of which tasks the case needs a record from, and it stopped short of binding them, on the
+grounds that editing the BPMN by hand would risk the model layout. The bindings were made later and
+the models still deploy and still run end to end with them.
+
+Those six files were written to the convention the eight original forms used, so they carried the
+same two faults: children under `elements`, and a `path` on the group. They would not have rendered
+a field either. They have been reworked to the schema rules above and to the variable contracts the
+models and the workers actually read, and `escalation.form` has been dropped: it covered
+`N_AM_ContactConsultant` and `N_AM_EscalateHigher` with one `escalationLevel` choice, but the two
+tasks ask for different records - contacting the responsible consultant, and escalating to higher
+management - and `consultant-contact.form` and `management-escalation.form` carry them separately.
+`129ad7f` still holds the original files for anyone who wants to compare.
+
 ## Testing the forms
 
 The forms are exercised as part of the scenarios in `../tests/test-plan.md`, and the end-to-end run

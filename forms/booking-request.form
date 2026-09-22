@@ -4,8 +4,7 @@
     {
       "type": "group",
       "label": "Booking Request Details",
-      "path": "bookingDetails",
-      "elements": [
+      "components": [
         {
           "type": "textfield",
           "key": "referralId",
@@ -61,6 +60,68 @@
           "type": "textarea",
           "key": "patientRequirements",
           "label": "Patient Requirements (if any)"
+        },
+        {
+          "type": "textarea",
+          "key": "recipients",
+          "label": "Recipients",
+          "description": "Separate recipients with commas. Passed to the correspondence service when the appointment letter is sent.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "documentType",
+          "label": "Document Type",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "New Patient Clinic Letter",
+              "value": "new_patient_clinic_letter"
+            },
+            {
+              "label": "Follow-up Clinic Letter",
+              "value": "follow_up_clinic_letter"
+            },
+            {
+              "label": "Appointment Letter",
+              "value": "appointment_letter"
+            },
+            {
+              "label": "Referral Outcome Letter",
+              "value": "referral_outcome_letter"
+            },
+            {
+              "label": "Deferral or Cancellation Letter",
+              "value": "deferral_or_cancellation_letter"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "channelPreference",
+          "label": "Channel Preference",
+          "options": [
+            {
+              "label": "Post",
+              "value": "post"
+            },
+            {
+              "label": "Digital",
+              "value": "digital"
+            },
+            {
+              "label": "Authorised Representative",
+              "value": "authorised_representative"
+            },
+            {
+              "label": "Accessible Format",
+              "value": "accessible_format"
+            }
+          ]
         }
       ]
     }

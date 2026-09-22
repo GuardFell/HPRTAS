@@ -1,0 +1,90 @@
+{
+  "id": "missing-information-request",
+  "components": [
+    {
+      "type": "group",
+      "label": "Request",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "requestedItems",
+          "label": "Items Requested",
+          "description": "One item per line. These are the items the validation step found missing.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "requestedFrom",
+          "label": "Requested From",
+          "description": "The referring organisation the request was sent to.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "requestMethod",
+          "label": "Method",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Letter",
+              "value": "letter"
+            },
+            {
+              "label": "Email",
+              "value": "email"
+            },
+            {
+              "label": "Telephone",
+              "value": "telephone"
+            }
+          ]
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "requestDate",
+          "label": "Date Requested",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "requestedBy",
+          "label": "Requested By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "requestNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

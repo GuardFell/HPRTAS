@@ -1,0 +1,158 @@
+{
+  "id": "dispatch-failure",
+  "components": [
+    {
+      "type": "group",
+      "label": "Failed Dispatch",
+      "components": [
+        {
+          "type": "textarea",
+          "key": "recipients",
+          "label": "Correct Recipients",
+          "description": "Separate recipients with commas. The dispatch failed because this list or the document type was unusable, so the corrected list is recorded here.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "documentType",
+          "label": "Document Type",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "New Patient Clinic Letter",
+              "value": "new_patient_clinic_letter"
+            },
+            {
+              "label": "Follow-up Clinic Letter",
+              "value": "follow_up_clinic_letter"
+            },
+            {
+              "label": "Appointment Letter",
+              "value": "appointment_letter"
+            },
+            {
+              "label": "Referral Outcome Letter",
+              "value": "referral_outcome_letter"
+            },
+            {
+              "label": "Deferral or Cancellation Letter",
+              "value": "deferral_or_cancellation_letter"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "channelPreference",
+          "label": "Channel Preference",
+          "description": "How the patient asked to be contacted. Defaults to post where it is not recorded.",
+          "options": [
+            {
+              "label": "Post",
+              "value": "post"
+            },
+            {
+              "label": "Digital",
+              "value": "digital"
+            },
+            {
+              "label": "Authorised Representative",
+              "value": "authorised_representative"
+            },
+            {
+              "label": "Accessible Format",
+              "value": "accessible_format"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Failure and Alternative Contact",
+      "components": [
+        {
+          "type": "select",
+          "key": "failureReason",
+          "label": "Reason for the Failure",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Recipient List Unusable",
+              "value": "invalid_recipients"
+            },
+            {
+              "label": "Document Type Missing or Unusable",
+              "value": "missing_document_type"
+            },
+            {
+              "label": "Correspondence Service Unavailable",
+              "value": "service_unavailable"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "alternativeChannel",
+          "label": "Alternative Channel Used",
+          "description": "The channel the patient is informed through when the service is not used.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Telephone",
+              "value": "telephone"
+            },
+            {
+              "label": "Digital",
+              "value": "digital"
+            },
+            {
+              "label": "Accessible Format",
+              "value": "accessible_format"
+            },
+            {
+              "label": "Authorised Representative",
+              "value": "authorised_representative"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "key": "patientInformed",
+          "label": "Patient Informed Through the Alternative Channel",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "recordedBy",
+          "label": "Recorded By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "failureNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

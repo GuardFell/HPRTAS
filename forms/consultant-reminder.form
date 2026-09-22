@@ -1,0 +1,97 @@
+{
+  "id": "consultant-reminder",
+  "components": [
+    {
+      "type": "group",
+      "label": "Reminder",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "number",
+          "key": "reminderNumber",
+          "label": "Reminder Number",
+          "validate": {
+            "required": true,
+            "min": 1
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "reminderDate",
+          "label": "Reminder Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "overdueDuration",
+          "label": "How Overdue the Letter Is",
+          "description": "Decides whether the delay stays with the Consultant or is escalated.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Less Than One Month",
+              "value": "less_than_one_month"
+            },
+            {
+              "label": "One to Three Months",
+              "value": "one_to_three_months"
+            },
+            {
+              "label": "More Than Three Months",
+              "value": "over_three_months"
+            }
+          ]
+        },
+        {
+          "type": "textfield",
+          "key": "reminderTo",
+          "label": "Reminder To",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "reminderResponse",
+          "label": "Response to the Reminder",
+          "description": "Kept as part of the record of reminders and responses."
+        },
+        {
+          "type": "textarea",
+          "key": "delayReason",
+          "label": "Valid Reason for the Delay",
+          "description": "Where the Consultant gives one, so the reason is retained with the reminder."
+        },
+        {
+          "type": "textfield",
+          "key": "issuedBy",
+          "label": "Issued By",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

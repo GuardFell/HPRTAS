@@ -1,0 +1,88 @@
+{
+  "id": "referrer-notification",
+  "components": [
+    {
+      "type": "group",
+      "label": "Informing the Referring Organisation",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "referrerOrganisation",
+          "label": "Referring Organisation",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "referrerNotified",
+          "label": "Referring Organisation Informed",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "notificationMethod",
+          "label": "Method",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Letter",
+              "value": "letter"
+            },
+            {
+              "label": "Email",
+              "value": "email"
+            },
+            {
+              "label": "Telephone",
+              "value": "telephone"
+            }
+          ]
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "notificationDate",
+          "label": "Date Informed",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "notifiedBy",
+          "label": "Informed By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "notificationNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

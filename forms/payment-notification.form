@@ -1,0 +1,100 @@
+{
+  "id": "payment-notification",
+  "components": [
+    {
+      "type": "group",
+      "label": "Notification",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "notifiedPatient",
+          "label": "Patient Notified",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "notifiedTeam",
+          "label": "Responsible Team Notified",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "notificationChannel",
+          "label": "Channel",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Telephone",
+              "value": "telephone"
+            },
+            {
+              "label": "Post",
+              "value": "post"
+            },
+            {
+              "label": "Digital",
+              "value": "digital"
+            }
+          ]
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "notificationDate",
+          "label": "Date Notified",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Next Step",
+      "components": [
+        {
+          "type": "checkbox",
+          "key": "retryPayment",
+          "label": "Another Payment Attempt Is Required",
+          "description": "Tick where the patient is able to settle and the charge should be presented again. The request is re-issued without creating a second charge on the same reference."
+        },
+        {
+          "type": "textfield",
+          "key": "notifiedBy",
+          "label": "Notified By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "notificationNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

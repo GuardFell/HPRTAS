@@ -1,0 +1,87 @@
+{
+  "id": "payment-investigation",
+  "components": [
+    {
+      "type": "group",
+      "label": "Transaction Under Investigation",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "paymentReference",
+          "label": "Payment Reference",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "transactionReference",
+          "label": "Provider Transaction Reference",
+          "description": "The reference the provider returned, where one was returned."
+        },
+        {
+          "type": "select",
+          "key": "investigationReason",
+          "label": "Reason for the Investigation",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Payment Taken Without Confirmation",
+              "value": "confirmation_not_returned"
+            },
+            {
+              "label": "Amount Does Not Match the Charge",
+              "value": "amount_mismatch"
+            },
+            {
+              "label": "Provider Reported an Error",
+              "value": "provider_error"
+            }
+          ]
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "investigationDate",
+          "label": "Date Marked",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "furtherPaymentBlocked",
+          "label": "No Further Payment Request Issued",
+          "description": "Confirm that no further request has been or will be issued against this payment while it is under investigation.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "investigatedBy",
+          "label": "Marked By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "investigationNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

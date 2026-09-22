@@ -1,0 +1,86 @@
+{
+  "id": "enquiry-response",
+  "components": [
+    {
+      "type": "group",
+      "label": "Response",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "enquiryReference",
+          "label": "Enquiry Reference",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "responseProvided",
+          "label": "Response Provided",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "responseDate",
+          "label": "Date Answered",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "respondedBy",
+          "label": "Answered By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "responsibleTeam",
+          "label": "Responsible Team",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "enquiryResolved",
+          "label": "Is the Enquiry Resolved?",
+          "description": "Whether the enquiry is resolved. An enquiry that is not resolved stays open rather than being closed unanswered.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Yes",
+              "value": "yes"
+            },
+            {
+              "label": "No",
+              "value": "no"
+            }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "responseNotes",
+          "label": "Notes",
+          "description": "Where the enquiry is not resolved it stays open rather than being closed unanswered."
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

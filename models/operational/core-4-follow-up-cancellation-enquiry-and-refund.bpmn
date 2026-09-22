@@ -94,6 +94,7 @@
     <bpmn:documentation>The appointment is confirmed in the Hospital Patient Administration System (BR-06, FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="appointment-confirmation" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -116,6 +117,7 @@
     <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the letter was not dispatched; the failure is recorded and the patient is informed through another channel (FR-023, NFR-008, NFR-011).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="dispatch-failure" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -133,7 +135,7 @@
     <bpmn:documentation>The event is recorded and a decision is taken on the next step (BR-39, FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
-      <zeebe:formDefinition formId="patient-contact" />
+      <zeebe:formDefinition formId="cancellation-record" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -144,6 +146,7 @@
     <bpmn:documentation>BR-39, EX-20: the referring organisation is told where the patient cancels, declines or fails to attend (FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="referrer-notification" />
       <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -152,6 +155,7 @@
     <bpmn:documentation>BR-34, EX-19: the case is highlighted for the relevant pathway team instead of being booked outside the requested period (FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="unbooked-case-review" />
       <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -160,6 +164,7 @@
     <bpmn:documentation>BR-41: whether the patient can continue treatment, whether it should be delayed and whether the patient should be discharged are clinical decisions (FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="pathway-review" />
       <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -168,6 +173,7 @@
     <bpmn:documentation>BR-35, EX-21: clinical enquiries reach an appropriately qualified member of the Clinical Nurse Specialist Team (FR-042).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="clinical-advice" />
       <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -178,6 +184,7 @@
     <bpmn:documentation>BR-38, FR-044: the enquiry is prioritised and escalated immediately.</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="urgent-escalation" />
       <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -192,6 +199,7 @@
     <bpmn:documentation>Administrative, financial or clinical; a priority is assigned and the record names who handled it (BR-37, FR-041).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="enquiry-classification" />
       <zeebe:assignmentDefinition candidateGroups="call-handling" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -202,6 +210,7 @@
     <bpmn:documentation>Straightforward administrative questions only, for example the date, time or location of an appointment (BR-36, FR-043).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="enquiry-response" />
       <zeebe:assignmentDefinition candidateGroups="call-handling" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -244,6 +253,7 @@
     <bpmn:documentation>BR-36, EX-21: payment and funding enquiries that a call handler cannot answer from authorised information are referred to the Finance Team (FR-043).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="enquiry-response" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>

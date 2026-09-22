@@ -1,0 +1,81 @@
+{
+  "id": "unbooked-case-review",
+  "components": [
+    {
+      "type": "group",
+      "label": "Unbooked Case",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "highlightedTo",
+          "label": "Highlighted To",
+          "description": "The pathway team the case is referred to.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "reviewOutcome",
+          "label": "Outcome of the Review",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Awaiting the Pathway Team",
+              "value": "awaiting_pathway_decision"
+            },
+            {
+              "label": "Referred On",
+              "value": "referred_on"
+            },
+            {
+              "label": "Case Closed",
+              "value": "closed"
+            }
+          ]
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "reviewDate",
+          "label": "Review Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "reviewedBy",
+          "label": "Reviewed By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "reviewNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

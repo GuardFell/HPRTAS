@@ -1,0 +1,115 @@
+{
+  "id": "enquiry-classification",
+  "components": [
+    {
+      "type": "group",
+      "label": "Enquiry",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "enquiryReference",
+          "label": "Enquiry Reference",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "receivedAt",
+          "label": "Date Received",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "receivedBy",
+          "label": "Received By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "enquirySummary",
+          "label": "What the Enquiry Is About",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "enquiryType",
+          "label": "Enquiry Type",
+          "description": "An administrative question is answered by the call handler. A payment or funding question goes to the Finance Team. Anything clinical goes to a clinical professional and is not answered here.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Administrative",
+              "value": "administrative"
+            },
+            {
+              "label": "Financial",
+              "value": "financial"
+            },
+            {
+              "label": "Clinical",
+              "value": "clinical"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "enquiryPriority",
+          "label": "Priority",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Routine",
+              "value": "routine"
+            },
+            {
+              "label": "Urgent",
+              "value": "urgent"
+            }
+          ]
+        },
+        {
+          "type": "textfield",
+          "key": "handledBy",
+          "label": "Handled By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "responsibleTeam",
+          "label": "Responsible Team",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "enquiryNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

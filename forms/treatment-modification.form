@@ -1,9 +1,9 @@
 {
-  "id": "treatment-booking",
+  "id": "treatment-modification",
   "components": [
     {
       "type": "group",
-      "label": "Treatment Booking Details",
+      "label": "Modification",
       "components": [
         {
           "type": "textfield",
@@ -16,7 +16,7 @@
         {
           "type": "textfield",
           "key": "proposedTreatment",
-          "label": "Proposed Treatment",
+          "label": "Modified Treatment",
           "validate": {
             "required": true
           }
@@ -26,24 +26,25 @@
           "subtype": "date",
           "dateLabel": "Date",
           "key": "treatmentStartDate",
-          "label": "Required Start Date",
+          "label": "Revised Start Date",
           "validate": {
             "required": true
           }
         },
         {
-          "type": "number",
-          "key": "numberOfCycles",
-          "label": "Number of Cycles",
-          "validate": {
-            "required": true,
-            "min": 1
-          }
+          "type": "textarea",
+          "key": "specialResources",
+          "label": "Special Resources Required",
+          "description": "One resource per line, or separated by commas."
         },
         {
           "type": "textarea",
-          "key": "specialResources",
-          "label": "Special Resources Required"
+          "key": "modificationReason",
+          "label": "Reason for the Modification",
+          "description": "Only a formally submitted modification is processed. One requested by email, telephone or informal communication is refused.",
+          "validate": {
+            "required": true
+          }
         }
       ]
     },
@@ -51,6 +52,12 @@
       "type": "group",
       "label": "Authorisation",
       "components": [
+        {
+          "type": "checkbox",
+          "key": "affectsCharge",
+          "label": "The Modification Affects an Existing Charge, Funding Approval or Payment",
+          "description": "Where this is ticked the case is referred to the Finance Team before the change is applied."
+        },
         {
           "type": "checkbox",
           "key": "clinicalAuthorised",

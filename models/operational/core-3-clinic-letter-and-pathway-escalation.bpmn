@@ -66,6 +66,7 @@
     <bpmn:documentation>EX-18, BR-27: a suspected clinical error is returned to the Consultant; administrative staff may not change clinical meaning (FR-037).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="clinical-error-review" />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -78,6 +79,7 @@
     <bpmn:documentation>Administrative checks and the correspondence timeline: appointment date, start and completion dates, approval date, processing date (BR-27, BR-29, FR-037, FR-039).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="letter-processing" />
       <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -105,6 +107,7 @@
     <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the dispatch variables (for example the recipient list) were unusable, so they are corrected and the letter is sent again through the correspondence service. The failure and the retry are recorded (FR-037, FR-039, NFR-008).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="dispatch-failure" />
       <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -115,6 +118,7 @@
     <bpmn:documentation>Pathway monitoring of outstanding correspondence; seven days after the appointment a letter is delayed (BR-28, BR-30, FR-038).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="correspondence-monitoring" />
       <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -126,6 +130,7 @@
     <bpmn:documentation>Weekly reminders, suppressed once the letter is completed; the full history of reminders, responses and valid reasons for delay is retained (BR-31, BR-33, FR-040, FR-052).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="consultant-reminder" />
       <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -136,6 +141,7 @@
     <bpmn:documentation>More than one month outstanding: the Administrative Manager contacts the consultant (BR-32, EX-17, FR-040).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="consultant-contact" />
       <zeebe:assignmentDefinition candidateGroups="administrative-management" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -143,6 +149,7 @@
     <bpmn:documentation>More than three months outstanding: escalation to the appropriate higher management team; the team is not named in the case (AM-05, BR-32, FR-040).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="management-escalation" />
       <zeebe:assignmentDefinition candidateGroups="administrative-management" />
     </bpmn:extensionElements>
   </bpmn:userTask>

@@ -63,6 +63,7 @@
       <bpmn:documentation>Medical Secretaries record the supporting information received and the patient identification check (BR-01, BR-46, FR-002, FR-048), and supply the validate-referral inputs documentsComplete, missingItems and referringOrganisation.</bpmn:documentation>
       <bpmn:extensionElements>
         <zeebe:userTask />
+        <zeebe:formDefinition formId="referral-check" />
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -79,6 +80,7 @@
       <bpmn:documentation>Medical Secretaries only; they may not judge clinical suitability (BR-02, EX-01, FR-003).</bpmn:documentation>
       <bpmn:extensionElements>
         <zeebe:userTask />
+        <zeebe:formDefinition formId="missing-information-request" />
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -86,6 +88,7 @@
       <bpmn:documentation>Handles MISSING_INFORMATION_NOT_SPECIFIED: the referral is marked incomplete but names no missing items, so nothing can be requested until the exception is reviewed (FR-003).</bpmn:documentation>
       <bpmn:extensionElements>
         <zeebe:userTask />
+        <zeebe:formDefinition formId="referral-exception-review" />
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -93,6 +96,7 @@
       <bpmn:documentation>Handles INVALID_VARIABLE on validate-referral: a required variable is missing, of the wrong type or contradicts another value, so the recorded inputs are corrected and the validation is re-run. Keeping this separate from the missing-information path is how the model tells the two failures apart (workers/README.md integration constraint).</bpmn:documentation>
       <bpmn:extensionElements>
         <zeebe:userTask />
+        <zeebe:formDefinition formId="referral-check" />
         <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -163,6 +167,7 @@
       <bpmn:documentation>EX-05: no suitable appointment inside the requested period; the scheduling outcome is outside_window or none and the action taken is recorded (FR-016).</bpmn:documentation>
       <bpmn:extensionElements>
         <zeebe:userTask />
+        <zeebe:formDefinition formId="no-suitable-slot" />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -181,6 +186,7 @@
       <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the letter was not dispatched because a required variable (for example the recipient list) was unusable. The failure is recorded and the patient is contacted through another channel, so informing the patient does not depend on the correspondence service (FR-012, NFR-008, NFR-011).</bpmn:documentation>
       <bpmn:extensionElements>
         <zeebe:userTask />
+        <zeebe:formDefinition formId="dispatch-failure" />
         <zeebe:assignmentDefinition candidateGroups="outpatient-bookings" />
       </bpmn:extensionElements>
     </bpmn:userTask>
@@ -188,6 +194,7 @@
       <bpmn:documentation>Pathway monitoring of a case with no suitable appointment (FR-016, FR-040).</bpmn:documentation>
       <bpmn:extensionElements>
         <zeebe:userTask />
+        <zeebe:formDefinition formId="delay-review" />
         <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
       </bpmn:extensionElements>
     </bpmn:userTask>

@@ -1,9 +1,9 @@
 {
-  "id": "treatment-booking",
+  "id": "funding-approval",
   "components": [
     {
       "type": "group",
-      "label": "Treatment Booking Details",
+      "label": "Approval",
       "components": [
         {
           "type": "textfield",
@@ -15,54 +15,50 @@
         },
         {
           "type": "textfield",
-          "key": "proposedTreatment",
-          "label": "Proposed Treatment",
-          "validate": {
-            "required": true
-          }
-        },
-        {
-          "type": "datetime",
-          "subtype": "date",
-          "dateLabel": "Date",
-          "key": "treatmentStartDate",
-          "label": "Required Start Date",
-          "validate": {
-            "required": true
-          }
-        },
-        {
-          "type": "number",
-          "key": "numberOfCycles",
-          "label": "Number of Cycles",
-          "validate": {
-            "required": true,
-            "min": 1
-          }
-        },
-        {
-          "type": "textarea",
-          "key": "specialResources",
-          "label": "Special Resources Required"
-        }
-      ]
-    },
-    {
-      "type": "group",
-      "label": "Authorisation",
-      "components": [
-        {
-          "type": "checkbox",
-          "key": "clinicalAuthorised",
-          "label": "Clinical Authorisation Confirmed",
+          "key": "fundingOrganisation",
+          "label": "Funding Organisation",
           "validate": {
             "required": true
           }
         },
         {
           "type": "textfield",
-          "key": "authorisingClinician",
-          "label": "Authorising Clinician",
+          "key": "authorisationReference",
+          "label": "Authorisation Reference",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "number",
+          "key": "approvedAmount",
+          "label": "Approved Amount (£)",
+          "validate": {
+            "required": true,
+            "min": 0,
+            "max": 100000
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "approvalDate",
+          "label": "Approval Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "approvalLimitations",
+          "label": "Limitations on the Approval",
+          "description": "Any treatment, period or amount the approval does not cover."
+        },
+        {
+          "type": "textfield",
+          "key": "approvedBy",
+          "label": "Approved By",
           "validate": {
             "required": true
           }

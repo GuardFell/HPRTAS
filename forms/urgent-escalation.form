@@ -1,0 +1,79 @@
+{
+  "id": "urgent-escalation",
+  "components": [
+    {
+      "type": "group",
+      "label": "Urgent Escalation",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "enquiryReference",
+          "label": "Enquiry Reference",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "escalationReason",
+          "label": "Reason for the Urgent Escalation",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "escalatedTo",
+          "label": "Escalated To",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "escalationDate",
+          "label": "Date Escalated",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "patientContacted",
+          "label": "Patient Contacted"
+        },
+        {
+          "type": "textfield",
+          "key": "escalatedBy",
+          "label": "Escalated By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "escalationNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

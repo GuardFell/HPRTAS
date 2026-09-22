@@ -1,0 +1,87 @@
+{
+  "id": "financial-impact-review",
+  "components": [
+    {
+      "type": "group",
+      "label": "Financial Impact",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "financialImpact",
+          "label": "Effect of the Modification",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "No Financial Effect",
+              "value": "none"
+            },
+            {
+              "label": "The Charge Changes",
+              "value": "charge_changed"
+            },
+            {
+              "label": "The Funding Approval Changes",
+              "value": "funding_changed"
+            },
+            {
+              "label": "A Completed Payment Is Affected",
+              "value": "payment_affected"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "key": "revisedChargeAmount",
+          "label": "Revised Charge (£)",
+          "description": "Recorded where the charge changes.",
+          "validate": {
+            "min": 0,
+            "max": 100000
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "reviewDate",
+          "label": "Review Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "reviewedBy",
+          "label": "Reviewed By",
+          "description": "An authorised member of the Finance Team.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "impactNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

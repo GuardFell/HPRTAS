@@ -1,0 +1,79 @@
+{
+  "id": "booking-pending",
+  "components": [
+    {
+      "type": "group",
+      "label": "Pending Booking",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "pendingReason",
+          "label": "Reason the Booking Is Pending",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Treatment Service Unavailable",
+              "value": "service_unavailable"
+            },
+            {
+              "label": "Awaiting Funding Approval",
+              "value": "awaiting_funding"
+            },
+            {
+              "label": "Awaiting Clinical Authorisation",
+              "value": "awaiting_authorisation"
+            }
+          ]
+        },
+        {
+          "type": "textfield",
+          "key": "notifiedTeam",
+          "label": "Team Notified",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "attemptRecorded",
+          "label": "Attempt Recorded",
+          "description": "The attempt is recorded so a further attempt is made without creating a duplicate appointment.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "recordedBy",
+          "label": "Recorded By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "pendingNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

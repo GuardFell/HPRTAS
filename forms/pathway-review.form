@@ -1,0 +1,101 @@
+{
+  "id": "pathway-review",
+  "components": [
+    {
+      "type": "group",
+      "label": "Clinical Pathway Review",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "pathwayDecision",
+          "label": "Decision",
+          "description": "Recorded by a clinical professional. A decision to continue, to delay and to discharge are all clinical decisions.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Continue Treatment",
+              "value": "continue_treatment"
+            },
+            {
+              "label": "Delay Treatment",
+              "value": "delay_treatment"
+            },
+            {
+              "label": "Discharge the Patient",
+              "value": "discharge_patient"
+            }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "clinicalReason",
+          "label": "Clinical Reason",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "reviewDate",
+          "label": "Review Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "reviewedBy",
+          "label": "Reviewed By",
+          "description": "A clinical professional.",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Where the Decision Sends the Case",
+      "components": [
+        {
+          "type": "checkbox",
+          "key": "continueTreatment",
+          "label": "Continue Treatment",
+          "description": "Tick exactly one of this and the two below. Continuing sends the case back to arranging another appointment."
+        },
+        {
+          "type": "checkbox",
+          "key": "pathwayClosed",
+          "label": "Close the Pathway",
+          "description": "Tick where the patient is discharged and the pathway ends."
+        },
+        {
+          "type": "textarea",
+          "key": "reviewNotes",
+          "label": "Notes",
+          "description": "Where neither of the two above is ticked the case continues with the referral to the referring organisation."
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

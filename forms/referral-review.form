@@ -4,8 +4,7 @@
     {
       "type": "group",
       "label": "Referral Information",
-      "path": "referralInfo",
-      "elements": [
+      "components": [
         {
           "type": "textfield",
           "key": "referralId",
@@ -35,8 +34,7 @@
     {
       "type": "group",
       "label": "Clinical Review",
-      "path": "clinicalReview",
-      "elements": [
+      "components": [
         {
           "type": "textarea",
           "key": "clinicalSummary",
@@ -72,8 +70,7 @@
     {
       "type": "group",
       "label": "Booking Request",
-      "path": "bookingRequest",
-      "elements": [
+      "components": [
         {
           "type": "select",
           "key": "speciality",

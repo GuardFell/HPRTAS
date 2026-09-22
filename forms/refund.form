@@ -4,8 +4,7 @@
     {
       "type": "group",
       "label": "Refund Details",
-      "path": "refundDetails",
-      "elements": [
+      "components": [
         {
           "type": "textfield",
           "key": "paymentReference",
@@ -44,7 +43,7 @@
           "label": "Refund Amount (£)",
           "description": "Required for a partial refund. A full refund returns the amount the provider actually took.",
           "validate": {
-            "min": 0,
+            "min": 0.01,
             "max": 100000
           }
         },

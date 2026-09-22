@@ -1,0 +1,84 @@
+{
+  "id": "urgent-authorisation",
+  "components": [
+    {
+      "type": "group",
+      "label": "Authorisation Without Confirmed Payment",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "clinicalRiskReason",
+          "label": "Clinical Reason Delaying Care Is a Risk",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "proceedingWithoutPaymentReason",
+          "label": "Reason for Proceeding Without Confirmed Payment",
+          "description": "Why treatment starts before the funding or payment question is settled.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "referredToFinance",
+          "label": "Referred to the Finance Team",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "authorisationDate",
+          "label": "Authorisation Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "authorisedBy",
+          "label": "Authorised By",
+          "description": "A clinical professional.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "urgentNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

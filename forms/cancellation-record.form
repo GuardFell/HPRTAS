@@ -1,0 +1,122 @@
+{
+  "id": "cancellation-record",
+  "components": [
+    {
+      "type": "group",
+      "label": "Cancellation or Non-attendance",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "appointmentReference",
+          "label": "Appointment Reference"
+        },
+        {
+          "type": "select",
+          "key": "cancellationType",
+          "label": "What Happened",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Cancelled by the Patient",
+              "value": "cancelled"
+            },
+            {
+              "label": "Declined",
+              "value": "declined"
+            },
+            {
+              "label": "Did Not Attend",
+              "value": "non_attendance"
+            }
+          ]
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "cancellationDate",
+          "label": "Date of the Event",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "recordedChannel",
+          "label": "How It Was Reported",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Telephone",
+              "value": "telephone"
+            },
+            {
+              "label": "Letter",
+              "value": "letter"
+            },
+            {
+              "label": "Email",
+              "value": "email"
+            }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "cancellationNotes",
+          "label": "Notes"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Decision on the Next Step",
+      "components": [
+        {
+          "type": "checkbox",
+          "key": "paidAppointment",
+          "label": "A Paid Appointment Is Affected",
+          "description": "Where this is ticked the case goes to the Finance Team, which decides whether the payment is retained, transferred or refunded."
+        },
+        {
+          "type": "checkbox",
+          "key": "offerAnotherAppointment",
+          "label": "Another Appointment Is to Be Offered"
+        },
+        {
+          "type": "checkbox",
+          "key": "pathwayReviewRequired",
+          "label": "A Clinical Pathway Review Is Required",
+          "description": "Whether the patient can continue treatment, whether it should be delayed and whether the patient should be discharged are clinical decisions."
+        },
+        {
+          "type": "textfield",
+          "key": "recordedBy",
+          "label": "Recorded By",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

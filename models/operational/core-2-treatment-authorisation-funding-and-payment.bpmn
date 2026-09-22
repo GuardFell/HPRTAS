@@ -73,6 +73,7 @@
     <bpmn:documentation>Clinical task: assess the patient, discuss the diagnosis and explain the treatment options (BR-25, FR-007).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="patient-assessment" />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -97,7 +98,7 @@
     <bpmn:documentation>Only a formally submitted Treatment Modification Request through the system is processed; requests made by email, telephone or informal communication are refused (BR-22, EX-15, FR-020).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
-      <zeebe:formDefinition formId="treatment-booking" />
+      <zeebe:formDefinition formId="treatment-modification" />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -105,6 +106,7 @@
     <bpmn:documentation>Records the reason for proceeding without confirmed payment and refers the case to the Finance Team for resolution (BR-19, EX-13, FR-032).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="urgent-authorisation" />
       <zeebe:assignmentDefinition candidateGroups="consultants" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -112,6 +114,7 @@
     <bpmn:documentation>Before each subsequent cycle: review, blood test results and the clinical decision on fitness to continue (BR-25, FR-009).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="pre-cycle-review" />
       <zeebe:assignmentDefinition candidateGroups="clinical-professionals" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -122,6 +125,7 @@
     <bpmn:documentation>Administrative check that the request is complete and clinically authorised; supplies clinicalAuthorised to the availability check (BR-10, FR-008).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="authorisation-verification" />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -138,6 +142,7 @@
     <bpmn:documentation>Confirmation only after the funding route and, where required, the payment or an authorised exemption are in place (BR-15, FR-029).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="appointment-confirmation" />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -151,6 +156,7 @@
     <bpmn:documentation>Handles UNAUTHORISED_BOOKING_REQUEST: the request has no clinical authorisation and is not processed; it is returned to the clinical role (BR-10, FR-008).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="authorisation-return" />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -158,6 +164,7 @@
     <bpmn:documentation>EX-10: the booking stays pending, the responsible team is notified, further attempts are recorded and no duplicate appointment is created (BR-12, FR-018).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="booking-pending" />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -173,6 +180,7 @@
     <bpmn:documentation>Handles INVALID_VARIABLE on send-correspondence: the notification was not dispatched because a required variable (for example the recipient list) was unusable; the failure is recorded and the patient is informed through another channel (FR-012, NFR-008, NFR-011).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="dispatch-failure" />
       <zeebe:assignmentDefinition candidateGroups="treatment-bookings" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -200,6 +208,7 @@
     <bpmn:documentation>Records the funding organisation, authorisation reference, approved amount and any limitations (BR-14, FR-026).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="funding-approval" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -235,6 +244,7 @@
     <bpmn:documentation>EX-12, BR-18: payment taken but confirmation not returned; the transaction is marked for investigation and no further payment request is issued (FR-031).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="payment-investigation" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -245,6 +255,7 @@
     <bpmn:documentation>EX-11, BR-17: the patient and the responsible administrative team are notified; another attempt is possible without a duplicate booking or a second charge (FR-030).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="payment-notification" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>
@@ -252,6 +263,7 @@
     <bpmn:documentation>BR-24, FR-022: a modification that affects an existing charge, funding approval or completed payment is reviewed by Finance.</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
+      <zeebe:formDefinition formId="financial-impact-review" />
       <zeebe:assignmentDefinition candidateGroups="finance" />
     </bpmn:extensionElements>
   </bpmn:userTask>

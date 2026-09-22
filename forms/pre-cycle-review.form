@@ -1,0 +1,79 @@
+{
+  "id": "pre-cycle-review",
+  "components": [
+    {
+      "type": "group",
+      "label": "Pre-cycle Review",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "number",
+          "key": "cycleNumber",
+          "label": "Cycle Number",
+          "validate": {
+            "required": true,
+            "min": 1
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "bloodTestDate",
+          "label": "Blood Test Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "bloodTestResults",
+          "label": "Blood Test Results",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Clinical Decision",
+      "components": [
+        {
+          "type": "checkbox",
+          "key": "fitToContinue",
+          "label": "Patient Fit to Continue",
+          "description": "Where the patient is not fit, the treatment plan is reviewed and modified by a clinical professional."
+        },
+        {
+          "type": "textfield",
+          "key": "reviewedBy",
+          "label": "Reviewed By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "reviewNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

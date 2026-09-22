@@ -4,8 +4,7 @@
     {
       "type": "group",
       "label": "Funding Information",
-      "path": "fundingInfo",
-      "elements": [
+      "components": [
         {
           "type": "textfield",
           "key": "treatmentRequestId",
@@ -32,6 +31,18 @@
           "type": "textarea",
           "key": "fundingNotes",
           "label": "Additional Notes"
+        },
+        {
+          "type": "checkbox",
+          "key": "fundingApprovalRequired",
+          "label": "Funding Approval Required From the Funding Organisation",
+          "description": "Tick where the funding organisation must approve before anything further happens. Where this is left unticked the approval step is skipped, so tick it unless no approval is needed."
+        },
+        {
+          "type": "checkbox",
+          "key": "paymentRequiredFromPatient",
+          "label": "Payment Required From the Patient",
+          "description": "Tick for a treatment the patient pays for. Where this is left unticked the appointment is confirmed without taking payment, so tick it unless the hospital, an insurer or an exemption covers the treatment."
         }
       ]
     }

@@ -1,0 +1,97 @@
+{
+  "id": "no-suitable-slot",
+  "components": [
+    {
+      "type": "group",
+      "label": "No Suitable Slot",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "noSlotOutcome",
+          "label": "Scheduling Outcome",
+          "description": "What the scheduling service reported when the appointment was sought.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Slot Outside the Requested Period",
+              "value": "outside_window"
+            },
+            {
+              "label": "No Slot Available",
+              "value": "none"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "actionTaken",
+          "label": "Action Taken",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Highlighted for the Pathway Team",
+              "value": "highlighted_for_pathway_team"
+            },
+            {
+              "label": "Alternative Slot Offered to the Patient",
+              "value": "alternative_offered"
+            },
+            {
+              "label": "Case Returned to the Referrer",
+              "value": "returned_to_referrer"
+            }
+          ]
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "alternativeDateOffered",
+          "label": "Alternative Date Offered",
+          "description": "Recorded where a slot outside the period was offered."
+        },
+        {
+          "type": "textfield",
+          "key": "recordedBy",
+          "label": "Recorded By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "noSlotNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

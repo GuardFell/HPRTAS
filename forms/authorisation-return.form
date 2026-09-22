@@ -1,0 +1,81 @@
+{
+  "id": "authorisation-return",
+  "components": [
+    {
+      "type": "group",
+      "label": "Return to the Clinical Role",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "returnReason",
+          "label": "Reason for the Return",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "No Clinical Authorisation on the Request",
+              "value": "unauthorised_booking_request"
+            },
+            {
+              "label": "Request Incomplete",
+              "value": "incomplete_request"
+            },
+            {
+              "label": "Request Submitted Informally",
+              "value": "informal_submission"
+            }
+          ]
+        },
+        {
+          "type": "textfield",
+          "key": "returnedTo",
+          "label": "Returned To",
+          "description": "The clinical professional who is asked to authorise the request.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "returnDate",
+          "label": "Date Returned",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "returnedBy",
+          "label": "Returned By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "returnNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

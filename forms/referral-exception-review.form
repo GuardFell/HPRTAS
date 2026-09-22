@@ -1,0 +1,58 @@
+{
+  "id": "referral-exception-review",
+  "components": [
+    {
+      "type": "group",
+      "label": "Exception",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "exceptionReason",
+          "label": "Why the Referral Was Incomplete",
+          "description": "The referral was recorded as incomplete but named no missing items, so nothing could be requested.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "missingItems",
+          "label": "Missing Items Now Identified",
+          "description": "One item per line. These are recorded so the referral can be re-checked and the items requested.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "reviewedBy",
+          "label": "Reviewed By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "reviewNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

@@ -1,46 +1,72 @@
 {
-  "id": "clinic-letter",
+  "id": "appointment-confirmation",
   "components": [
     {
       "type": "group",
-      "label": "Clinic Letter Details",
+      "label": "Confirmation",
       "components": [
         {
           "type": "textfield",
-          "key": "consultationId",
-          "label": "Consultation ID",
+          "key": "patientId",
+          "label": "Patient ID",
           "validate": {
             "required": true
           }
-        },
-        {
-          "type": "textarea",
-          "key": "letterContent",
-          "label": "Clinic Letter Content",
-          "validate": {
-            "required": true
-          }
-        },
-        {
-          "type": "textarea",
-          "key": "diagnosis",
-          "label": "Diagnosis"
-        },
-        {
-          "type": "textarea",
-          "key": "treatmentDecisions",
-          "label": "Treatment Decisions"
-        },
-        {
-          "type": "textarea",
-          "key": "followUpArrangements",
-          "label": "Follow-up Arrangements"
         },
         {
           "type": "textfield",
-          "key": "authoringClinician",
-          "label": "Authoring Clinician",
-          "description": "The Consultant who wrote the clinical content.",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID"
+        },
+        {
+          "type": "select",
+          "key": "confirmationBasis",
+          "label": "Basis for Confirming",
+          "description": "The appointment is confirmed only once the funding route and, where required, the payment or an authorised exemption are in place.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Funding in Place",
+              "value": "funding_in_place"
+            },
+            {
+              "label": "Payment Settled",
+              "value": "payment_settled"
+            },
+            {
+              "label": "Payment Not Required",
+              "value": "payment_not_required"
+            },
+            {
+              "label": "Exemption Authorised",
+              "value": "exemption_authorised"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "key": "appointmentConfirmed",
+          "label": "Appointment Confirmed",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "confirmationDate",
+          "label": "Confirmation Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "confirmedBy",
+          "label": "Confirmed By",
           "validate": {
             "required": true
           }
@@ -49,12 +75,13 @@
     },
     {
       "type": "group",
-      "label": "Recipients",
+      "label": "Notification",
       "components": [
         {
           "type": "textarea",
           "key": "recipients",
-          "label": "Recipients (separate with commas)",
+          "label": "Recipients",
+          "description": "Separate recipients with commas. Passed to the correspondence service.",
           "validate": {
             "required": true
           }
@@ -63,7 +90,6 @@
           "type": "select",
           "key": "documentType",
           "label": "Document Type",
-          "description": "Passed to the correspondence service with the recipients.",
           "validate": {
             "required": true
           },
@@ -112,6 +138,11 @@
               "value": "accessible_format"
             }
           ]
+        },
+        {
+          "type": "textarea",
+          "key": "confirmationNotes",
+          "label": "Notes"
         }
       ]
     }

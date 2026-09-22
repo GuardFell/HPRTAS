@@ -4,8 +4,7 @@
     {
       "type": "group",
       "label": "Payment Details",
-      "path": "paymentDetails",
-      "elements": [
+      "components": [
         {
           "type": "textfield",
           "key": "treatmentRequestId",

@@ -1,0 +1,75 @@
+{
+  "id": "delay-review",
+  "components": [
+    {
+      "type": "group",
+      "label": "Delay Review",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "delayReviewOutcome",
+          "label": "Outcome of the Review",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Kept Under Monitoring",
+              "value": "monitoring"
+            },
+            {
+              "label": "Expedited with the Service",
+              "value": "expedited"
+            },
+            {
+              "label": "Returned to the Referring Organisation",
+              "value": "returned_to_referrer"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "key": "referredToPathwayTeam",
+          "label": "Referred to the Pathway Team"
+        },
+        {
+          "type": "textfield",
+          "key": "reviewedBy",
+          "label": "Reviewed By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "delayReviewNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

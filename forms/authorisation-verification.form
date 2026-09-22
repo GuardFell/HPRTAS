@@ -1,0 +1,54 @@
+{
+  "id": "authorisation-verification",
+  "components": [
+    {
+      "type": "group",
+      "label": "Administrative Verification",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "requestComplete",
+          "label": "Treatment Booking Request Complete"
+        },
+        {
+          "type": "checkbox",
+          "key": "authorisationVerified",
+          "label": "Clinical Authorisation Verified",
+          "description": "The request carries the clinical authorisation the authorising professional recorded. This step verifies it; it does not supply it.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "verifiedBy",
+          "label": "Verified By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "verificationNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

@@ -1,0 +1,78 @@
+{
+  "id": "consultant-contact",
+  "components": [
+    {
+      "type": "group",
+      "label": "Contact with the Consultant",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "contactDate",
+          "label": "Contact Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "contactOutcome",
+          "label": "Outcome of the Contact",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Consultant Responded",
+              "value": "responded"
+            },
+            {
+              "label": "Acknowledged",
+              "value": "acknowledged"
+            },
+            {
+              "label": "No Response",
+              "value": "no_response"
+            }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "consultantResponse",
+          "label": "What the Consultant Said"
+        },
+        {
+          "type": "textfield",
+          "key": "contactedBy",
+          "label": "Contacted By",
+          "description": "The Administrative Manager.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "contactNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

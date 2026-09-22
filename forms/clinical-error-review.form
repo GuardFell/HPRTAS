@@ -1,0 +1,75 @@
+{
+  "id": "clinical-error-review",
+  "components": [
+    {
+      "type": "group",
+      "label": "Clinical Error Review",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "clinicalErrorDescription",
+          "label": "What the Suspected Error Was",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "correctionMade",
+          "label": "Correction Made",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "letterCorrected",
+          "label": "Letter Corrected and Ready to Approve Again",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "reviewDate",
+          "label": "Review Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "reviewedBy",
+          "label": "Reviewed By",
+          "description": "The responsible Consultant.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "reviewNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

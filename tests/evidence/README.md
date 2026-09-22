@@ -92,8 +92,10 @@ operational models of the first edition, which the four `core-N` models have sin
 - **The forms and role-based access.** No scenario has been completed by a signed-in user through
   Tasklist, so every user task variable in every run above was supplied with the completion call.
   The form contract is proved by the variables the model expects, not by a person filling a form in
-  (`DEF-08`), and 36 of the 55 user tasks bind no form at all, so for those tasks there is no form
-  to prove (`DEF-13`). Role-based access cannot be exercised at all (`DEF-07`).
+  (`DEF-08`). The runs above also predate the forms: 36 of the 55 user tasks had no form at all when
+  they were made, so for those tasks there was no form to prove (`DEF-13`, closed at `a62e783`;
+  `../forms/README.md` records what the forms now cover). Role-based access cannot be exercised at
+  all (`DEF-07`).
 - **The exception paths that no engine run has driven.** The between-cycle review's refusals, the
   suspected-clinical-error return in `core-3`, the another-appointment and pathway-review branches
   of the cancellation, and the no-slot-in-period case at model level. The unit suite covers the

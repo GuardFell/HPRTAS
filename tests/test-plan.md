@@ -137,9 +137,9 @@ cannot be met until role-based access exists (`DEF-07`, `DEF-08`).
 Two further faults were found while checking the models against the requirements rather than by
 running them, and both are the kind that running the current scenarios would not have caught:
 `N_F_ProcessRefund` cannot catch the `PROHIBITED_FINANCIAL_DATA` its worker raises (`DEF-12`), and
-36 of the 55 user tasks bind no form, so the variables they must write are recorded nowhere
-(`DEF-13`). Both are recorded in section 6 because a finding that only exists in a conversation is
-not evidence of anything.
+36 of the 55 user tasks bound no form, so the variables they must write were recorded nowhere
+(`DEF-13`, since fixed at `a62e783`). Both are recorded in section 6 because a finding that only
+exists in a conversation is not evidence of anything.
 
 ## 6. Defects and limitations
 
@@ -157,7 +157,7 @@ not evidence of anything.
 | DEF-10 | Each simulated service keeps its ledger in memory, so it is per worker process and is cleared when the worker restarts. A duplicate-prevention result is therefore only valid within one worker process. | Medium | Accepted limitation of the simulation (`AS-12`) | State the limitation wherever a duplicate result is claimed | - |
 | DEF-11 | An urgent referral with no slot in the requested period loops for ever in `core-1`. `N_OB_SlotAvailable` takes its default flow to `N_OB_RecordNoSlot`, whose only successor `N_OB_UrgentReferral` sends `priority = "urgent"` back to `N_OB_CheckAvailability`. The scheduling service returns the same outcome for the same input, and there is no attempt counter, no timer and no escalation on that branch, so the instance cannot leave it. A routine referral on the same branch terminates correctly at `N_PC_Referred`, which is why the fault is confined to the urgent case. | High | Open | None. Do not demonstrate an urgent referral with no suitable slot until this is fixed. | - |
 | DEF-12 | `N_F_ProcessRefund` in `core-4` catches only `Error_INVALID_VARIABLE`, but `refund-processing` also raises `PROHIBITED_FINANCIAL_DATA` when card or security details are supplied. A refund request carrying card details therefore becomes an `UNHANDLED_ERROR_EVENT` incident and stops the process, which is the same fault as `DEF-02` on a task that did not exist when that was fixed. The worker test for it passes, so the worker level gives no warning. | High | Open | None; the refund path must not be given card details. | - |
-| DEF-13 | 36 of the 55 user tasks in the four models bind no form: 7 in `core-1`, 12 in `core-2`, 7 in `core-3` and 10 in `core-4`. A task with no form has no defined variable contract, so the variables it must write are recorded nowhere and a downstream gateway that reads them can only be satisfied by injecting the variables with the completion call. The tasks affected include the ones the case requires a record from: the missing-information request, the funding approval details (`N_F_RecordApproval`, FR-026), the payment investigation, the clinic-letter processing and clinical-error review, the reminder and both escalations, and the whole enquiry path (`N_CH_ClassifyEnquiry`, `N_CH_AnswerAdmin`, FR-041). | High | Open | The end-to-end run supplies the variables a validated form would; the gap is that for these tasks there is no form to supply them from. | - |
+| DEF-13 | 36 of the 55 user tasks in the four models bind no form: 7 in `core-1`, 12 in `core-2`, 7 in `core-3` and 10 in `core-4`. A task with no form has no defined variable contract, so the variables it must write are recorded nowhere and a downstream gateway that reads them can only be satisfied by injecting the variables with the completion call. The tasks affected include the ones the case requires a record from: the missing-information request, the funding approval details (`N_F_RecordApproval`, FR-026), the payment investigation, the clinic-letter processing and clinical-error review, the reminder and both escalations, and the whole enquiry path (`N_CH_ClassifyEnquiry`, `N_CH_AnswerAdmin`, FR-041). | High | Fixed at `a62e783`; 40 forms cover all 55 user tasks. Writing them also showed that the eight forms that existed had never rendered a field, for the four reasons in `../forms/README.md` | None needed | PB-006 |
 
 ## 7. Simulated components
 

@@ -222,10 +222,13 @@ These are the costs of the choices above, recorded rather than hidden. The defec
 `PROHIBITED_FINANCIAL_DATA`, which the refund worker can also raise (`DEF-12`). Neither is
 hidden: both are in the defect table, and the second is a one-line model change.
 
-**Thirty-six of the fifty-five user tasks bind no form** (`DEF-13`). The tasks a scenario exercises
-are covered, and the models are runnable end to end, but a task with no form has no defined variable
-contract. The end-to-end evidence therefore supplies those variables at task completion rather than
-from a form, and says so.
+**Every user task now binds a form** (`DEF-13`, closed at `a62e783`). This was the largest gap in
+the first edition. Thirty-six of the fifty-five tasks had no form at all, so their variable contract
+was declared nowhere; and the eight that existed had never rendered a field, because a group's
+children belong under `components` and a group's `path` prefixed every child key with a name no
+gateway read. The end-to-end evidence at `a7f0dd6` supplies the variables at task completion rather
+than from a form and says so; `../forms/README.md` records what the forms now cover and what has not
+been driven through Tasklist.
 
 **Role-based access and the audit trail are not implemented** (`DEF-07`). Both are Must
 requirements. The lane-to-candidate-group bindings are the deployment-side half of the first, and

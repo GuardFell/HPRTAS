@@ -109,6 +109,12 @@ rather than repeated.
   -- models workers forms`. The current model-level evidence therefore still describes the
   delivered artefacts - which is worth stating explicitly, because the evidence's own version
   string names an older commit than the version under test.
+- **Added after this evaluation - and it changes the answer on the forms.** `DEF-13` is closed at
+  `a62e783`: 40 forms now cover all 55 user tasks. Writing the missing ones showed that the eight
+  the evaluation counts as delivered had never rendered a field - a group's children belong under
+  `components`, and a group's `path` prefixed every child key - so statements above about a form
+  binding resolving describe `c8556ba` and not the current tree. The four faults, every binding, and
+  what is and is not verified now, are in `../../forms/README.md`.
 
 ## 5. Plan evaluation: planned against actual
 
@@ -122,6 +128,7 @@ the repository.
 | 17 Sep 2026 | The case study summary (sections 1-10) and the first requirements draft | `52508a1`, `fddd9d4` |
 | 21 Sep 2026 | The external workers with their tests, the recorded evidence, the forms bound to their user tasks, the four `core-N` models replacing the first edition, and the end-to-end run | `813fea6`, `1b42bff`, `e852224`, `38367e8`, `524a6a4`, `a7f0dd6`, `bf79865` |
 | 21 Sep 2026 | The READMEs rewritten as functional descriptions, the traceability re-pointed at the `core-N` models | `10c9324`, `d94006f`, `c8556ba` |
+| 22 Sep 2026 | Every user task bound to a Camunda Form, closing `DEF-13`: 32 forms added and the eight that existed repaired, after they were found never to have rendered a field | `a62e783` |
 
 ### 5.2 Sprint 1 - 15 to 20 September 2026
 
@@ -156,7 +163,7 @@ criteria re-run. That is now recorded in `project-plan.md` section 7 and is why 
 | Dimension | Planned | Actual | Verdict |
 |---|---|---|---|
 | Integrated increment | Models, workers and forms end to end for the normal pathway, the funding and payment gate and one failure path | Delivered at `a7f0dd6`: four models, eight forms, six workers, five scenarios each reaching an end event, and every service task in the four models reached | **Exceeded** |
-| Forms | Bound to their user tasks and deployed with the models | Delivered; the bindings resolve, but 36 of 55 tasks still bind no form | **Partially met** - see `DEF-13` |
+| Forms | Bound to their user tasks and deployed with the models | Delivered; the bindings resolve, but 36 of 55 tasks still bind no form | **Partially met** at this version - see `DEF-13`; closed at `a62e783`, where 40 forms cover all 55 tasks |
 | Evidence against an identified version | A run naming its version | Three model-level records and a re-run of the unit suite at `c8556ba` | **On plan** |
 | Estimates | Every chosen task estimated | None recorded | **Not assessable** |
 | Acceptance criteria | Not planned for this sprint | Ten criteria and twenty-one scenarios defined, the execution record opened, and seven of the ten met | **Ahead of plan** |
@@ -210,10 +217,13 @@ checking rather than by running, which is the only reason they are not already i
 2. **The three open defects must be fixed and re-tested before the initial release.** `DEF-11`
    (small: re-target the urgent flow so it cannot cycle), `DEF-12` (small: add the missing catch
    event), `DEF-13` (large: the forms for the 36 tasks, or an explicit decision to accept the
-   limitation for the first release and say so in the demonstration).
+   limitation for the first release and say so in the demonstration). **`DEF-13` is done:** it was
+   closed at `a62e783`, where 40 forms came to cover all 55 user tasks. `DEF-11` and `DEF-12` are
+   still open.
 3. **The unrun scenarios are the cheapest remaining work.** TC-02, TC-13, TC-16 and TC-20 need no
    code, only a run - except that TC-13 and TC-20 need forms and a signed-in user first, which makes
-   them depend on `DEF-13` and `DEF-07`.
+   them depend on `DEF-13` and `DEF-07`. With `DEF-13` closed they depend on `DEF-07` alone: the
+   forms exist, and it is the signed-in user that is still missing.
 4. **The plan process has to start now, not at the review.** The backlog, the task breakdown, the
    sprint backlogs and the contribution matrix are the project's own record of what was planned and
    who did what, and none of them can be reconstructed afterwards. **Partly done:** the product

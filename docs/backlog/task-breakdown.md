@@ -44,8 +44,9 @@ Two tasks are recorded against the plan rather than in it and are worth naming h
 covers the exception paths that `DEF-01` and `DEF-02` were found in, and both were fixed at
 `e852224` and re-tested; the fixes and the defects they close are what the Evidence cell points at.
 `TB-011` delivered the eight forms, and the Evidence cell names the limitation rather than leaving
-it to be discovered: 36 of the 55 user tasks bind no form (`DEF-13`), which is the largest open
-alignment finding in the project.
+it to be discovered: 36 of the 55 user tasks bound no form (`DEF-13`), which was the largest
+alignment finding in the project. It was closed at `a62e783`, where 40 forms cover all 55 tasks -
+and where the eight `TB-011` delivered turned out never to have rendered a field.
 
 The tasks selected into Sprints 3 and 4 are not broken down yet, so they have no `TB-###`
 identifier. They are named with the backlog item each serves in `sprint-backlogs.md`, which is where

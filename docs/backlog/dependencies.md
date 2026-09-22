@@ -25,7 +25,7 @@
 | PB-008 | PB-003, PB-004, PB-005, PB-006, PB-007 | - | Nothing depends on it, and that is the risk: the demonstration is the deliverable, not an input to one. |
 | PB-009 | PB-001 | - | The i\* models are deferred to the second release and nothing first-release depends on them. |
 | PB-010 | PB-002, PB-007 | PB-008 | The plan evaluation reads the test results; run before the tests, it reports intentions rather than outcomes. |
-| PB-011 | PB-001 | - | Assessed separately; it depends on the case study reading only. |
+| PB-011 | PB-001 | - | It carries its own conditions in `../agile/definition-of-done.md`; it depends on the case study reading only. |
 
 ## Critical path
 
@@ -48,4 +48,4 @@ which is why the first release is dated against them in `../planning/plan-evalua
 |---|---|---|---|
 | The Camunda 8 Run engine and its Java 21 runtime | M3 | No model-level or engine-level evidence can be produced or reproduced, which leaves the worker unit suite as the only run anyone can repeat (`R-02`). | The engine runtime is documented in `../../README.md` and the reproduction steps are written into each evidence file; the unit suite needs no engine. |
 | The group's meeting time for sprint planning and the review | M1 | Estimates, the sprint selection and the definition of done stay unagreed, which is `R-06` and the reason velocity cannot be measured. | Tasks are recorded with a first and a second owner so they can be taken over; the plan states the variance instead of absorbing it. |
-| The assessed coursework brief and its deadlines | M1 | The scope decisions - what is deferred to the second release - are made against it (`AS-14`, `DEF-07`). | The deferrals are recorded in `../planning/project-plan.md` section 1 with the reason, so the decision is visible rather than implied. |
+| The first-release date, 28 September 2026 | M1 | A date that cannot move turns the remaining work into a scope decision: what is deferred to the second release (`AS-14`, `DEF-07`). | The deferrals are recorded in `../planning/project-plan.md` section 1 with the reason, so the decision is visible rather than implied. |

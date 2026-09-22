@@ -34,6 +34,6 @@
 | PB-010 | Evaluate alignment and the plan | Evaluate the delivered solution against the requirements and the plan: requirement traceability across the models, the criteria the evaluation is made against, and the comparison of planned against actual progress. | Must | All FR and NFR | 8 | M5 | M2 | PB-002, PB-007 | Every requirement the strategic model carries has a verdict - supported, partially supported or unsupported - with the gap named where there is one; requirements with no model element are accounted for; the plan is compared with what happened and the causes are stated. | `docs/planning/plan-evaluation.md` | Done - made against `c8556ba`, and it is the document that found `DEF-11`, `DEF-12` and `DEF-13`; it has to be re-run against the second release. |
 | PB-011 | Prepare the enterprise architecture artefact | Description of the enterprise and its information systems, with the Zachman Framework. | Must | - | 8 | M2 | M1 | PB-001 | Description of 150-300 words; framework cells populated for the agreed scope. | `Enterprise Architecture/` | Done |
 
-Items above `PB-011` were placeholder rows and have been removed: the backlog of record defines
-eleven items, and every one of them is above. A new item takes the next free identifier rather than
-filling a reserved row.
+Items numbered after `PB-011` were placeholder rows and have been removed: the backlog of record
+defines eleven items, and all eleven are in the table above. A new item takes the next free
+identifier rather than filling a reserved row.

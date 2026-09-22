@@ -1,8 +1,9 @@
 """Render `tests/test-plan.md` as a Word document at `tests/exports/test-plan.docx`.
 
-The acceptance test plan is kept as Markdown, which is the source of record. The assessment asks
-for it in `.docx`, `.xlsx` or PDF, so this renders a readable Word copy rather than keeping a second
-document that can drift from the first: re-run the script after any change to the plan.
+The acceptance test plan is kept as Markdown, which is the source of record: it diffs, and it
+carries the same identifiers the models, the forms and the tests use. A Word copy is easier to read
+and to print, and a second document edited by hand would drift from the first, so this renders one
+instead. Re-run the script after any change to the plan.
 
     cd tests/exports && python render-test-plan.py
 
@@ -12,6 +13,7 @@ export is `.docx`.
 
 import re
 import sys
+import zipfile
 from pathlib import Path
 
 from docx import Document
@@ -147,6 +149,22 @@ def render(lines, doc):
         add_runs(doc.add_paragraph(), " ".join(block))
 
 
+def normalise_timestamps(path, when=(1980, 1, 1, 0, 0, 0)):
+    """Give every zip entry the same timestamp.
+
+    python-docx stamps each entry with the moment it saved, so two runs of this script produce files
+    that differ in nothing but those stamps - same parts, same content, different bytes - which makes
+    `git status` report a change that is not one. The content is already stable; this makes the whole
+    file stable, so a re-run of the script leaves the working tree clean.
+    """
+    with zipfile.ZipFile(path) as src:
+        entries = [(info, src.read(info.filename)) for info in src.infolist()]
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as out:
+        for info, data in entries:
+            info.date_time = when
+            out.writestr(info, data)
+
+
 def main():
     doc = Document()
 
@@ -174,6 +192,7 @@ def main():
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     doc.save(OUT)
+    normalise_timestamps(OUT)
     print(f"wrote {OUT.relative_to(ROOT)}")
 
 

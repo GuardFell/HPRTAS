@@ -9,8 +9,8 @@ simulated components the testing depends on.
 `evidence/` holds the output of the runs. `evidence/README.md` describes how the files are named and
 what each one records.
 
-`exports/test-plan.docx` is the same plan as a readable Word document, which is the form the
-assessment asks for. It is generated from the Markdown by `exports/render-test-plan.py`, so the
+`exports/test-plan.docx` is the same plan as a readable Word document, for reading and printing
+rather than editing. It is generated from the Markdown by `exports/render-test-plan.py`, so the
 Markdown stays the source of record and the two cannot drift: re-run the script after changing the
 plan.
 

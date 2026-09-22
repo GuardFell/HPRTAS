@@ -109,15 +109,15 @@ integrated system demonstrated.
 | - | Tag the second release so the two releases can be compared. | M5 | M1 | 1 | The tag identifies the commit the second release was validated at. | `release-2.0` |
 
 **Note on dates.** The two sprint windows above are the ones in `../planning/project-plan.md`
-section 5, where they end at the 15 and 21 October milestones before the 22 October submission. The
-plan document splits the same period at 11 and 22 October instead. Sprint dates there are recorded
-as proposals to confirm, and the two readings need reconciling at sprint planning; the milestone
-dates in the plan are the ones used here because they are the ones the deliverables are dated
-against.
+section 5, where they end at the 15 and 21 October milestones, before the second release on
+22 October. The plan document splits the same period at 11 and 22 October instead. Sprint dates
+there are recorded as proposals to confirm, and the two readings need reconciling at sprint
+planning; the milestone dates in the plan are the ones used here because they are the ones the
+deliverables are dated against.
 
 ## Differences from the plan document
 
-Five rows differ between the group's plan document and the records already kept in this repository.
+Six rows differ between the group's plan document and the records already kept in this repository.
 Each is left visible rather than resolved in favour of one document, because in each case one of the
 two is a considered entry and the other is not obviously a correction of it.
 

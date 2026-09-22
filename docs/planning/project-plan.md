@@ -21,7 +21,7 @@
 | The requirements list and its traceability in `docs/requirements/requirements.md` | Every acceptance criterion in the test plan is linked to a requirement and a business rule, so the criteria cannot be read without it. | |
 | The test plan and the evidence in `tests/` | The delivery gate: a criterion with no evidence has not been demonstrated. | M5 |
 | The case study summary, backlog and planning documents in `docs/` | The shared understanding, the plan and the record of what was agreed that the rest of the work is built on. | |
-| The Enterprise Architecture portfolio deliverable | A separate assessed deliverable describing the enterprise, its information systems and the Zachman view. | |
+| The Enterprise Architecture portfolio deliverable | A separate deliverable describing the enterprise, its information systems and the Zachman view; it carries its own conditions in `../agile/definition-of-done.md`. | |
 
 ### Explicitly out of scope
 

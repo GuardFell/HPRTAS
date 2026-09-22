@@ -48,7 +48,7 @@ worker source cite, so `TC-06` in a test name and `TC-06` here are the same scen
 | Patient identification and duplicate-patient matching (FR-048, NFR-004) | Not implemented. `N_MS_CheckReferral` records an identification check as a task field, but no matching or duplicate check runs behind it. |
 | Performance, load, availability targets and record retention (NFR-005, NFR-013) | No availability target or retention period has been agreed (`AS-10`), so neither is measurable against this prototype. |
 | Visual rendering and layout of the Tasklist forms | The forms are exercised through the variables they write; nothing checks how they look or how a long form is read on screen. |
-| The Enterprise Architecture portfolio deliverable | Assessed separately, and it describes the enterprise rather than implementing it. |
+| The Enterprise Architecture portfolio deliverable | It describes the enterprise rather than implementing it, so there is nothing to run against it; it carries its own conditions in `../docs/agile/definition-of-done.md`. |
 
 ## 3. Acceptance criteria
 

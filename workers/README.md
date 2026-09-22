@@ -11,15 +11,20 @@ and does not model is written down below.
 
 ## Why Java
 
-The project is built with Maven and runs on Java 21, which is the same runtime the engine uses.
-The client is `io.camunda:camunda-client-java`, pinned to the engine's own release, so there is one
+The project is built with Maven and runs on Java 21, which is the same runtime the engine uses. The
+client is `io.camunda:camunda-client-java`, pinned to the engine's own release, so there is one
 Camunda version in the repository rather than two that can drift apart.
 
-The workers are small, and the plain client keeps each of them short enough to read in one sitting.
-Spring Boot was the other option and was not taken: the configuration here is layered over three
-levels and resolved by the project's own `Config`, and handing that to a framework's auto-configuration
-would mean two things deciding what the connection settings are. The client is therefore told not to
-read the environment itself — everything it is given has already been resolved in one place.
+Node.js with the Camunda 8 SDK was the other alternative. It keeps each worker short too, and the
+workers are small either way, so that is not what decided it: it would put a second runtime and a
+second Camunda client in the repository, each free to drift from the engine's release, and the plain
+Java client keeps a worker just as short as the SDK does.
+
+Spring Boot was the third option and was not taken either. The configuration here is layered over
+three levels and resolved by the project's own `Config`, and handing that to a framework's
+auto-configuration would mean two things deciding what the connection settings are. The client is
+therefore told not to read the environment itself — everything it is given has already been resolved
+in one place.
 
 ## How work is obtained
 

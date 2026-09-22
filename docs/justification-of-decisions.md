@@ -196,9 +196,12 @@ written, so extending them would have meant re-identifying elements anyway. Rebu
 `core-N` processes made the coverage visible and let each process be run on its own. The cost was a
 migration with no rename path, paid once.
 
-**Java with Spring Boot for the workers.** Rejected in `workers/README.md`. Six small workers do not
-need the ceremony, and the Camunda 8 Node SDK keeps each of them short enough for the second owner
-to read in full.
+**Node.js for the workers, with the Camunda 8 SDK.** Rejected in `workers/README.md`. It keeps each
+worker short, but it puts a second runtime and a second Camunda client in the repository, free to
+drift from the engine's release; Java 21 is the runtime the engine already runs on, so the workers
+and the engine move together. The Spring Boot starter was not taken either: the configuration is
+layered over three levels and resolved by the project's own `Config`, and a framework's
+auto-configuration would leave two parties deciding what the connection settings are.
 
 **Camunda 7.** Rejected on evidence, not preference: the platform binaries are no longer published,
 and the course requires Camunda 8. The first edition accidentally used Camunda 7 form-binding syntax

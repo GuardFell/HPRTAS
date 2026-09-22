@@ -28,7 +28,7 @@ in one place.
 
 ## How work is obtained
 
-`mvn exec:java` connects to the Zeebe gRPC gateway and registers one worker per service task. The
+`mvn compile exec:java` connects to the Zeebe gRPC gateway and registers one worker per service task. The
 registration is driven by `config/workers.default.json` rather than by code, so changing a job type
 or a concurrency is a configuration change: each worker has a `taskType`, a `maxJobsToActivate` and a
 `timeoutMs`, and the job type must match the `<zeebe:taskDefinition type="...">` of the service task
@@ -58,8 +58,8 @@ element id, the duration and the outcome, which is what makes the log usable as 
 ```bash
 cp .env.example .env
 mvn test                                          # unit tests, no engine required
-mvn exec:java -Dexec.args="--check"               # validate the configuration and the wiring
-mvn exec:java                                     # run the workers
+mvn compile exec:java -Dexec.args="--check"               # validate the configuration and the wiring
+mvn compile exec:java                                     # run the workers
 mvn test -Pengine                                 # the fixture and the models, engine running
 mvn test -Pengine -Dtest=SmokeTest                # the fixture only
 mvn test -Pengine -Dtest=OperationalModelsTest    # the four operational models only

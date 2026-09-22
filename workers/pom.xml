@@ -79,7 +79,7 @@
       </plugin>
 
       <!--
-        `mvn exec:java` runs the workers. Passing the check argument instead validates the
+        `mvn compile exec:java` runs the workers. Passing the check argument instead validates the
         configuration and the wiring without connecting to an engine; the root README gives the
         exact command.
       -->

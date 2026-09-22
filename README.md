@@ -61,10 +61,10 @@ The workers are a separate Maven project. Copy `workers/.env.example` to `worker
 
 ```bash
 cd workers
-mvn exec:java
+mvn compile exec:java
 ```
 
-They need Java 21, which is the runtime the engine uses. `mvn exec:java -Dexec.args="--check"`
+They need Java 21, which is the runtime the engine uses. `mvn compile exec:java -Dexec.args="--check"`
 validates the configuration and the wiring without connecting to the engine, which is useful before
 a demonstration.
 
@@ -84,7 +84,7 @@ The workers carry their own tests and they do not all need an engine:
 ```bash
 cd workers
 mvn test                                          # the worker unit tests, no engine
-mvn exec:java -Dexec.args="--check"               # the configuration and the worker wiring, no engine
+mvn compile exec:java -Dexec.args="--check"               # the configuration and the worker wiring, no engine
 mvn test -Pengine -Dtest=SmokeTest                # the workers against a purpose-built fixture, engine running
 mvn test -Pengine -Dtest=OperationalModelsTest    # the four operational models and the forms, engine running
 ```

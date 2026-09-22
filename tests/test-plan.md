@@ -6,11 +6,11 @@
 
 ## Version under test
 
-The release is tagged `release-1.0` (`3a98be7`). This tag was re-pointed from the original
-Node.js version (`9ef26df`) to the current Java implementation after the workers were rewritten
-in commit `4eb3fee`. The results recorded in this plan's execution table were produced against
-the Node.js version and **each result names the commit it was produced at**; they no longer
-describe the current code.
+The release is tagged `release-1.0` (`bdcc0e1`; the annotated tag is `ca13f7f`). This tag was
+re-pointed from the original Node.js version (`9ef26df`) to the Java implementation after the
+workers were rewritten in commit `4eb3fee`. The results recorded in this plan's execution table
+were produced against the Node.js version and **each result names the commit it was produced at**;
+they no longer describe the current code.
 
 **The forms were completed after this tag.** `release-1.0` carries 14 forms - the 8 originals and
 6 of the forms `DEF-13` calls for. That defect was closed at `a62e783`, where the set was reworked
@@ -20,7 +20,7 @@ second release is the first that can be compared against the completed set.
 
 | What | Value |
 |---|---|
-| Release under test | `release-1.0` - commit `3a98be7` (Java workers, the first 6 of the DEF-13 forms) |
+| Release under test | `release-1.0` - commit `bdcc0e1` (Java workers, the first 6 of the DEF-13 forms) |
 | Previous tag target | `9ef26df` (Node.js workers, superseded) |
 | Commit each result was produced at | `c8556ba` at worker level (Node.js), `a7f0dd6` at model level |
 | Artefact versions | the four `core-N` models; 14 Camunda Forms at the tag, 40 in the current tree (`a62e783`); workers in Java (`4eb3fee`) |

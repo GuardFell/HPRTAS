@@ -232,5 +232,7 @@ checking rather than by running, which is the only reason they are not already i
    rows, which are their owners' to record.
 5. **The first release needs a tag.** Every result in this repository is tied to a commit, and a
    release with no tag cannot be compared against the second release, which is what Sprint 4 is for.
-   **Done:** `release-1.0` tags the first release at `9ef26df`. The defects item 2 lists are open at
-   that tag, so the tag and the fixes have to be brought together before the release is accepted.
+   **Done:** `release-1.0` tags the first release, made at `9ef26df` and since re-pointed to
+   `bdcc0e1` so that it covers the Java workers. The defects item 2 lists are open at that tag, so
+   the tag and the fixes have to be brought together before the release is accepted. `DEF-13` was
+   closed at `a62e783`, after the tag, so the completed forms are not in anything the tag names.

@@ -11,8 +11,6 @@ identifier.
 `dependencies.md` records what has to come first, what depends on what, and what to do if an item
 that others depend on slips.
 
-`sprint-backlogs.md` records the tasks selected for each sprint together with that sprint's goal.
-
 Identifiers are stable once assigned and are used in commit messages, so a commit names the item it
 belongs to: `PB-006 add rejected referral path (TB-010)`. Items are split until each one can be
 completed and demonstrated within a single sprint; an item such as "do testing" is too broad to be

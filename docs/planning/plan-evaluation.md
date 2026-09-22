@@ -13,7 +13,7 @@
 |---|---|---|
 | Does each requirement reach from the strategic model through an operational model into an implementation and a test? | Section 3 | The traceability table in `../requirements/requirements.md`, verified element by element against the four `core-N` models |
 | Do the models, the forms and the workers agree with each other? | Section 4 | `models/operational/*.bpmn`, `forms/*.form`, `workers/src/` |
-| Did the plan match what happened? | Section 5 | `project-plan.md` sections 5 and 6, `../backlog/sprint-backlogs.md`, `git log` |
+| Did the plan match what happened? | Section 5 | `project-plan.md` sections 5 and 6, `git log` |
 | Are the acceptance criteria met? | `../../tests/test-plan.md` section 5, summarised in section 6 below | `tests/evidence/` |
 
 **Version evaluated.** `c8556ba`. The models, the forms and the workers were last changed at

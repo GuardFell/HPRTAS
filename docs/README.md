@@ -9,11 +9,8 @@ itself, the business rules, the exceptions and the assumptions made where the ca
 from the case study, and the traceability that links each one to where it is implemented and where
 it is tested.
 
-`deliverables.md` sets out what the project produces and the acceptance conditions for each
-deliverable.
-
-`backlog/` holds the product backlog, the task breakdown that follows from it, the dependencies
-between the items, and the sprint backlogs.
+`backlog/` holds the product backlog, the task breakdown that follows from it, and the dependencies
+between the items.
 
 `planning/` holds the plan: the scope of each release, the estimation approach, the allocation of
 work, the risks, the timeline and the comparison of what was planned against what actually

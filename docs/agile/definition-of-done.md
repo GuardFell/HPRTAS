@@ -7,7 +7,7 @@
 > Recorded by M5, with M4, as the joint task for the plan, the estimation scale and the acceptance
 > criteria. The five role slots below confirm it at the sprint review; until a slot is dated, that
 > member has not agreed this version. It is applied to every task in
-> `../backlog/task-breakdown.md` and to every row of `../backlog/sprint-backlogs.md`.
+> `../backlog/task-breakdown.md`.
 
 ## Project-wide definition of done
 
@@ -15,7 +15,7 @@ Every task meets all eight conditions, whatever it produces.
 
 | # | Condition | How it is evidenced |
 |---|---|---|
-| 1 | Its agreed acceptance conditions are met. | The task's own Acceptance Conditions cell in `../backlog/task-breakdown.md` and in `../backlog/sprint-backlogs.md`, each one checked off rather than the task simply being called finished. |
+| 1 | Its agreed acceptance conditions are met. | The task's own Acceptance Conditions cell in `../backlog/task-breakdown.md`, checked off rather than the task simply being called finished. |
 | 2 | It is in the repository at a commit. Work in a chat, on one machine or in a private folder is not done. | The commit that adds or changes it. The evidence must be a path inside this repository. |
 | 3 | It has been run, not only read. A model is deployed and driven to an end state; a worker is executed; a form is deployed with its model and the variables it writes are checked against the gateways and workers that read them; a document is reviewed by someone else. | A file in `../../tests/evidence/` naming the version it was run at, or an equivalent record for a non-executable artefact. |
 | 4 | The version it was produced against is identified, and a result can be reproduced from that version. | A commit or a tag in the evidence file's name and header, plus a "Reproduce with" section. There are no release tags yet, so the commit is the version. |

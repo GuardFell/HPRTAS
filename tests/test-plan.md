@@ -8,15 +8,20 @@
 
 The first release is tagged `release-1.0` (`9ef26df`). The results recorded in this plan were
 produced before that tag was made, so **each result names the commit it was produced at** rather
-than the tag, and every evidence file in `evidence/` carries one in its name. Nothing in `models/`,
-`forms/` or `workers/src/` changed between `a7f0dd6`, where the artefacts were last changed, and
-`release-1.0`, so the results still describe the released artefacts.
+than the tag, and every evidence file in `evidence/` carries one in its name. Nothing in `models/`
+or `forms/` changed between `a7f0dd6`, where those artefacts were last changed, and `release-1.0`,
+so the model and form results still describe the released artefacts.
+
+**Note (post-release-1.0):** The external workers were rewritten from Node.js to Java in commit
+`4eb3fee`, and the build process was updated in `76a7fdc`. The worker-level test results recorded
+at `c8556ba` describe the Node.js implementation and no longer reflect the current code. A new
+release tag should be created once the Java implementation's tests have been re-run and recorded.
 
 | What | Value |
 |---|---|
 | Release under test | `release-1.0` - commit `9ef26df` |
-| Commit each result was produced at | `c8556ba` at worker level, `a7f0dd6` at model level |
-| Artefact versions | the four `core-N` models, the eight forms and the six workers, last changed at `a7f0dd6`; only documentation changed between `a7f0dd6` and `release-1.0` |
+| Commit each result was produced at | `c8556ba` at worker level (Node.js, superseded by Java at `4eb3fee`), `a7f0dd6` at model level |
+| Artefact versions | the four `core-N` models, last changed at `a7f0dd6`; eight forms, updated after `release-1.0` with additional DEF-13 forms; workers rewritten to Java at `4eb3fee` |
 | Requirement basis for the criteria | `../docs/requirements/requirements.md` (FR-001 - FR-052, NFR-001 - NFR-013) |
 | Rule and exception basis | `../docs/case-study-summary.md` section 5 (BR-01 - BR-47) and section 6 (EX-01 - EX-23) |
 

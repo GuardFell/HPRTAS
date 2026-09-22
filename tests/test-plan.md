@@ -6,14 +6,17 @@
 
 ## Version under test
 
-There are no release tags in this repository yet, so **the version under test is the commit**. A
-result is only meaningful with the commit it was produced at, and every evidence file in
-`evidence/` carries one in its name.
+The first release is tagged `release-1.0` (`9ef26df`). The results recorded in this plan were
+produced before that tag was made, so **each result names the commit it was produced at** rather
+than the tag, and every evidence file in `evidence/` carries one in its name. Nothing in `models/`,
+`forms/` or `workers/src/` changed between `a7f0dd6`, where the artefacts were last changed, and
+`release-1.0`, so the results still describe the released artefacts.
 
 | What | Value |
 |---|---|
-| Current version | `c8556ba` - "Correct the note on where the model migration is recorded" |
-| Artefact versions in that commit | the four `core-N` models, the eight forms and the six workers, last changed at `a7f0dd6`; only documentation changed between `a7f0dd6` and `c8556ba` |
+| Release under test | `release-1.0` - commit `9ef26df` |
+| Commit each result was produced at | `c8556ba` at worker level, `a7f0dd6` at model level |
+| Artefact versions | the four `core-N` models, the eight forms and the six workers, last changed at `a7f0dd6`; only documentation changed between `a7f0dd6` and `release-1.0` |
 | Requirement basis for the criteria | `../docs/requirements/requirements.md` (FR-001 - FR-052, NFR-001 - NFR-013) |
 | Rule and exception basis | `../docs/case-study-summary.md` section 5 (BR-01 - BR-47) and section 6 (EX-01 - EX-23) |
 
@@ -93,8 +96,8 @@ worker source cite, so `TC-06` in a test name and `TC-06` here are the same scen
 > Filled in when the tests are run - it is evidence of testing, not a plan.
 >
 > `Result` is `Pass`, `Fail`, `Partial` (part of the scenario ran) or `Not run`. A version is a
-> commit, because there are no release tags. Nothing in this table is a claim about a version other
-> than the one in its row.
+> commit or a tag; every run recorded here was made before `release-1.0` was tagged, so each row
+> names its commit. Nothing in this table is a claim about a version other than the one in its row.
 
 | TC ID | Date | Tester | Version tested | Result | Evidence path | Defect raised |
 |---|---|---|---|---|---|---|

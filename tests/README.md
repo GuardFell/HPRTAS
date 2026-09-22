@@ -9,10 +9,16 @@ simulated components the testing depends on.
 `evidence/` holds the output of the runs. `evidence/README.md` describes how the files are named and
 what each one records.
 
+`exports/test-plan.docx` is the same plan as a readable Word document, which is the form the
+assessment asks for. It is generated from the Markdown by `exports/render-test-plan.py`, so the
+Markdown stays the source of record and the two cannot drift: re-run the script after changing the
+plan.
+
 ## Where it stands
 
-There are no release tags, so **the version under test is the commit**. `test-plan.md` opens with
-the current one; every evidence file names its own.
+The first release is tagged `release-1.0`. The runs recorded here were produced before that tag was
+made, so **each result names the commit it was produced at**. `test-plan.md` opens with the version
+the plan is written against; every evidence file names its own.
 
 At `c8556ba`, seven of the ten acceptance criteria are met, three are not, and thirteen defects and
 limitations are recorded. The evaluation of what that means for the project - which requirements are

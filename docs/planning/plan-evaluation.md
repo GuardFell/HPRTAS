@@ -216,6 +216,11 @@ checking rather than by running, which is the only reason they are not already i
    them depend on `DEF-13` and `DEF-07`.
 4. **The plan process has to start now, not at the review.** The backlog, the task breakdown, the
    sprint backlogs and the contribution matrix are the project's own record of what was planned and
-   who did what, and none of them can be reconstructed afterwards.
+   who did what, and none of them can be reconstructed afterwards. **Partly done:** the product
+   backlog, the task breakdown, the sprint backlogs and the dependencies are recorded at
+   `release-1.0`, from the group's plan document; the contribution matrix still has the M1 to M4
+   rows, which are their owners' to record.
 5. **The first release needs a tag.** Every result in this repository is tied to a commit, and a
    release with no tag cannot be compared against the second release, which is what Sprint 4 is for.
+   **Done:** `release-1.0` tags the first release at `9ef26df`. The defects item 2 lists are open at
+   that tag, so the tag and the fixes have to be brought together before the release is accepted.

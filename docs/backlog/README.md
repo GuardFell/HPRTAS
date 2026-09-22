@@ -8,6 +8,10 @@ identifier.
 `task-breakdown.md` breaks each backlog item into tasks small enough for a single sprint, using the
 `TB-###` identifier.
 
+`sprint-backlogs.md` records the sprint goals and the tasks selected into each sprint, with the
+status the repository's evidence supports and the differences from the plan document left visible
+rather than resolved.
+
 `dependencies.md` records what has to come first, what depends on what, and what to do if an item
 that others depend on slips.
 

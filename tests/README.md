@@ -40,4 +40,4 @@ it.
   defects in `test-plan.md` section 6 were invisible at worker level for exactly that reason.
 
 The tests themselves are run from the worker project; `../workers/README.md` describes the four
-commands and what each one covers. `npm test` needs no engine; the other three do.
+commands and what each one covers. `mvn test` needs no engine; the other three do.

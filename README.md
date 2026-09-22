@@ -19,7 +19,7 @@ test evidence for that system.
 `forms/` holds the Camunda Forms the user tasks are bound to, one `.form` file per form, each with
 the form key the model refers to.
 
-`workers/` holds the external workers as a Node.js project: the job workers themselves, the
+`workers/` holds the external workers as a Maven project: the job workers themselves, the
 simulated external services they call, and their configuration.
 
 `docs/` holds everything that describes the project rather than implements it: the case study
@@ -57,14 +57,16 @@ for f in *.form; do
 done
 ```
 
-The workers are a separate Node.js project. Copy `workers/.env.example` to `workers/.env` first,
-then:
+The workers are a separate Maven project. Copy `workers/.env.example` to `workers/.env` first, then:
 
 ```bash
 cd workers
-npm install
-npm start
+mvn exec:java
 ```
+
+They need Java 21, which is the runtime the engine uses. `mvn exec:java -Dexec.args="--check"`
+validates the configuration and the wiring without connecting to the engine, which is useful before
+a demonstration.
 
 The four operational processes are separate, so each is started separately from Tasklist under
 Processes. Complete the user tasks on an instance as it reaches them; each task is assigned to the
@@ -81,11 +83,15 @@ The workers carry their own tests and they do not all need an engine:
 
 ```bash
 cd workers
-npm run check        # the configuration and the worker wiring, no engine
-npm test             # the worker unit tests, no engine
-npm run test:smoke   # the workers against a purpose-built fixture, engine running
-npm run test:e2e     # the four operational models and the forms, engine running
+mvn test                                          # the worker unit tests, no engine
+mvn exec:java -Dexec.args="--check"               # the configuration and the worker wiring, no engine
+mvn test -Pengine -Dtest=SmokeTest                # the workers against a purpose-built fixture, engine running
+mvn test -Pengine -Dtest=OperationalModelsTest    # the four operational models and the forms, engine running
 ```
+
+The engine tests are left out of the default build because they need Camunda 8 Run to be up and they
+change what is deployed in it. They skip themselves, rather than fail, when the engine is not
+answering.
 
 `workers/README.md` describes the job types, the variables each worker reads and writes, the error
 codes and the simulated services. `tests/README.md` describes the test plan and where the evidence

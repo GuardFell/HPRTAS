@@ -120,7 +120,7 @@ default and now declares one.
 **Every call outside the hospital is a job worker against a service task, and every simulated
 service says what it does not model.** The four external services the case describes - scheduling,
 treatment and imaging, the payment service provider and correspondence - are simulated in
-`../workers/src/services/`, and each states its limitations in `workers/README.md`: no clinic
+`../workers/src/main/java/uk/ac/uwe/hprtas/workers/services/`, and each states its limitations in `workers/README.md`: no clinic
 capacity, no real diary, no card processing or settlement, no printing or delivery confirmation.
 Three keep a ledger keyed by the booking or payment reference, which is what makes "no duplicate
 appointment", "no second charge" and "no second refund" testable rather than asserted.

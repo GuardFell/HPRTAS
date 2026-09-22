@@ -1,29 +1,33 @@
 # External Workers
 
 The workers that carry out the automated activities in the operational models. They are written in
-Node.js, and they are what sits behind every service task in `../models/operational/`: each worker
-takes a job of its type off the gateway, does the work, and returns the result so the process
-carries on.
+Java, and they are what sits behind every service task in `../models/operational/`: each worker takes
+a job of its type off the gateway, does the work, and returns the result so the process carries on.
 
 Some of that work is talking to systems outside the hospital — the scheduling service, the treatment
 and laboratory service, the payment service provider and the correspondence service. Those systems
-are not available here, so the workers call simulated versions of them, and what each simulation
-does and does not model is written down below.
+are not available here, so the workers call simulated versions of them, and what each simulation does
+and does not model is written down below.
 
-## Why Node.js
+## Why Java
 
-The alternative was Java with Spring Boot. The workers are small, and the Camunda 8 Node SDK keeps
-each of them short enough to read in one sitting, which matters more here than the ceremony of a
-Spring project. The only runtime dependency is `@camunda8/sdk`, so `npm install` is quick to run on
-any machine.
+The project is built with Maven and runs on Java 21, which is the same runtime the engine uses.
+The client is `io.camunda:camunda-client-java`, pinned to the engine's own release, so there is one
+Camunda version in the repository rather than two that can drift apart.
+
+The workers are small, and the plain client keeps each of them short enough to read in one sitting.
+Spring Boot was the other option and was not taken: the configuration here is layered over three
+levels and resolved by the project's own `Config`, and handing that to a framework's auto-configuration
+would mean two things deciding what the connection settings are. The client is therefore told not to
+read the environment itself — everything it is given has already been resolved in one place.
 
 ## How work is obtained
 
-`npm start` connects to the Zeebe gRPC gateway and registers one worker per service task. The
+`mvn exec:java` connects to the Zeebe gRPC gateway and registers one worker per service task. The
 registration is driven by `config/workers.default.json` rather than by code, so changing a job type
-or a concurrency is a configuration change: each worker has a `taskType`, a `maxJobsToActivate` and
-a `timeoutMs`, and the job type must match the `<zeebe:taskDefinition type="...">` of the service
-task it serves.
+or a concurrency is a configuration change: each worker has a `taskType`, a `maxJobsToActivate` and a
+`timeoutMs`, and the job type must match the `<zeebe:taskDefinition type="...">` of the service task
+it serves.
 
 Configuration is layered over three levels, each overriding the one before it:
 
@@ -31,24 +35,39 @@ Configuration is layered over three levels, each overriding the one before it:
 2. `config/workers.local.json` — optional, never committed, for one machine.
 3. Environment variables — from `.env` or the shell.
 
-The connection settings are passed to the SDK under the names the SDK itself reads, so there is one
-vocabulary for the connection everywhere. `ZEEBE_GRPC_ADDRESS` carries its protocol
-(`grpc://localhost:26500`), and `CAMUNDA_AUTH_STRATEGY` is `NONE` because Camunda 8 Run is installed
-unsecured for API access, so no credentials are sent and no token is fetched.
+A variable the environment already defines wins over the same variable in `.env`, so a committed file
+can never override a machine's own setting. The connection settings keep the names they had when the
+project used the Node SDK — `ZEEBE_GRPC_ADDRESS` carries its protocol (`grpc://localhost:26500`) and
+`CAMUNDA_AUTH_STRATEGY` is `NONE`, because Camunda 8 Run is installed unsecured for API access, so no
+credentials are sent and no token is fetched. The client spells a plaintext connection `http://` and a
+secured one `https://`, so the scheme is translated on the way in and the configuration keeps the
+vocabulary the models and the evidence already use.
+
+The workers directory is the directory they were started from, or `HPRTAS_WORKERS_DIR` when one is
+set. A missing configuration file is reported against the directory that was searched.
 
 Every job is logged as one JSON line carrying the worker, the job key, the process instance, the
 element id, the duration and the outcome, which is what makes the log usable as evidence. Setting
 `HPRTAS_LOG_FILE` also writes it to a file.
 
 ```bash
-npm install        # dependencies
 cp .env.example .env
-npm run check      # validate the configuration and the wiring, without an engine
-npm start          # run the workers
-npm test           # unit tests, no engine required
-npm run test:smoke # the fixture scenarios, engine running
-npm run test:e2e   # the operational models, engine running
+mvn test                                          # unit tests, no engine required
+mvn exec:java -Dexec.args="--check"               # validate the configuration and the wiring
+mvn exec:java                                     # run the workers
+mvn test -Pengine                                 # the fixture and the models, engine running
+mvn test -Pengine -Dtest=SmokeTest                # the fixture only
+mvn test -Pengine -Dtest=OperationalModelsTest    # the four operational models only
+mvn package                                       # a self-contained jar
 ```
+
+The engine tests are tagged and left out of the default build, because they need Camunda 8 Run to be
+up and they change what is deployed in it. They skip themselves, rather than fail, when the engine is
+not answering — a skipped run is not a pass, and the skip says which address it tried.
+
+Before any worker is registered the gateway is asked for its topology. A worker that cannot reach the
+gateway would otherwise start, look alive, and quietly take no work at all, which is the stalled job
+described under *Failure handling* below.
 
 ## The workers
 
@@ -190,6 +209,12 @@ Three of the four keep a ledger keyed by the booking or payment reference, and t
 the same key returns the first result instead of creating another. The ledgers are in memory, so
 they are per worker process and are cleared when it restarts.
 
+The ledgers are also the one place where running on a JVM rather than on Node changes the code
+rather than only its shape. Job workers are served by more than one thread, so the check that a
+reference is unknown and the record that it is now known are made together under the ledger's lock.
+Without that, two jobs for the same booking key could both find nothing and both book, which is
+exactly the duplicate the ledger is there to prevent.
+
 ## Failure handling
 
 **Invalid or missing input** is caught by the worker validating its variables before doing any work,
@@ -219,7 +244,12 @@ moves. A second refund for a payment already refunded returns the first one mark
 
 **An unexpected exception in a handler** is caught by the handler wrapper and turned into a job
 failure carrying the message, so the broker retries the job rather than leaving it stalled. A
-handler that returns something other than a job outcome is failed the same way.
+handler that returns nothing at all is failed the same way.
+
+The failure consumes one of the job's retries rather than setting them to zero. The client has no way
+to leave the retry count unset, and an unset count reaches the broker as zero, which raises an
+incident immediately — so the wrapper passes one fewer than the job currently has, which spends the
+model's own retry count and leaves the incident for when that count is exhausted.
 
 **No worker registered for a job type** leaves the job in the queue and the process waits where it
 is: the element instance stays active at the service task and the token does not move on. The job
@@ -228,27 +258,29 @@ Operate.
 
 ## Testing
 
-`npm test` runs the worker unit tests with no engine. They call the same handlers the workers call,
+`mvn test` runs the worker unit tests with no engine. They call the same handlers the workers call,
 with the simulated services running for real, so the behaviour is exercised rather than mocked, and
 each test names the test case or business rule it belongs to.
 
-`npm run test:smoke` deploys a single linear fixture that calls each worker once, starts the real
-workers and runs two process instances: the normal path, and a booking without clinical
-authorisation. It asserts on the path each instance took, read back from the Orchestration Cluster
-API, which proves that a worker registers against the gateway, receives a job of its type, returns
-its result and lets the process continue, and that a business error is caught by the model's
-boundary event.
+`mvn test -Pengine -Dtest=SmokeTest` deploys a single linear fixture, `src/test/resources/worker-smoke-test.bpmn`,
+which calls each worker once, starts the real workers and runs two process instances: the normal
+path, and a booking without clinical authorisation. It asserts on the path each instance took, read
+back from the Orchestration Cluster API, which proves that a worker registers against the gateway,
+receives a job of its type, returns its result and lets the process continue, and that a business
+error is caught by the model's boundary event.
 
-`npm run test:e2e` drives the delivered models rather than a fixture. It deploys the four
-operational models and the forms, starts the workers and runs five scenarios: the normal referral
-path in `core-1` to the appointment being arranged; authorisation, funding, payment and the
-between-cycle review in `core-2`; the clinic letter in `core-3` to its distribution; a follow-up
-requested and booked in `core-4`; and a paid appointment cancelled and refunded in `core-4`.
+`mvn test -Pengine -Dtest=OperationalModelsTest` drives the delivered models rather than a fixture.
+It deploys the four operational models and the forms, starts the workers and runs five scenarios:
+the normal referral path in `core-1` to the appointment being arranged; authorisation, funding,
+payment and the between-cycle review in `core-2`; the clinic letter in `core-3` to its distribution;
+a follow-up requested and booked in `core-4`; and a paid appointment cancelled and refunded in
+`core-4`.
 
 The refund scenario is run after the payment scenario on purpose: the refund it records is made
 against the payment reference the earlier scenario settled with the provider, which is the only way
 to show the refund worker working against a transaction that really exists rather than one the test
-assumed.
+assumed. The scenarios therefore declare the order they run in rather than leaving it to the test
+runner.
 
 Both engine runs are recorded in `../tests/evidence/`, named after the commit they were run at.
 Forms and role-based access are out of scope here and are tested separately; see

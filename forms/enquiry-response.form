@@ -1,0 +1,44 @@
+{
+  "id": "enquiry-response",
+  "components": [
+    {
+      "type": "group",
+      "label": "Enquiry Response",
+      "path": "response",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "enquiryId",
+          "label": "Enquiry ID",
+          "validate": { "required": true }
+        },
+        {
+          "type": "textarea",
+          "key": "responseProvided",
+          "label": "Response Provided",
+          "validate": { "required": true }
+        },
+        {
+          "type": "select",
+          "key": "resolutionStatus",
+          "label": "Resolution Status",
+          "validate": { "required": true },
+          "options": [
+            { "label": "Resolved", "value": "resolved" },
+            { "label": "Requires follow-up", "value": "follow_up" },
+            { "label": "Transferred to another team", "value": "transferred" }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "responseNotes",
+          "label": "Additional Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

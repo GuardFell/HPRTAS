@@ -76,6 +76,21 @@ it in sees a label rather than a code. Free-text clinical notes and decision rea
 with room to write in. Each form has a short kebab-case `id`, because that id is the key the model
 refers to and it has to stay stable.
 
+## Additional forms (DEF-13 mitigation)
+
+The following forms address the most critical unbound tasks identified in `DEF-13`:
+
+| Form file | Bound user task | Model | Purpose |
+|---|---|---|---|
+| `missing-information-request.form` | `N_MS_RequestMissing` | core-1 | Record missing information items and the request to the referring organisation (FR-003) |
+| `funding-approval.form` | `N_F_RecordApproval` | core-2 | Record funding organisation, authorisation reference, approved amount and limitations (FR-026) |
+| `payment-investigation.form` | `N_F_InvestigatePayment` | core-2 | Mark a transaction for investigation when payment was taken but confirmation not received |
+| `enquiry-classification.form` | `N_CH_ClassifyEnquiry` | core-4 | Record, classify, prioritise and route every enquiry (FR-041) |
+| `enquiry-response.form` | `N_CH_AnswerAdmin`, `N_F_AnswerFinance`, `N_CNS_ClinicalAdvice` | core-4 | Record the response and resolution status for enquiries (FR-041) |
+| `escalation.form` | `N_AM_ContactConsultant`, `N_AM_EscalateHigher` | core-3 | Record escalation level, reason and days outstanding (FR-038) |
+
+These forms are not yet bound to the BPMN models via `zeebe:formDefinition` - binding requires updating the BPMN XML for each task, which should be done in Camunda Modeler to avoid breaking the model layout.
+
 ## Testing the forms
 
 The forms are exercised as part of the scenarios in `../tests/test-plan.md`, and the end-to-end run

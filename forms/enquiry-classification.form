@@ -1,0 +1,54 @@
+{
+  "id": "enquiry-classification",
+  "components": [
+    {
+      "type": "group",
+      "label": "Enquiry Details",
+      "path": "enquiryDetails",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID (if applicable)"
+        },
+        {
+          "type": "select",
+          "key": "enquiryType",
+          "label": "Enquiry Type",
+          "validate": { "required": true },
+          "options": [
+            { "label": "Administrative", "value": "administrative" },
+            { "label": "Financial", "value": "financial" },
+            { "label": "Clinical", "value": "clinical" }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "priority",
+          "label": "Priority",
+          "validate": { "required": true },
+          "options": [
+            { "label": "Routine", "value": "routine" },
+            { "label": "Urgent", "value": "urgent" }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "enquiryDescription",
+          "label": "Enquiry Description",
+          "validate": { "required": true }
+        },
+        {
+          "type": "textfield",
+          "key": "handlerName",
+          "label": "Handler Name",
+          "validate": { "required": true }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

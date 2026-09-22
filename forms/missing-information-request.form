@@ -1,0 +1,40 @@
+{
+  "id": "missing-information-request",
+  "components": [
+    {
+      "type": "group",
+      "label": "Missing Information Request",
+      "path": "missingInfo",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral ID",
+          "validate": { "required": true }
+        },
+        {
+          "type": "textarea",
+          "key": "missingItems",
+          "label": "Missing Items",
+          "description": "List the documents or information that are missing from the referral.",
+          "validate": { "required": true }
+        },
+        {
+          "type": "textfield",
+          "key": "referringOrganisation",
+          "label": "Referring Organisation",
+          "validate": { "required": true }
+        },
+        {
+          "type": "textarea",
+          "key": "requestNotes",
+          "label": "Additional Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

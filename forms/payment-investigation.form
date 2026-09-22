@@ -1,0 +1,45 @@
+{
+  "id": "payment-investigation",
+  "components": [
+    {
+      "type": "group",
+      "label": "Payment Investigation",
+      "path": "investigation",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "paymentReference",
+          "label": "Payment Reference",
+          "validate": { "required": true }
+        },
+        {
+          "type": "textfield",
+          "key": "transactionReference",
+          "label": "Transaction Reference from Provider"
+        },
+        {
+          "type": "select",
+          "key": "investigationReason",
+          "label": "Reason for Investigation",
+          "validate": { "required": true },
+          "options": [
+            { "label": "Payment taken but confirmation not received", "value": "no_confirmation" },
+            { "label": "Suspected duplicate charge", "value": "suspected_duplicate" },
+            { "label": "Amount discrepancy", "value": "amount_discrepancy" },
+            { "label": "Other", "value": "other" }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "investigationNotes",
+          "label": "Investigation Notes",
+          "validate": { "required": true }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

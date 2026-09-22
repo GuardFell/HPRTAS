@@ -1,0 +1,45 @@
+{
+  "id": "funding-approval",
+  "components": [
+    {
+      "type": "group",
+      "label": "Funding Approval Details",
+      "path": "fundingApproval",
+      "elements": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": { "required": true }
+        },
+        {
+          "type": "textfield",
+          "key": "fundingOrganisation",
+          "label": "Funding Organisation",
+          "validate": { "required": true }
+        },
+        {
+          "type": "textfield",
+          "key": "authorisationReference",
+          "label": "Authorisation Reference",
+          "validate": { "required": true }
+        },
+        {
+          "type": "number",
+          "key": "approvedAmount",
+          "label": "Approved Amount (£)",
+          "validate": { "required": true, "min": 0 }
+        },
+        {
+          "type": "textarea",
+          "key": "limitations",
+          "label": "Limitations or Conditions"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

@@ -1,0 +1,78 @@
+{
+  "id": "letter-correction",
+  "components": [
+    {
+      "type": "group",
+      "label": "Clinical Error Correction",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "clinicalErrorDescription",
+          "label": "What the Suspected Error Was",
+          "description": "The suspected error the letter was returned for, recorded as the Consultant found it.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "correctionMade",
+          "label": "Correction Made",
+          "description": "What was changed in the clinical content, so the correction is held with the error that caused it.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "letterCorrected",
+          "label": "Letter Corrected and Ready to Approve Again",
+          "description": "The corrected letter returns to the Consultant for approval before it can be distributed.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "reviewDate",
+          "label": "Review Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "reviewedBy",
+          "label": "Reviewed By",
+          "description": "The responsible Consultant.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "correctionNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

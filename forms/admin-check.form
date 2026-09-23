@@ -1,0 +1,153 @@
+{
+  "id": "admin-check",
+  "components": [
+    {
+      "type": "group",
+      "label": "Administrative Check",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "suspectedClinicalError",
+          "label": "Suspected Clinical Error Found",
+          "description": "Tick this only where the letter shows a suspected clinical error; the letter is then returned to the Consultant instead of being distributed. Administrative staff may correct formatting and clear administrative errors, but must not change clinical meaning. Leaving it unticked clears the letter for distribution, so the box is deliberately not required."
+        },
+        {
+          "type": "textarea",
+          "key": "clinicalErrorDetail",
+          "label": "What Is Suspected to Be Wrong",
+          "description": "Recorded where a clinical error is suspected, so the Consultant knows what to review."
+        },
+        {
+          "type": "textarea",
+          "key": "recipients",
+          "label": "Recipients Confirmed (separate with commas)",
+          "description": "The recipients the Consultant identified, confirmed here before the letter is distributed. Separate multiple recipients with commas.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "documentType",
+          "label": "Document Type",
+          "description": "Passed to the correspondence service with the recipients.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "New Patient Clinic Letter",
+              "value": "new_patient_clinic_letter"
+            },
+            {
+              "label": "Follow-up Clinic Letter",
+              "value": "follow_up_clinic_letter"
+            },
+            {
+              "label": "Appointment Letter",
+              "value": "appointment_letter"
+            },
+            {
+              "label": "Referral Outcome Letter",
+              "value": "referral_outcome_letter"
+            },
+            {
+              "label": "Deferral or Cancellation Letter",
+              "value": "deferral_or_cancellation_letter"
+            }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "channelPreference",
+          "label": "Channel Preference",
+          "description": "How the patient asked to be contacted. Defaults to post where it is not recorded.",
+          "options": [
+            {
+              "label": "Post",
+              "value": "post"
+            },
+            {
+              "label": "Digital",
+              "value": "digital"
+            },
+            {
+              "label": "Authorised Representative",
+              "value": "authorised_representative"
+            },
+            {
+              "label": "Accessible Format",
+              "value": "accessible_format"
+            }
+          ]
+        },
+        {
+          "type": "textfield",
+          "key": "checkedBy",
+          "label": "Checked By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "checkNotes",
+          "label": "Notes"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Correspondence Timeline",
+      "components": [
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "appointmentDate",
+          "label": "Appointment Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "approvalDate",
+          "label": "Letter Approval Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "processingDate",
+          "label": "Processing Date",
+          "description": "The date the letter was checked. The seven-day target is measured from the appointment date.",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

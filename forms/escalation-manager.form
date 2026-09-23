@@ -1,0 +1,120 @@
+{
+  "id": "escalation-manager",
+  "components": [
+    {
+      "type": "group",
+      "label": "Escalation to the Administrative Manager",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "escalatedTo",
+          "label": "Escalated To",
+          "description": "The Administrative Manager the delay is escalated to. The case names the role rather than a person, so the manager it went to is recorded here.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "escalationDate",
+          "label": "Escalation Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "escalationReason",
+          "label": "Reason for the Escalation",
+          "description": "The letter has been outstanding for more than one month, so the delay is escalated rather than left with the Consultant.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "escalatedBy",
+          "label": "Escalated By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "escalationNotes",
+          "label": "Notes"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Contact with the Consultant",
+      "components": [
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "contactDate",
+          "label": "Contact Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "contactOutcome",
+          "label": "Outcome of the Contact",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Consultant Responded",
+              "value": "responded"
+            },
+            {
+              "label": "Acknowledged",
+              "value": "acknowledged"
+            },
+            {
+              "label": "No Response",
+              "value": "no_response"
+            }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "consultantResponse",
+          "label": "What the Consultant Said"
+        },
+        {
+          "type": "textfield",
+          "key": "contactedBy",
+          "label": "Contacted By",
+          "description": "The Administrative Manager.",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

@@ -23,6 +23,29 @@
         },
         {
           "type": "select",
+          "key": "overdueDuration",
+          "label": "How Overdue the Letter Is",
+          "description": "Decides whether the delay stays with the Consultant or is escalated.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Less Than One Month",
+              "value": "less_than_one_month"
+            },
+            {
+              "label": "One to Three Months",
+              "value": "one_to_three_months"
+            },
+            {
+              "label": "More Than Three Months",
+              "value": "over_three_months"
+            }
+          ]
+        },
+        {
+          "type": "select",
           "key": "delayReviewOutcome",
           "label": "Outcome of the Review",
           "validate": {

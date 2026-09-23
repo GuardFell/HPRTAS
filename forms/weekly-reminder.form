@@ -1,0 +1,82 @@
+{
+  "id": "weekly-reminder",
+  "components": [
+    {
+      "type": "group",
+      "label": "Weekly Reminder",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "number",
+          "key": "reminderNumber",
+          "label": "Reminder Number",
+          "description": "Weekly reminders are numbered, so the history shows which reminder this is.",
+          "validate": {
+            "required": true,
+            "min": 1
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "reminderDate",
+          "label": "Reminder Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "reminderTo",
+          "label": "Reminder To",
+          "description": "The Consultant the reminder is issued to.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "reminderResponse",
+          "label": "Response to the Reminder",
+          "description": "Kept as part of the record of reminders and responses."
+        },
+        {
+          "type": "textarea",
+          "key": "delayReason",
+          "label": "Valid Reason for the Delay",
+          "description": "Where the Consultant gives one, so the reason is retained with the reminder."
+        },
+        {
+          "type": "textfield",
+          "key": "issuedBy",
+          "label": "Issued By",
+          "description": "The Patient Pathway Coordinator who issued the reminder.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "reminderNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

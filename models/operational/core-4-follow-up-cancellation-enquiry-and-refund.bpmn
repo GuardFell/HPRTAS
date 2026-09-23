@@ -982,5 +982,5 @@
         <di:waypoint x="3660" y="470" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
+  </bpmndi:BPMNDiagram>
 </bpmn:definitions>

@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_simple_letter" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.51.0">
+  <bpmn:collaboration id="Collaboration_letter">
+    <bpmn:participant id="Participant_Hospital" name="Hospital" processRef="simple-clinic-letter" />
+  </bpmn:collaboration>
+  <bpmn:process id="simple-clinic-letter" name="Clinic Letter Production and Distribution" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Consultants" name="Consultants">
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PrepareLetter</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ApproveLetter</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ReturnToConsultant</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_0d0hrf2</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_MedicalSecretaries" name="Medical Secretaries">
+        <bpmn:flowNodeRef>Task_AdminCheck</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_DistributeLetter</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_LetterSent</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_CheckOk</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_PathwayCoordinators" name="Pathway Coordinators">
+        <bpmn:flowNodeRef>StartEvent_Delay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_MonitorDelay</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_DelayLevel</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_WeeklyReminder</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Escalated</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_AdminManagement" name="Admin Management">
+        <bpmn:flowNodeRef>Task_EscalateManager</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_EscalateHigher</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_PrepareLetter" name="Prepare clinic letter">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="clinic-letter-prepare" bindingType="deployment" />
+        <zeebe:assignmentDefinition candidateGroups="consultants" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:startEvent id="StartEvent_Delay">
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_MonitorDelay" name="Review outstanding letter">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="delay-review" bindingType="deployment" />
+        <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:outgoing>Flow_11</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_PrepareLetter" />
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_PrepareLetter" targetRef="Gateway_0d0hrf2" />
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_ApproveLetter" targetRef="Task_AdminCheck" />
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_AdminCheck" targetRef="Gateway_CheckOk" />
+    <bpmn:sequenceFlow id="Flow_6" name="passed" sourceRef="Gateway_CheckOk" targetRef="Task_DistributeLetter" />
+    <bpmn:sequenceFlow id="Flow_0dnut9q" name="error found" sourceRef="Gateway_CheckOk" targetRef="Task_ReturnToConsultant" />
+    <bpmn:sequenceFlow id="Flow_8" sourceRef="Task_ReturnToConsultant" targetRef="Gateway_0d0hrf2" />
+    <bpmn:sequenceFlow id="Flow_7" sourceRef="Task_DistributeLetter" targetRef="EndEvent_LetterSent" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="StartEvent_Delay" targetRef="Task_MonitorDelay" />
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="Task_MonitorDelay" targetRef="Gateway_DelayLevel" />
+    <bpmn:sequenceFlow id="Flow_000x028" name="under 90 days" sourceRef="Gateway_DelayLevel" targetRef="Task_WeeklyReminder" />
+    <bpmn:sequenceFlow id="Flow_13" name="over 90 days" sourceRef="Gateway_DelayLevel" targetRef="Task_EscalateManager">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= delayDays &gt; 90</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_15" sourceRef="Task_WeeklyReminder" targetRef="EndEvent_Escalated" />
+    <bpmn:sequenceFlow id="Flow_16" sourceRef="Task_EscalateManager" targetRef="Task_EscalateHigher" />
+    <bpmn:sequenceFlow id="Flow_0dqzt6f" sourceRef="Task_EscalateHigher" targetRef="EndEvent_Escalated" />
+    <bpmn:sequenceFlow id="Flow_0uyypho" sourceRef="Gateway_0d0hrf2" targetRef="Task_ApproveLetter" />
+    <bpmn:userTask id="Task_ApproveLetter" name="Approve clinic letter">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="clinic-letter-approve" bindingType="deployment" />
+        <zeebe:assignmentDefinition candidateGroups="consultants" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0uyypho</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_ReturnToConsultant" name="Return for correction">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="letter-correction" bindingType="deployment" />
+        <zeebe:assignmentDefinition candidateGroups="consultants" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0dnut9q</bpmn:incoming>
+      <bpmn:outgoing>Flow_8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_AdminCheck" name="Administrative check">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="admin-check" bindingType="deployment" />
+        <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_DelayLevel">
+      <bpmn:incoming>Flow_11</bpmn:incoming>
+      <bpmn:outgoing>Flow_13</bpmn:outgoing>
+      <bpmn:outgoing>Flow_000x028</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_WeeklyReminder" name="Send weekly reminder">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="weekly-reminder" bindingType="deployment" />
+        <zeebe:assignmentDefinition candidateGroups="pathway-coordinators" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_000x028</bpmn:incoming>
+      <bpmn:outgoing>Flow_15</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_Escalated">
+      <bpmn:incoming>Flow_15</bpmn:incoming>
+      <bpmn:incoming>Flow_0dqzt6f</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="Gateway_0d0hrf2">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:incoming>Flow_8</bpmn:incoming>
+      <bpmn:outgoing>Flow_0uyypho</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_DistributeLetter" name="Distribute letter">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="letter-distribution" bindingType="deployment" />
+        <zeebe:assignmentDefinition candidateGroups="medical-secretaries" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+      <bpmn:outgoing>Flow_7</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="EndEvent_LetterSent">
+      <bpmn:incoming>Flow_7</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="Gateway_CheckOk">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0dnut9q</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_EscalateManager" name="Escalate to manager">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="escalation-manager" bindingType="deployment" />
+        <zeebe:assignmentDefinition candidateGroups="admin-management" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_13</bpmn:incoming>
+      <bpmn:outgoing>Flow_16</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_EscalateHigher" name="Escalate higher">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="escalation-higher" bindingType="deployment" />
+        <zeebe:assignmentDefinition candidateGroups="admin-management" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_16</bpmn:incoming>
+      <bpmn:outgoing>Flow_0dqzt6f</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_letter">
+      <bpmndi:BPMNShape id="Participant_Hospital_di" bpmnElement="Participant_Hospital" isHorizontal="true">
+        <dc:Bounds x="160" y="60" width="1360" height="680" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_AdminManagement_di" bpmnElement="Lane_AdminManagement" isHorizontal="true">
+        <dc:Bounds x="190" y="570" width="1330" height="170" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_PathwayCoordinators_di" bpmnElement="Lane_PathwayCoordinators" isHorizontal="true">
+        <dc:Bounds x="190" y="400" width="1330" height="170" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_MedicalSecretaries_di" bpmnElement="Lane_MedicalSecretaries" isHorizontal="true">
+        <dc:Bounds x="190" y="230" width="1330" height="170" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Consultants_di" bpmnElement="Lane_Consultants" isHorizontal="true">
+        <dc:Bounds x="190" y="60" width="1330" height="170" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="252" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PrepareLetter_di" bpmnElement="Task_PrepareLetter">
+        <dc:Bounds x="350" y="120" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_Delay_di" bpmnElement="StartEvent_Delay">
+        <dc:Bounds x="252" y="442" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_MonitorDelay_di" bpmnElement="Task_MonitorDelay">
+        <dc:Bounds x="350" y="420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ApproveLetter_di" bpmnElement="Task_ApproveLetter">
+        <dc:Bounds x="670" y="120" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ReturnToConsultant_di" bpmnElement="Task_ReturnToConsultant">
+        <dc:Bounds x="860" y="120" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_AdminCheck_di" bpmnElement="Task_AdminCheck">
+        <dc:Bounds x="670" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_DelayLevel_di" bpmnElement="Gateway_DelayLevel" isMarkerVisible="true">
+        <dc:Bounds x="685" y="435" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_WeeklyReminder_di" bpmnElement="Task_WeeklyReminder">
+        <dc:Bounds x="810" y="420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Escalated_di" bpmnElement="EndEvent_Escalated">
+        <dc:Bounds x="982" y="442" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0d0hrf2_di" bpmnElement="Gateway_0d0hrf2" isMarkerVisible="true">
+        <dc:Bounds x="535" y="135" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_DistributeLetter_di" bpmnElement="Task_DistributeLetter">
+        <dc:Bounds x="1020" y="280" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_LetterSent_di" bpmnElement="EndEvent_LetterSent">
+        <dc:Bounds x="1212" y="302" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_CheckOk_di" bpmnElement="Gateway_CheckOk" isMarkerVisible="true">
+        <dc:Bounds x="885" y="295" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_EscalateManager_di" bpmnElement="Task_EscalateManager">
+        <dc:Bounds x="660" y="620" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_EscalateHigher_di" bpmnElement="Task_EscalateHigher">
+        <dc:Bounds x="950" y="620" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="288" y="160" />
+        <di:waypoint x="350" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="450" y="160" />
+        <di:waypoint x="535" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="720" y="200" />
+        <di:waypoint x="720" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="770" y="320" />
+        <di:waypoint x="885" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_6_di" bpmnElement="Flow_6">
+        <di:waypoint x="935" y="320" />
+        <di:waypoint x="1020" y="320" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="963" y="306" width="36" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0dnut9q_di" bpmnElement="Flow_0dnut9q">
+        <di:waypoint x="910" y="295" />
+        <di:waypoint x="910" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="918" y="246" width="54" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_8_di" bpmnElement="Flow_8">
+        <di:waypoint x="910" y="120" />
+        <di:waypoint x="910" y="80" />
+        <di:waypoint x="560" y="80" />
+        <di:waypoint x="560" y="130" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_7_di" bpmnElement="Flow_7">
+        <di:waypoint x="1120" y="320" />
+        <di:waypoint x="1212" y="320" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10">
+        <di:waypoint x="288" y="460" />
+        <di:waypoint x="350" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_di" bpmnElement="Flow_11">
+        <di:waypoint x="450" y="460" />
+        <di:waypoint x="685" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_000x028_di" bpmnElement="Flow_000x028">
+        <di:waypoint x="735" y="460" />
+        <di:waypoint x="810" y="460" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="735" y="446" width="70" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13_di" bpmnElement="Flow_13">
+        <di:waypoint x="710" y="485" />
+        <di:waypoint x="710" y="620" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="718" y="537" width="63" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15_di" bpmnElement="Flow_15">
+        <di:waypoint x="910" y="460" />
+        <di:waypoint x="982" y="460" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16_di" bpmnElement="Flow_16">
+        <di:waypoint x="760" y="660" />
+        <di:waypoint x="950" y="660" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0dqzt6f_di" bpmnElement="Flow_0dqzt6f">
+        <di:waypoint x="1000" y="620" />
+        <di:waypoint x="1000" y="478" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0uyypho_di" bpmnElement="Flow_0uyypho">
+        <di:waypoint x="585" y="160" />
+        <di:waypoint x="670" y="160" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

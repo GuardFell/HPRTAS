@@ -15,7 +15,7 @@
 | Item | Why it is in scope | Owner |
 |---|---|---|
 | The four `core-N` operational models in `models/operational/` | They are the executable system: referral to appointment, treatment authorisation with funding and payment, clinic letter and escalation, follow-up, cancellation, enquiry and refund. `AS-14` fixes this as the first-release scope. | |
-| The eight Camunda Forms in `forms/`, bound to their user tasks | A user task without its form cannot be completed as a Tasklist user would, so the models are not usable without them. | M4 |
+| The 47 Camunda Forms in `forms/`, bound to their user tasks | A user task without its form cannot be completed as a Tasklist user would, so the models are not usable without them. | M4 |
 | The six external workers and their simulated services in `workers/` | Every service task in the four models is bound to one of them, so the models would stall without them. | |
 | The strategic model `models/strategic/patient-pathway-all-entities.bpmn` | The non-executable view of the whole pathway across all entities, and the only place the enquiry requirements sit at strategic level. It is not deployed. | |
 | The requirements list and its traceability in `docs/requirements/requirements.md` | Every acceptance criterion in the test plan is linked to a requirement and a business rule, so the criteria cannot be read without it. | |

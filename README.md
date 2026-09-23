@@ -48,7 +48,7 @@ both to resolve them:
 
 ```bash
 cd models/operational
-for f in core-*.bpmn; do
+for f in *.bpmn; do
   curl -X POST "http://localhost:8080/v2/deployments" -F "resources=@$f;type=application/xml"
 done
 cd ../../forms
@@ -56,6 +56,11 @@ for f in *.form; do
   curl -X POST "http://localhost:8080/v2/deployments" -F "resources=@$f;type=application/json"
 done
 ```
+
+Every model in `models/operational/` is deployed this way, and every form in `forms/` goes with
+them, so no task is left pointing at a form key nothing resolves. From the workspace root,
+`python tools\verify_hprtas_engine_forms.py` does the same thing and then proves it: it deploys each
+model with its forms, starts it, and checks that the user task it reaches resolves its form.
 
 The workers are a separate Maven project. Copy `workers/.env.example` to `workers/.env` first, then:
 
@@ -68,11 +73,13 @@ They need Java 21, which is the runtime the engine uses. `mvn compile exec:java 
 validates the configuration and the wiring without connecting to the engine, which is useful before
 a demonstration.
 
-The four operational processes are separate, so each is started separately from Tasklist under
+The five operational processes are separate, so each is started separately from Tasklist under
 Processes. Complete the user tasks on an instance as it reaches them; each task is assigned to the
 candidate group its lane represents. `core-4-follow-up-cancellation-enquiry-and-refund` also has
 two message start events, for a cancellation arriving and for a patient enquiry arriving, which are
 started by sending that message rather than from the Processes page.
+`simple-clinic-letter-lanes` is the second, lane-level view of the clinic letter process: it is
+deployable and runnable in the same way, and its steps are the same steps `core-3` carries.
 
 The strategic model is a non-executable view of the process. Do not deploy it: Camunda rejects a
 deployment that contains no executable process.

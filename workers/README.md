@@ -126,7 +126,7 @@ that case the provider is not called at all.
 ## Where the workers run in the models
 
 The job type in the configuration is the `<zeebe:taskDefinition type="...">` of the matching
-service task, so this is the binding between the workers and the four operational processes.
+service task, so this is the binding between the workers and the five operational processes.
 
 In `core-1`, `N_MS_ValidateReferral` runs `referral-validation`, `N_OB_CheckAvailability` runs
 `appointment-availability` and `N_OB_SendNotification` runs `correspondence-dispatch`.
@@ -139,12 +139,18 @@ In `core-3`, `N_MS_SendLetter` runs `correspondence-dispatch`.
 In `core-4`, `N_OB_CheckAvailability` runs `appointment-availability`, `N_OB_SendFollowUpLetter`
 runs `correspondence-dispatch` and `N_F_ProcessRefund` runs `refund-processing`.
 
+In `simple-clinic-letter-lanes`, `N_MS_SendLetter` runs `correspondence-dispatch`: the letter leaves
+through the correspondence service there too, which is why that model has a service task where its
+other steps are user tasks.
+
 Every service task in the operational models is covered. The strategic and socio-technical models
 contain no service tasks, so nothing is bound to them.
 
-`send-correspondence` serves four service tasks and `check-appointment-availability` two, so the
+`send-correspondence` serves five service tasks and `check-appointment-availability` two, so the
 job type alone does not say which activity a job came from. The worker log carries the `elementId`,
-which is what tells them apart in the evidence.
+which is what tells them apart in the evidence. `N_MS_SendLetter` is the one element id that appears
+in two models — the same letter step in `core-3` and in `simple-clinic-letter-lanes` — so for that
+one the log's `elementId` is not enough on its own to say which model the job came from.
 
 ## Error codes
 

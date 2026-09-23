@@ -34,6 +34,10 @@ target/
 *.jar
 !**/maven-wrapper.jar
 
+# Python bytecode (the tools/ scripts are Python)
+__pycache__/
+*.py[cod]
+
 # Camunda engine runtime data and logs - never commit runtime state
 camunda-data/
 *.mv.db

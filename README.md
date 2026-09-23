@@ -28,6 +28,10 @@ that go with delivering it.
 
 `tests/` holds the test plan and the evidence of the runs.
 
+`tools/` holds the scripts that redraw the diagrams, export them and check that the models, the
+forms and the workers agree with each other, so that what is claimed here can be reproduced rather
+than taken on trust. `tools/README.md` says what each one does and what it needs.
+
 `Enterprise Architecture/` holds the portfolio deliverable describing the enterprise and its
 information systems, and the Zachman Framework view of them.
 
@@ -58,8 +62,8 @@ done
 ```
 
 Every model in `models/operational/` is deployed this way, and every form in `forms/` goes with
-them, so no task is left pointing at a form key nothing resolves. From the workspace root,
-`python tools\verify_hprtas_engine_forms.py` does the same thing and then proves it: it deploys each
+them, so no task is left pointing at a form key nothing resolves.
+`python tools/verify_hprtas_engine_forms.py` does the same thing and then proves it: it deploys each
 model with its forms, starts it, and checks that the user task it reaches resolves its form.
 
 The workers are a separate Maven project. Copy `workers/.env.example` to `workers/.env` first, then:
@@ -101,3 +105,14 @@ answering.
 `workers/README.md` describes the job types, the variables each worker reads and writes, the error
 codes and the simulated services. `tests/README.md` describes the test plan and where the evidence
 of each run is kept.
+
+The models, the forms and the workers are also checked against each other without an engine, which
+is the check to run before committing a model or a form:
+
+```bash
+python tools/verify_hprtas_bpmn_bindings.py      # the three artefact types agree
+python tools/verify_hprtas_bpmn_layout.py        # the diagrams hold the layout and BPMN rules
+python tools/verify_hprtas_engine_forms.py       # the bindings, proved on the engine instead
+```
+
+`tools/README.md` lists every script, what it checks and what it needs.

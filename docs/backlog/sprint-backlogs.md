@@ -86,7 +86,7 @@ comes from rather than a task ID. Every row is one of the gaps recorded in
 |---|---|---|---|---|---|---|
 | PB-009 | The i\* SD and SR models in `../../models/socio-technical/`, checked against each other: every dependency in the SD model has a rationale in the SR model, and every actor appears in both with the same goals. The strategic BPMN half of PB-009 is already delivered in `../../models/strategic/`. | M2 | M1 | 13 | Roles and external interactions shown; SD and SR consistent; the abstraction level explained. | `../../models/socio-technical/`; the traceability extended in `../requirements/requirements.md` |
 | PB-008 | `DEF-11`: the urgent referral with no slot in the requested period loops for ever in `core-1`. Re-target the flow so it cannot cycle, then re-run the scenarios that reach it (`TC-05`, `TC-18`). | M1 | M3 | to be estimated | The instance leaves the branch for both a routine and an urgent referral; the re-run reaches an end event with no incident. | A corrected `core-1` and a re-run in `../../tests/evidence/` |
-| PB-008 | `DEF-12`: `N_F_ProcessRefund` cannot catch the `PROHIBITED_FINANCIAL_DATA` its worker raises. Add the missing boundary event and re-run `TC-21`. | M3 | M1 | to be estimated | A refund carrying card details follows the error path instead of becoming an incident; `TC-21` still passes. | A corrected `core-4` and a re-run in `../../tests/evidence/` |
+| PB-008 | `DEF-12`: `N_F_ProcessRefund` cannot catch the `PROHIBITED_FINANCIAL_DATA` its worker raises. Add the missing boundary event and re-run `TC-21`. | M3 | M1 | to be estimated | A refund carrying card details follows the error path instead of becoming an incident; `TC-21` still passes. | Done at `9138bcc`: `core-4` corrected, the error path driven on the engine, and `TC-21` re-run green |
 | PB-006 | `DEF-13`: 36 of the 55 user tasks bound no form. Either the forms are built for those tasks, or the limitation is accepted for the second release and stated in the demonstration and in the evaluation. This was the largest open item in the project. | M4 | M2 | to be estimated | Every task the case requires a record from has a form whose fields are the variables the model reads, or a recorded decision that it does not and why. | `../../forms/`; `../planning/plan-evaluation.md` section 6 |
 | PB-007 | Run the four scenarios that have no result. `TC-02` and `TC-16` need no new capability; `TC-13` and `TC-20` need the forms from the row above and a signed-in user first. | M5 | M3 | to be estimated | Each scenario has a result or a recorded reason it still cannot be run. | `../../tests/test-plan.md` section 5; `../../tests/evidence/` |
 | PB-008 | Fold the first review's feedback into the model, the workers and the forms, and record each point against the decision, the action and the outcome. | M4 | M5 | to be estimated | Every feedback point is recorded with what was decided, what was done, the evidence and the outcome. | A response-to-feedback record; the corrected artefacts |
@@ -94,7 +94,7 @@ comes from rather than a task ID. Every row is one of the gaps recorded in
 
 **Landed so far, mid-sprint.** The `PB-006` row is done at `a62e783`: 40 forms now cover all 55
 user tasks, so `TC-13` and `TC-20` no longer wait on the `PB-006` row - only on the signed-in user
-that `DEF-07` and `DEF-08` need. The `DEF-11` and `DEF-12` rows are still open.
+that `DEF-07` and `DEF-08` need. The `DEF-12` row is done at `9138bcc`; the `DEF-11` row is still open.
 
 ## Sprint 4 - Validation, evaluation and demonstration
 

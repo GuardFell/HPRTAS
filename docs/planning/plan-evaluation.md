@@ -84,7 +84,7 @@ rather than repeated.
   no condition of its own, which is what `DEF-01` was about. Verified on all 21 gateways; every
   default is the safe branch (an unhandled value falls to the exception path, not to the happy one).
 - Every service task that can raise a business error catches every code its worker can raise, with
-  one exception: `N_F_ProcessRefund` (`DEF-12`).
+  one exception: `N_F_ProcessRefund` (`DEF-12`, fixed at `9138bcc`).
 - Every user task carries the Camunda user task marker and a candidate group, so no task is
   invisible in Tasklist and none is unassigned.
 - Every form field name used by the models resolves to a form that exists, and the eight `.form`
@@ -101,6 +101,12 @@ rather than repeated.
 - **`N_F_ProcessRefund` cannot catch `PROHIBITED_FINANCIAL_DATA`** (`DEF-12`), so a refund carrying
   card details stops the process. The worker test for that behaviour passes, which is the point:
   the worker level cannot see a missing catch event on the model.
+- **Added after this evaluation.** `DEF-12` is closed at `9138bcc`, and fixing it found a third fault of
+  the same family: a sequence-flow condition on the only outgoing flow of an activity is never
+  evaluated, so two conditions in `core-2` read as guards and were not (`DEF-14`). One of them,
+  `retryPayment`, now decides at a gateway and both answers have been driven; the other,
+  `affectsCharge`, is corrected but still not enforced. The conditions out of gateways - which is
+  every decision this evaluation checked - are unaffected.
 - **An urgent referral with no slot loops for ever in `core-1`** (`DEF-11`). It was found by reading
   the two gateway conditions against the scheduling service's determinism, and running the current
   scenarios would not have found it, because they all use `priority = "routine"`.
@@ -200,7 +206,7 @@ Full detail is in `../../tests/test-plan.md` section 5. In summary, at `c8556ba`
 | AC-06 clinic letter, seven-day target and escalation | **Partially met** | The letter path and the `P7D` timer are right; the timer's path has never been run (TC-16), and the escalation thresholds are input data rather than measured periods. |
 | AC-07 follow-up, cancellation and enquiries | **Not met** | The follow-up and cancellation paths pass in part, but the enquiry half is unsupported (`DEF-13`), so the criterion as written cannot be accepted. |
 | AC-08 refund and separation of duties | **Met** with a caveat | TC-21 passes end to end against a settled reference. The caveat is that the separation is structural, not enforced, because role-based access does not exist. |
-| AC-09 data minimisation | **Met** on the payment path | TC-07 and TC-11 pass and the provider-call assertion holds. Not met on the refund path (`DEF-12`). |
+| AC-09 data minimisation | **Met** on the payment path (and on the refund path since `9138bcc`) | TC-07 and TC-11 pass and the provider-call assertion holds. Not met on the refund path (`DEF-12`). |
 | AC-10 controlled failure and no duplicates | **Met** | TC-08, TC-11 and TC-12 pass; the duplicate guards are asserted, not assumed. |
 
 **Seven of ten met; three not.** The first release cannot be signed off on this. `DEF-11`, `DEF-12`
@@ -217,9 +223,9 @@ checking rather than by running, which is the only reason they are not already i
 2. **The three open defects must be fixed and re-tested before the initial release.** `DEF-11`
    (small: re-target the urgent flow so it cannot cycle), `DEF-12` (small: add the missing catch
    event), `DEF-13` (large: the forms for the 36 tasks, or an explicit decision to accept the
-   limitation for the first release and say so in the demonstration). **`DEF-13` is done:** it was
-   closed at `a62e783`, where 40 forms came to cover all 55 user tasks. `DEF-11` and `DEF-12` are
-   still open.
+   limitation for the first release and say so in the demonstration). **`DEF-13` and `DEF-12` are
+   done:** the forms were closed at `a62e783`, where 40 forms came to cover all 55 user tasks, and
+   the catch event at `9138bcc`. `DEF-11` is still open.
 3. **The unrun scenarios are the cheapest remaining work.** TC-02, TC-13, TC-16 and TC-20 need no
    code, only a run - except that TC-13 and TC-20 need forms and a signed-in user first, which makes
    them depend on `DEF-13` and `DEF-07`. With `DEF-13` closed they depend on `DEF-07` alone: the
@@ -234,6 +240,6 @@ checking rather than by running, which is the only reason they are not already i
    release with no tag cannot be compared against the second release, which is what Sprint 4 is for.
    **Done:** `release-1.0` tags the first release. It was made at `9ef26df`, re-pointed to
    `bdcc0e1` so that it covered the Java workers, and re-pointed again to cover the completed form
-   set, so `DEF-13` is closed inside the tag rather than after it. `DEF-11` and `DEF-12`, which
-   item 2 lists, are still open at it, so the tag and those two fixes have to be brought together
-   before the release is accepted.
+   set, so `DEF-13` is closed inside the tag rather than after it. `DEF-11` is still open at it, so
+   the tag and that fix have to be brought together before the release is accepted; `DEF-12` and
+   `DEF-14` came after the tag as well.

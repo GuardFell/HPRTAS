@@ -218,9 +218,11 @@ These are the costs of the choices above, recorded rather than hidden. The defec
 `../tests/test-plan.md` section 6.
 
 **Known structural gaps.** An urgent referral with no slot in the requested period loops in
-`core-1` instead of ending (`DEF-11`). The refund service task catches `INVALID_VARIABLE` but not
-`PROHIBITED_FINANCIAL_DATA`, which the refund worker can also raise (`DEF-12`). Neither is
-hidden: both are in the defect table, and the second is a one-line model change.
+`core-1` instead of ending (`DEF-11`), which is still open. The refund service task caught
+`INVALID_VARIABLE` but not `PROHIBITED_FINANCIAL_DATA`, which the refund worker can also raise;
+that is fixed at `9138bcc`, and fixing it turned up a fault of the same family - a condition on the
+only outgoing flow of an activity is never evaluated (`DEF-14`), so two conditions in `core-2`
+read as guards and were not. None of this is hidden: all three are in the defect table.
 
 **Every user task now binds a form** (`DEF-13`, closed at `a62e783`). This was the largest gap in
 the first edition. Thirty-six of the fifty-five tasks had no form at all, so their variable contract

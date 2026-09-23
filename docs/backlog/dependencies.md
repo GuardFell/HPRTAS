@@ -39,8 +39,8 @@ PB-001 -> PB-002 -> PB-003 -> PB-005 -> PB-007 -> PB-010 -> PB-008
 The chain that decides the release is the one through the operational model, the workers and the
 tests: nothing can be demonstrated, and no criterion can be evaluated, until the model runs with its
 workers and a scenario has been driven through it. The three defects that were open (`DEF-11`,
-`DEF-12`, `DEF-13`; `DEF-13` since fixed at `a62e783`) sit on that chain - `DEF-11` and `DEF-12` on
-`PB-003` and `PB-005`, `DEF-13` on `PB-006` - which is why the first release is dated against them
+`DEF-12`, `DEF-13`; `DEF-13` since fixed at `a62e783` and `DEF-12` at `9138bcc`) sit on that chain -
+`DEF-11` on `PB-003`, `DEF-12` on `PB-005`, `DEF-13` on `PB-006` - which is why the first release is dated against them
 in `../planning/plan-evaluation.md` section 7.
 
 ## External dependencies

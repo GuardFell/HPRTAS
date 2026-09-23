@@ -6,24 +6,24 @@
 
 ## Version under test
 
-The release is tagged `release-1.0` (`bdcc0e1`; the annotated tag is `ca13f7f`). This tag was
-re-pointed from the original Node.js version (`9ef26df`) to the Java implementation after the
-workers were rewritten in commit `4eb3fee`. The results recorded in this plan's execution table
-were produced against the Node.js version and **each result names the commit it was produced at**;
-they no longer describe the current code.
+The release is tagged `release-1.0`, on the commit that carries these version records. The tag's own
+message names that commit and `git rev-parse release-1.0` resolves it, which is why the hash is not
+written here: a record that has to name its own commit cannot be written before the commit exists,
+and the two earlier attempts to do it got the hash wrong.
 
-**The forms were completed after this tag.** `release-1.0` carries 14 forms - the 8 originals and
-6 of the forms `DEF-13` calls for. That defect was closed at `a62e783`, where the set was reworked
-and completed to 40 forms covering all 55 user tasks; the 8 originals had in fact never rendered a
-field. The tag therefore describes the forms as they stood rather than as they are now, and the
-second release is the first that can be compared against the completed set.
+The tag has been re-pointed twice. It was made at `9ef26df` against the Node.js version, then moved
+to `bdcc0e1` after the workers were rewritten in `4eb3fee`, and then moved forward to where it is
+now so that the release covers the completed form set. `DEF-13` was closed at `a62e783`: 40 forms
+now cover all 55 user tasks, and the 8 that existed earlier had in fact never rendered a field. The
+results recorded in this plan's execution table were produced against the Node.js version and **each
+result names the commit it was produced at**; they no longer describe the current code.
 
 | What | Value |
 |---|---|
-| Release under test | `release-1.0` - commit `bdcc0e1` (Java workers, the first 6 of the DEF-13 forms) |
-| Previous tag target | `9ef26df` (Node.js workers, superseded) |
+| Release under test | `release-1.0` - the commit carrying these records: four `core-N` models, all 40 Camunda Forms, workers in Java |
+| Earlier tag targets | `9ef26df` (Node.js workers, superseded), then `bdcc0e1` (Java workers, before the forms were completed) |
 | Commit each result was produced at | `c8556ba` at worker level (Node.js), `a7f0dd6` at model level |
-| Artefact versions | the four `core-N` models; 14 Camunda Forms at the tag, 40 in the current tree (`a62e783`); workers in Java (`4eb3fee`) |
+| Artefact versions | the four `core-N` models; 40 Camunda Forms covering all 55 user tasks (`a62e783`); workers in Java (`4eb3fee`) |
 | Requirement basis for the criteria | `../docs/requirements/requirements.md` (FR-001 - FR-052, NFR-001 - NFR-013) |
 | Rule and exception basis | `../docs/case-study-summary.md` section 5 (BR-01 - BR-47) and section 6 (EX-01 - EX-23) |
 

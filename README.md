@@ -73,13 +73,11 @@ They need Java 21, which is the runtime the engine uses. `mvn compile exec:java 
 validates the configuration and the wiring without connecting to the engine, which is useful before
 a demonstration.
 
-The five operational processes are separate, so each is started separately from Tasklist under
+The four operational processes are separate, so each is started separately from Tasklist under
 Processes. Complete the user tasks on an instance as it reaches them; each task is assigned to the
 candidate group its lane represents. `core-4-follow-up-cancellation-enquiry-and-refund` also has
 two message start events, for a cancellation arriving and for a patient enquiry arriving, which are
 started by sending that message rather than from the Processes page.
-`simple-clinic-letter-lanes` is the second, lane-level view of the clinic letter process: it is
-deployable and runnable in the same way, and its steps are the same steps `core-3` carries.
 
 The strategic model is a non-executable view of the process. Do not deploy it: Camunda rejects a
 deployment that contains no executable process.

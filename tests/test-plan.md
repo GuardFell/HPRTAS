@@ -34,7 +34,7 @@ worker source cite, so `TC-06` in a test name and `TC-06` here are the same scen
 
 | Item | Detail |
 |---|---|
-| Solution under test | The four executable processes in `models/operational/` (`core-1` to `core-4`), the 47 Camunda Forms in `forms/`, and the six external workers in `workers/` with their simulated external services. |
+| Solution under test | The four executable processes in `models/operational/` (`core-1` to `core-4`), the 40 Camunda Forms in `forms/`, and the six external workers in `workers/` with their simulated external services. |
 | Levels of testing | Worker level (`mvn test`, no engine); worker through the engine (`mvn test -Pengine -Dtest=SmokeTest`, a purpose-built fixture); solution level (`mvn test -Pengine -Dtest=OperationalModelsTest`, the delivered models and forms with the real workers). |
 | Main workflow | The referral being received and checked, the Consultant's decision, the new patient appointment being found and confirmed, the patient being informed, consent and clinical authorisation, the funding route, payment, the treatment booking, the clinic letter, the follow-up, the cancellation and the refund. |
 | Alternative paths | Rejected, queried and redirected referrals; a slot outside the requested period; a funded or exempt patient who is not asked to pay; a declined payment that may be retried; a patient contacted by telephone with an outcome other than a successful call; a treatment modification; an enquiry that is administrative, financial or clinical; a letter returned for suspected clinical error. |

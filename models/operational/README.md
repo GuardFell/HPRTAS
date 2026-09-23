@@ -35,16 +35,6 @@ Each file holds one executable process. The processes are deployed and started s
 two message start events for the cancellation and for the enquiry, which arrive unannounced and
 cannot share the single ordinary start event that Camunda allows a process.
 
-`simple-clinic-letter-lanes.bpmn` is the second, simpler view of the clinic letter: the same process
-`core-3` carries, drawn across the four lanes that own it — Consultants, Medical Secretaries,
-Patient Pathway Coordinators and Administrative Management Team — with one task per step and no
-error paths beyond the one the dispatch can raise. It is there to read the responsibility for each
-step off a single diagram: the Consultant prepares and approves the letter and reviews a suspected
-clinical error, the Medical Secretaries check it administratively and send it through the external
-correspondence service, and a letter outstanding beyond the escalation threshold moves from a weekly
-reminder to the Administrative Management Team. Its user tasks bind their own forms, and its one
-service task runs `send-correspondence`, the same job type `core-3` uses for the letter.
-
 ## What the models require
 
 - **Participants and lanes.** Every process has more than one pool where independent participants

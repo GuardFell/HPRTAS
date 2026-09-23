@@ -1,8 +1,8 @@
 # Camunda Forms
 
 The Camunda Forms the staff fill in, one `.form` file per form, and the user tasks in the
-operational models they are bound to. The 47 forms here bind every one of the 63 user tasks in the
-five operational models, and no form is left unbound.
+operational models they are bound to. Every one of the 55 user tasks in the four operational models
+binds a form.
 
 ## How a form is bound to a task
 
@@ -128,12 +128,7 @@ the pathway needs a clinical review.
 `no-suitable-slot`, `delay-review`, `unbooked-case-review` and `referrer-notification` cover what
 happens when the appointment the clinician asked for cannot be found: the scheduling outcome and the
 action taken are recorded, the pathway team reviews the case, and the referring organisation is
-told. `delay-review` is bound in `core-1` and in `simple-clinic-letter-lanes`, where it is the
-review of a letter that is still outstanding. It asks how overdue the letter is as
-`overdueDuration`, a required choice of `less_than_one_month`, `one_to_three_months` or
-`over_three_months` — the same variable and the same three values `consultant-reminder` writes in
-`core-3`, and the ones the delay gateway in the lane model and the escalation gateways in `core-3`
-read.
+told.
 
 `dispatch-failure` is bound to all four tasks that handle a correspondence failure — one in each of
 `core-1` to `core-4`. It records the corrected recipients and document type, so the dispatch that is
@@ -188,25 +183,6 @@ correction. `correspondence-monitoring`, `consultant-reminder`, `consultant-cont
 `management-escalation` carry the seven-day target, the reminders with their responses and reasons
 for delay, and the escalation past one month and past three months.
 
-`simple-clinic-letter-lanes` is the same letter process drawn once at lane level: eight user tasks
-and one service task across the four lanes that own the steps — Consultants, Medical Secretaries,
-Patient Pathway Coordinators and the Administrative Management Team. It starts where the
-consultation or treatment review completes or where a letter is already outstanding, and ends at the
-letter being sent, the dispatch failing, or the delay being escalated. Its tasks carry forms of
-their own, because a task there is drawn against a lane rather than against the fuller `core-3`
-process. `clinic-letter-prepare` and `clinic-letter-approve` split what `clinic-letter` covers
-between authoring the clinical content and releasing it for distribution — `clinicalContentApproved`
-is required, because approval is what lets the letter leave the Consultant. `admin-check` is the
-administrative check with the correspondence timeline that `letter-processing` records, and answers
-`suspectedClinicalError` the same way. `letter-correction` is `clinical-error-review` under another
-id. `weekly-reminder` records the reminder and its response, without the `overdueDuration` question
-`consultant-reminder` asks separately. `escalation-manager` records the escalation to the
-Administrative Manager together with the contact with the Consultant that `consultant-contact`
-covers in `core-3`, and `escalation-higher` records the escalation past the manager. Four of its
-ids — `N_C_PrepareLetter`, `N_C_ApproveLetter`, `N_C_ReviewClinicalError` and `N_AM_EscalateHigher` —
-name a different task, bound to a different form, in `core-3`. The eighth task, `N_MS_SendLetter`, is
-a service task on the correspondence service, so it binds no form at all.
-
 `enquiry-classification` records an enquiry with when it was received, who took it, the team
 responsible and the priority, and answers `enquiryType`, which routes it. `enquiry-response` records
 the answer, who gave it and whether the enquiry is resolved, and is bound both to answering an
@@ -232,41 +208,31 @@ result, and `fitToContinue`, which is the clinical decision the model branches o
 ## Every binding
 
 A form shared by several tasks is listed once per task, because the same form is the variable
-contract for each of them. Every user task in the five operational models appears exactly once, and
-`lanes` is `simple-clinic-letter-lanes.bpmn`. Element ids are unique within a model but not across
-the set — `N_OB_CorrectRequest` and `N_OB_RecordDispatchFailure` each name a task in two `core-N`
-models, and four ids name a task in both `core-3` and the lane model, binding a different form each
-time — so a row is qualified by its model wherever the id alone would be ambiguous.
+contract for each of them. Every user task in the four operational models appears exactly once.
 
 | Form | Tasks bound to it |
 |---|---|
-| `admin-check.form` | `N_MS_AdminCheck` (lanes) |
 | `appointment-confirmation.form` | `N_TB_ConfirmAppointment`, `N_OB_ConfirmFollowUp` |
 | `authorisation-return.form` | `N_TB_ReturnRequest` |
 | `authorisation-verification.form` | `N_TB_VerifyAuthorisation` |
 | `booking-pending.form` | `N_TB_KeepPending` |
 | `booking-request.form` | `N_OB_PrepareRequest`, `N_OB_CorrectRequest` (core-1), `N_OB_ArrangeFollowUp`, `N_OB_CorrectRequest` (core-4) |
 | `cancellation-record.form` | `N_OB_RecordCancellation` |
-| `clinic-letter.form` | `N_C_PrepareLetter` (core-3), `N_C_ApproveLetter` (core-3), `N_MS_ConfirmRecipients` |
-| `clinic-letter-approve.form` | `N_C_ApproveLetter` (lanes) |
-| `clinic-letter-prepare.form` | `N_C_PrepareLetter` (lanes) |
+| `clinic-letter.form` | `N_C_PrepareLetter`, `N_C_ApproveLetter`, `N_MS_ConfirmRecipients` |
 | `clinical-advice.form` | `N_CNS_ClinicalAdvice` |
-| `clinical-error-review.form` | `N_C_ReviewClinicalError` (core-3) |
+| `clinical-error-review.form` | `N_C_ReviewClinicalError` |
 | `consultant-contact.form` | `N_AM_ContactConsultant` |
 | `consultant-reminder.form` | `N_PC_IssueReminder` |
 | `correspondence-monitoring.form` | `N_PC_MonitorCorrespondence` |
-| `delay-review.form` | `N_PC_ReviewDelay` (core-1), `N_PC_MonitorDelay` (lanes) |
+| `delay-review.form` | `N_PC_ReviewDelay` |
 | `dispatch-failure.form` | `N_OB_RecordDispatchFailure` (core-1), `N_TB_RecordNotificationFailure`, `N_MS_HandleDispatchFailure`, `N_OB_RecordDispatchFailure` (core-4) |
 | `enquiry-classification.form` | `N_CH_ClassifyEnquiry` |
 | `enquiry-response.form` | `N_CH_AnswerAdmin`, `N_F_AnswerFinance` |
-| `escalation-higher.form` | `N_AM_EscalateHigher` (lanes) |
-| `escalation-manager.form` | `N_AM_EscalateManager` (lanes) |
 | `financial-impact-review.form` | `N_F_ReviewFinancialImpact` |
 | `funding-approval.form` | `N_F_RecordApproval` |
 | `funding-route.form` | `N_F_DetermineFunding` |
-| `letter-correction.form` | `N_C_ReviewClinicalError` (lanes) |
 | `letter-processing.form` | `N_MS_ProcessLetter` |
-| `management-escalation.form` | `N_AM_EscalateHigher` (core-3) |
+| `management-escalation.form` | `N_AM_EscalateHigher` |
 | `missing-information-request.form` | `N_MS_RequestMissing` |
 | `no-suitable-slot.form` | `N_OB_RecordNoSlot` |
 | `pathway-review.form` | `N_CNS_PathwayReview` |
@@ -286,7 +252,6 @@ time — so a row is qualified by its model wherever the id alone would be ambig
 | `unbooked-case-review.form` | `N_PC_ReviewUnbooked` |
 | `urgent-authorisation.form` | `N_CL_UrgentAuthorise` |
 | `urgent-escalation.form` | `N_CNS_HighlightUrgent` |
-| `weekly-reminder.form` | `N_PC_WeeklyReminder` (lanes) |
 
 ## How the forms are built
 
@@ -318,32 +283,25 @@ tasks ask for different records - contacting the responsible consultant, and esc
 management - and `consultant-contact.form` and `management-escalation.form` carry them separately.
 `129ad7f` still holds the original files for anyone who wants to compare.
 
-The lane-level view of the letter process, `simple-clinic-letter-lanes`, came after the `core-N`
-models, and brought seven forms of its own for the tasks it draws - the letter split into
-preparation and approval, the administrative check, the correction, the weekly reminder and the two
-escalations. `delay-review` was already there, shared with `core-1`, and gained the `overdueDuration`
-the lane model's delay branch reads.
-
 ## Testing the forms
 
 The forms are exercised as part of the scenarios in `../tests/test-plan.md`, and the end-to-end run
-described in `../tests/evidence/README.md` deploys them alongside the four `core-N` models so the
-bindings are proved to resolve. The runs in `../tests/evidence/` that predate the forms passed their
-variables with the task completion call instead, so they do not exercise the form bindings.
+described in `../tests/evidence/README.md` deploys them alongside the models so the bindings are
+proved to resolve. The runs in `../tests/evidence/` that predate the forms passed their variables
+with the task completion call instead, so they do not exercise the form bindings.
 
 What has been checked about the forms themselves:
 
-- All 47 deploy to the engine, and every user task in the five operational models binds the key of a
-  form in this directory.
-- All 47 import in `@bpmn-io/form-js`, the library Tasklist renders them with, and each one's
-  submission carries exactly its own field keys and nothing else, at the top level — 346 fields,
-  346 variables. That is the check that a field's output name is its `key`.
+- All 40 deploy to the engine, and every user task in the four operational models resolves a form
+  key.
+- All 40 import in `@bpmn-io/form-js`, the library Tasklist renders them with, and each one's
+  submission carries exactly its own field keys and nothing else, at the top level — 287 fields,
+  287 variables. That is the check that a field's output name is its `key`.
 - The form bound to `N_MS_CheckReferral` renders in Tasklist with all ten of its fields, becomes
   editable once the task is assigned, and enables `Complete Task` only when the required fields are
   filled.
-- `mvn test -Pengine -Dtest=OperationalModelsTest` runs the four `core-N` models with these bindings
-  in place, and deploys every form in this directory with them; the lane model is not one of the
-  models that run.
+- `mvn test -Pengine -Dtest=OperationalModelsTest` runs all four models with these bindings in
+  place.
 
 Not checked: a task completed from a form by a signed-in user, end to end. The variables a form
 produces have been shown to be the variables the model reads, but the round trip through Tasklist

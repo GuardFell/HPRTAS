@@ -34,9 +34,12 @@ import java.util.Map;
  *       the way in (BR-06, NFR-007, AC-09).</li>
  * </ul>
  *
- * Every one of those refusals is reported as {@code INVALID_VARIABLE}, which is the error catch event
- * the refund task in {@code core-4-follow-up-cancellation-enquiry-and-refund} carries, so the Finance
- * Team is handed the request back to correct instead of the process stalling on an incident.
+ * An unusable request is reported as {@code INVALID_VARIABLE} and card or security details as
+ * {@code PROHIBITED_FINANCIAL_DATA}. The refund task in
+ * {@code core-4-follow-up-cancellation-enquiry-and-refund} catches both, so the Finance Team is
+ * handed the request back to correct instead of the process stalling on an incident. The second
+ * catch event is the one {@code DEF-12} was raised about: without it that refusal, and only that
+ * one, became an incident.
  */
 public final class RefundProcessing implements WorkerModule {
 

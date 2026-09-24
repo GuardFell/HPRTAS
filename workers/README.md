@@ -60,6 +60,7 @@ cp .env.example .env
 mvn test                                          # unit tests, no engine required
 mvn compile exec:java -Dexec.args="--check"               # validate the configuration and the wiring
 mvn compile exec:java                                     # run the workers
+mvn compile exec:java -Dexec.args="--publish-message <name>"   # send a message a model waits for
 mvn test -Pengine                                 # the fixture and the models, engine running
 mvn test -Pengine -Dtest=SmokeTest                # the fixture only
 mvn test -Pengine -Dtest=OperationalModelsTest    # the four operational models only
@@ -69,6 +70,29 @@ mvn package                                       # a self-contained jar
 The engine tests are tagged and left out of the default build, because they need Camunda 8 Run to be
 up and they change what is deployed in it. They skip themselves, rather than fail, when the engine is
 not answering — a skipped run is not a pass, and the skip says which address it tried.
+
+## Starting a process by message
+
+Two of the paths in `core-4` are begun by a message rather than from the Processes page: a
+cancellation arriving and a patient enquiry arriving. Neither is requested by the hospital, so
+neither can be an ordinary start event, and a process may hold only one of those — which is why they
+are message start events. `--publish-message` sends the message they wait for:
+
+```bash
+mvn compile exec:java -Dexec.args="--publish-message patient-cancellation-or-non-attendance"
+mvn compile exec:java -Dexec.args="--publish-message patient-enquiry --variables {\"enquiryType\":\"clinical\"}"
+```
+
+The name is the `name` of the `bpmn:message` the model declares, and the variables are its payload.
+No correlation key is sent, and none can be: a message start event holds no subscription, so there is
+nothing to correlate against. A correlation key belongs to the intermediate catch events a
+long-running instance waits on, which these models do not use.
+
+The engine recording the publication is not proof that an instance received it. A name no deployed
+model declares, or a model that is not deployed, is accepted and correlated with nothing, and the
+command says what it published rather than that it worked — so confirm the instance in Operate. The
+end-to-end test does the same thing and then drives the instance that appeared, which is what
+scenarios 5 and 6 of `OperationalModelsTest` are.
 
 Before any worker is registered the gateway is asked for its topology. A worker that cannot reach the
 gateway would otherwise start, look alive, and quietly take no work at all, which is the stalled job

@@ -81,7 +81,17 @@ The four operational processes are separate, so each is started separately from 
 Processes. Complete the user tasks on an instance as it reaches them; each task is assigned to the
 candidate group its lane represents. `core-4-follow-up-cancellation-enquiry-and-refund` also has
 two message start events, for a cancellation arriving and for a patient enquiry arriving, which are
-started by sending that message rather than from the Processes page.
+started by sending that message rather than from the Processes page:
+
+```bash
+cd workers
+mvn compile exec:java -Dexec.args="--publish-message patient-cancellation-or-non-attendance"
+mvn compile exec:java -Dexec.args="--publish-message patient-enquiry"
+```
+
+Neither path is requested by the hospital, so neither can be an ordinary start event, and a process
+can hold only one of those. The command names the message the model waits for; see
+`workers/README.md` under *Starting a process by message* for what it does and does not prove.
 
 The strategic model is a non-executable view of the process. Do not deploy it: Camunda rejects a
 deployment that contains no executable process.

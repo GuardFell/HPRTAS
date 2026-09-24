@@ -16,8 +16,16 @@
 | Did the plan match what happened? | Section 5 | `project-plan.md` sections 5 and 6, `git log` |
 | Are the acceptance criteria met? | `../../tests/test-plan.md` section 5, summarised in section 6 below | `tests/evidence/` |
 
-**Version evaluated.** `c8556ba`. The models, the forms and the workers were last changed at
-`a7f0dd6`; only documentation changed between the two, which is itself a finding in section 4.
+**Version evaluated.** `69e01a1`, the commit `release-1.0` tags. The evaluation was first made at
+`c8556ba`, when the workers were still in Node.js and 36 of the 55 user tasks bound no form; the
+artefacts have changed since, so every verdict below was re-checked against the current tree rather
+than carried over. Where a verdict moved because of that, the row says so and names the commit that
+moved it. The evidence is the half that has not kept up: every run in `tests/evidence/` except one
+was recorded before the workers were rewritten in Java (`4eb3fee`), so those records describe the
+Node.js implementation and no longer describe the current code. They are kept because a result is a
+record of what was run at a named version, not a claim about today's tree. The exception is
+`workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt`, the one run made against the Java
+workers, and it is the current worker-level and model-level evidence.
 
 ## 2. Evaluation criteria
 
@@ -37,8 +45,10 @@ check is what the recorded paths, the gateway conditions and the worker validati
 ## 3. Requirement traceability: strategic model to operational model to implementation
 
 The rows below are the traceability table in `../requirements/requirements.md`, each one evaluated.
-Every row was checked against the model XML at `c8556ba` rather than carried over from the
-requirements list.
+Every row was checked against the model XML at `69e01a1` rather than carried over from the
+requirements list. Three rows moved as a result of re-checking them at that version, and each is
+marked in place: FR-041 and FR-044, whose gap was the missing forms that `a62e783` supplied, and the
+counts of gateways, service tasks and forms in section 4.
 
 | Requirement | Strategic element | Operational element | Implementation | Test | Verdict | Justification, and the gap where there is one |
 |---|---|---|---|---|---|---|
@@ -48,8 +58,8 @@ requirements list.
 | FR-024 - a paid appointment that is cancelled, postponed or changed goes to the Finance Team | Finance lane: `N_F_DetermineRefund`, `N_F_ProcessRefund` | core-4: `N_F_PaidAffected`, `N_F_RetentionDecision`, `N_F_RefundDecision` | Model user tasks; `refund-processing` worker; `refund` form | `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (refund scenario) | **Supported** | The check the requirements list asked for **verifies**: `N_F_RetentionDecision` and `N_F_ProcessRefund` are both in the Finance Team lane and carry `candidateGroups="finance"`, so no clinical or administrative lane owns the decision. The branch is guarded twice (`F17` on `paidAppointment = true`, and `F23` testing the same variable again), the refund is made only against a payment the same run settled with the provider, and the refund worker refuses a payment that was never settled. **Caveat carried forward:** the candidate group is not enforced by anything, because role-based access is not implemented (`DEF-07`); the separation is structural, not enforced. |
 | FR-028 - record the payment result and store no complete card information | Finance lane: `N_F_ProcessPayment` with the request leaving the pool as a message | core-2: `N_F_ProcessPayment`, `N_F_CorrectPaymentRequest` (boundary `B_F_ProhibitedData`) | `payment-processing`, `payment-service-provider`; card data rejected in `Validate.java` | `TC-07`, `TC-11`, `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` | **Supported** | The check the requirements list asked for **verifies at worker level**: the variables returned carry status, reference, date and amount only, and a request carrying card or security details raises `PROHIBITED_FINANCIAL_DATA` before the provider is called - and the test asserts the provider was not called rather than assuming it. `N_F_ProcessPayment` catches both codes its worker can raise. **Gap:** the equivalent check does not hold on the refund path - see `DEF-12`. |
 | FR-038 - flag a letter not completed within seven days and include it in pathway monitoring | Patient Pathway Coordinators lane: `N_PC_LetterWithinSevenDays`, `N_PC_IssueReminder` | core-3: `N_PC_MonitorCorrespondence`, `N_PC_SevenDays`, `N_PC_IssueReminder` | Model branch and a timer; no worker | `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` | **Partially supported** | The seven-day rule is genuinely enforced rather than asserted: `B_C_LetterOverdue` is a timer boundary event with duration `P7D` on `N_C_ApproveLetter`, so the delayed path starts from the clock without a worker being involved, and `N_PC_SevenDays` tests `letterWithinSevenDays`. **Gaps:** `TC-16` is not run, so no evidence exists that the timer fires and the path is entered; and the escalation thresholds are weaker than the seven-day rule - `N_PC_OverdueDuration` branches on an `overdueDuration` variable supplied as input (`one_to_three_months` / `over_three_months`) rather than on a timer, so a month and three months are recorded as data, not measured. `F14`'s condition and its default also mean the reminder path is taken when the value is absent, which is the safe direction. |
-| FR-041 - record, classify, prioritise and route every enquiry | Call Handling lane: `N_CH_ClassifyEnquiry`, `N_CH_EnquiryType`; CNS Admin Support lane: `N_CNSA_RecordEnquiry` | core-4: `N_CH_ContactReceived`, `N_CH_ClassifyEnquiry`, `N_CH_EnquiryType`, `N_CH_EnquiryAnswered` | Model user tasks; no worker | `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` | **Unsupported** | Routing is modelled and correct - `N_CH_EnquiryType` sends `administrative` to `N_CH_AnswerAdmin`, `financial` to `N_F_AnswerFinance`, and its default to `N_CNS_ClinicalAdvice`, which is the safe direction for a clinical enquiry. But `BR-37` requires the record to show when the enquiry was received, who handled it, the team responsible, the response provided and whether it was resolved, and **every task on this path binds no form** (`DEF-13`): `N_CH_ContactReceived`, `N_CH_ClassifyEnquiry`, `N_CH_AnswerAdmin`, `N_CNSA_RecordEnquiry` and `N_CNS_HighlightUrgent` all have no variable contract. The record the requirement describes cannot be captured in Tasklist, and the one run that touches core-4 never reaches this path at all. |
-| FR-044 - urgent clinical concerns are highlighted immediately | CNS Team lane: `N_CNS_Urgency` | core-4: `N_CNS_Urgency`, `N_CNS_HighlightUrgent` | Model branch; urgency rules not agreed (`AM-01`) and left configurable (`NFR-012`) | `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` | **Partially supported** | The branch is right and fail-safe: `N_CNS_Urgency`'s default flow `F39` is the highlight path, so an unresolved or absent `urgentClinicalConcern` value highlights the concern rather than dismissing it. **Gaps:** the complete urgency rules are still not agreed (`AM-01`, `AS-03`), so what the demonstration treats as urgent has to be stated wherever it is shown; and `N_CNS_HighlightUrgent` binds no form, so "highlight immediately" has no recorded outcome behind it (`DEF-13`). No run reaches this branch. |
+| FR-041 - record, classify, prioritise and route every enquiry | Call Handling lane: `N_CH_ClassifyEnquiry`, `N_CH_EnquiryType`; CNS Admin Support lane: `N_CNSA_RecordEnquiry` | core-4: `N_CH_ContactReceived`, `N_CH_ClassifyEnquiry`, `N_CH_EnquiryType`, `N_CH_EnquiryAnswered` | Model user tasks and their forms; no worker | `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` | **Partially supported** | Routing is modelled and correct - `N_CH_EnquiryType` sends `administrative` to `N_CH_AnswerAdmin`, `financial` to `N_F_AnswerFinance`, and its default to `N_CNS_ClinicalAdvice`, which is the safe direction for a clinical enquiry. **Moved at `a62e783`:** this row read **Unsupported** while every task on the path bound no form (`DEF-13`), because `BR-37` requires the record to show when the enquiry was received, who handled it, the team responsible, the response and whether it was resolved, and none of it had a capture surface. The forms now exist - `N_CH_ContactReceived`, `N_CH_ClassifyEnquiry`, `N_CH_AnswerAdmin`, `N_CNSA_RecordEnquiry` and `N_CNS_HighlightUrgent` each bind one - so the record can be captured. **Gap:** no run reaches this path at all, and no form has been submitted by a signed-in user (`DEF-08`), so the capture is verified by the forms' own contracts and by nothing else. |
+| FR-044 - urgent clinical concerns are highlighted immediately | CNS Team lane: `N_CNS_Urgency` | core-4: `N_CNS_Urgency`, `N_CNS_HighlightUrgent` | Model branch; urgency rules not agreed (`AM-01`) and left configurable (`NFR-012`) | `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` | **Partially supported** | The branch is right and fail-safe: `N_CNS_Urgency`'s default flow `F39` is the highlight path, so an unresolved or absent `urgentClinicalConcern` value highlights the concern rather than dismissing it. **Gaps:** the complete urgency rules are still not agreed (`AM-01`, `AS-03`), so what the demonstration treats as urgent has to be stated wherever it is shown; and no run reaches this branch. `N_CNS_HighlightUrgent` bound no form when this row was first evaluated, so "highlight immediately" had no recorded outcome behind it; **that half of the gap closed at `a62e783`** (`DEF-13`), and the task now binds one. |
 | NFR-002 - access restricted by role, with clinical, administrative and financial duties kept separate | Lane structure: eleven lanes in the Hospital Trust pool, clinical and Finance lanes apart | Lanes of core-1 to core-4 | `forms/` holds the forms; no permission configuration exists | No evidence file | **Gap identified** | The lane structure is real and is verified: each user task carries the `candidateGroups` of its lane, and no lane mixes a clinical decision with a financial one. Beyond that the requirement is unmet. Nothing authenticates a user, nothing enforces a candidate group, and the `demo`/`demo` login on an unsecured local engine grants every task to anyone. A reader must not take the lane structure as evidence of access control. Depends on the role model (`AS-04`) and on which Finance roles hold financial authority (`AS-07`). |
 | NFR-004 - accurate patient identification, and less risk of the wrong patient when information arrives from elsewhere | Medical Secretaries lane receives the referral message flow from the referring organisation pool | core-1: `N_MS_CheckReferral` records the patient identification check | Recorded as a task field; no matching or duplicate check exists | No evidence file | **Gap identified** | `N_MS_CheckReferral` has no form either (`DEF-13`), so even the recorded check has no capture surface. There is no patient-matching or duplicate-detection logic anywhere in the models or the workers, so `BR-46` is unimplemented rather than partly implemented. |
 
@@ -71,36 +81,41 @@ because it only tracks what it already knows about.
 
 ## 4. Alignment between the models, the forms and the workers
 
-Checked structurally at `c8556ba`, not inferred from the runs. These are the findings from that
+Checked structurally at `69e01a1`, not inferred from the runs. These are the findings from that
 check; the ones that are defects are in `../../tests/test-plan.md` section 6 and are cross-referenced
 rather than repeated.
 
 **Supported by the check.**
 
 - Every service task in the four models is bound to a job type that a worker registers, and every
-  job type in `workers/config/workers.default.json` serves at least one service task. Twelve service
+  job type in `workers/config/workers.default.json` serves at least one service task. Ten service
   tasks, six workers, no orphans in either direction.
 - Every exclusive gateway in the four models declares a `default` flow and the flow it names carries
-  no condition of its own, which is what `DEF-01` was about. Verified on all 21 gateways; every
+  no condition of its own, which is what `DEF-01` was about. Verified on all 23 gateways; every
   default is the safe branch (an unhandled value falls to the exception path, not to the happy one).
 - Every service task that can raise a business error catches every code its worker can raise, with
   one exception: `N_F_ProcessRefund` (`DEF-12`, fixed at `9138bcc`).
 - Every user task carries the Camunda user task marker and a candidate group, so no task is
   invisible in Tasklist and none is unassigned.
-- Every form field name used by the models resolves to a form that exists, and the eight `.form`
+- Every form field name used by the models resolves to a form that exists, and the 41 `.form`
   files carry the ids the models refer to. No model points at a missing form.
 
 **Not supported by the check.**
 
-- **36 of 55 user tasks bind no form** (`DEF-13`). This is the largest alignment finding in the
-  project. The consequence is not cosmetic: a task with no form has no variable contract, so the
-  variables it must write are declared nowhere, and the only way to satisfy a downstream gateway
-  that reads them is to inject them with the task completion call - which is exactly what the
-  end-to-end run does. The run therefore demonstrates the models, not the Tasklist experience the
-  case describes.
 - **`N_F_ProcessRefund` cannot catch `PROHIBITED_FINANCIAL_DATA`** (`DEF-12`), so a refund carrying
   card details stops the process. The worker test for that behaviour passes, which is the point:
-  the worker level cannot see a missing catch event on the model.
+  the worker level cannot see a missing catch event on the model. **Closed at `9138bcc`**; the
+  catch event and its error path now exist, and the residual limitation - no form field can clear
+  card details that have already reached the process - is recorded with the defect.
+- **Closed since this evaluation: every user task now binds a form** (`DEF-13`, closed at
+  `a62e783`). This was the largest alignment finding in the project, and it is worth recording what
+  it was: 36 of the 55 user tasks bound no form, and a task with no form has no variable contract,
+  so the variables it must write were declared nowhere and the only way to satisfy a downstream
+  gateway that reads them was to inject them with the task completion call - which is exactly what
+  the end-to-end run does. The run therefore demonstrates the models, not the Tasklist experience
+  the case describes. Forty forms now cover all 55 tasks. **What has not closed with it:** the
+  forms have still never been submitted by a signed-in user, so the variable contracts are verified
+  by the models' own expectations and by nothing else (`DEF-08`).
 - **Added after this evaluation.** `DEF-12` is closed at `9138bcc`, and fixing it found a third fault of
   the same family: a sequence-flow condition on the only outgoing flow of an activity is never
   evaluated, so two conditions in `core-2` read as guards and were not (`DEF-14`). One of them,
@@ -110,17 +125,26 @@ rather than repeated.
 - **An urgent referral with no slot loops for ever in `core-1`** (`DEF-11`). It was found by reading
   the two gateway conditions against the scheduling service's determinism, and running the current
   scenarios would not have found it, because they all use `priority = "routine"`.
-- **Nothing has changed in the models, the forms or the workers since `a7f0dd6`.** Only
-  documentation changed between `a7f0dd6` and `c8556ba`, verified with `git diff --stat a7f0dd6 HEAD
-  -- models workers forms`. The current model-level evidence therefore still describes the
-  delivered artefacts - which is worth stating explicitly, because the evidence's own version
-  string names an older commit than the version under test.
+- **The artefacts have changed since this evaluation was first made, and it has been re-checked.**
+  Between `c8556ba` - the version the first edition evaluated - and `69e01a1`, the workers were
+  rewritten from Node.js into Java (`4eb3fee`), all 40 forms were written or repaired (`a62e783`),
+  the refund catch event was added and the retry decision moved onto a gateway (`9138bcc`), and the
+  diagrams were laid out again (`91ee6d4`, `69e01a1`). `git diff --stat c8556ba HEAD -- models
+  workers forms` is what that looks like: 118 files. Everything in sections 3 and 4 above was
+  re-read against the current tree for that reason.
+- **The evidence has not changed with the artefacts, and cannot be made to.** Every run in
+  `tests/evidence/` was recorded against the Node.js workers or against the models as they stood on
+  21 September. Re-running them needs an engine, which is why they are kept as the record of what
+  was run at a named version rather than presented as results for `release-1.0`. The Java-era run
+  that does exist - `workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt`, the unit suite, the
+  smoke fixture and the operational models after the rewrite - is cited in
+  `../../tests/test-plan.md` section 5 beside the Node-era results it supersedes.
 - **Added after this evaluation - and it changes the answer on the forms.** `DEF-13` is closed at
   `a62e783`: 40 forms now cover all 55 user tasks. Writing the missing ones showed that the eight
-  the evaluation counts as delivered had never rendered a field - a group's children belong under
-  `components`, and a group's `path` prefixed every child key - so statements above about a form
-  binding resolving describe `c8556ba` and not the current tree. The four faults, every binding, and
-  what is and is not verified now, are in `../../forms/README.md`.
+  the first edition counted as delivered had never rendered a field - a group's children belong
+  under `components`, and a group's `path` prefixed every child key - so statements in the first
+  edition about a form binding resolving described `c8556ba` and not the tree. The four faults,
+  every binding, and what is and is not verified now, are in `../../forms/README.md`.
 
 ## 5. Plan evaluation: planned against actual
 
@@ -169,7 +193,7 @@ criteria re-run. That is now recorded in `project-plan.md` section 7 and is why 
 | Dimension | Planned | Actual | Verdict |
 |---|---|---|---|
 | Integrated increment | Models, workers and forms end to end for the normal pathway, the funding and payment gate and one failure path | Delivered at `a7f0dd6`: four models, eight forms, six workers, five scenarios each reaching an end event, and every service task in the four models reached | **Exceeded** |
-| Forms | Bound to their user tasks and deployed with the models | Delivered; the bindings resolve, but 36 of 55 tasks still bind no form | **Partially met** at this version - see `DEF-13`; closed at `a62e783`, where 40 forms cover all 55 tasks |
+| Forms | Bound to their user tasks and deployed with the models | Delivered; the bindings resolve, but 36 of 55 tasks still bind no form at this version | **Partially met** *at this version* - `DEF-13` is closed at `a62e783`, where 40 forms cover all 55 tasks, so the dimension is met at `release-1.0`; what is still missing is a submitted form (`DEF-08`) |
 | Evidence against an identified version | A run naming its version | Three model-level records and a re-run of the unit suite at `c8556ba` | **On plan** |
 | Estimates | Every chosen task estimated | None recorded | **Not assessable** |
 | Acceptance criteria | Not planned for this sprint | Ten criteria and twenty-one scenarios defined, the execution record opened, and seven of the ten met | **Ahead of plan** |
@@ -194,7 +218,11 @@ criteria re-run. That is now recorded in `project-plan.md` section 7 and is why 
 
 ## 6. Acceptance criteria evaluation
 
-Full detail is in `../../tests/test-plan.md` section 5. In summary, at `c8556ba`:
+Full detail is in `../../tests/test-plan.md` section 5. The criteria are the ones defined there; the
+verdicts below were re-checked at `release-1.0`, where two of them moved because the defects behind
+them were fixed. **Every underlying run still dates from the Node.js workers, so a verdict of "met"
+means the criterion was demonstrated at the version the evidence names, not that it has been
+re-demonstrated since the rewrite.**
 
 | Criterion | Verdict | Basis |
 |---|---|---|
@@ -202,34 +230,39 @@ Full detail is in `../../tests/test-plan.md` section 5. In summary, at `c8556ba`
 | AC-02 clinical decisions and the gates that depend on them | **Met** | TC-06 passes at worker and model level; the structural check confirms no path reaches the booking step without acceptance. |
 | AC-03 funding, payment and the confirmation gate | **Met** | TC-07 and TC-08 pass, and the gate is `F26`/`F20` in core-2, reading what the worker returned. |
 | AC-04 exception routing and the investigation flag | **Met** | TC-09 and TC-12 pass; the investigation branch is `F28` and the fallbacks are fail-safe. |
-| AC-05 no suitable slot, and urgent referrals | **Not met** | The no-slot half passes; the urgent half loops for ever (`DEF-11`), and no evidence covers the current models' urgent branch. |
+| AC-05 no suitable slot, and urgent referrals | **Met** - moved at the `DEF-11` fix | The no-slot half passes, and the urgent half now escalates out of the booking process instead of looping. Driven on the engine in scenario 8 of `OperationalModelsTest`: the availability check is reached once, the routine delay review is not taken, and the instance completes. |
 | AC-06 clinic letter, seven-day target and escalation | **Partially met** | The letter path and the `P7D` timer are right; the timer's path has never been run (TC-16), and the escalation thresholds are input data rather than measured periods. |
-| AC-07 follow-up, cancellation and enquiries | **Not met** | The follow-up and cancellation paths pass in part, but the enquiry half is unsupported (`DEF-13`), so the criterion as written cannot be accepted. |
+| AC-07 follow-up, cancellation and enquiries | **Partially met** - moved at `a62e783` | The follow-up and cancellation paths pass in part. This row read **Not met** while the enquiry half was unsupported for want of forms (`DEF-13`); the forms exist now, so what remains is that no run reaches the enquiry path and none of its tasks has been completed by a signed-in user (`DEF-08`). |
 | AC-08 refund and separation of duties | **Met** with a caveat | TC-21 passes end to end against a settled reference. The caveat is that the separation is structural, not enforced, because role-based access does not exist. |
-| AC-09 data minimisation | **Met** on the payment path (and on the refund path since `9138bcc`) | TC-07 and TC-11 pass and the provider-call assertion holds. Not met on the refund path (`DEF-12`). |
+| AC-09 data minimisation | **Met** - moved at `9138bcc` | TC-07 and TC-11 pass and the provider-call assertion holds. The refund path was the exception, because `N_F_ProcessRefund` could not catch the `PROHIBITED_FINANCIAL_DATA` its worker raises (`DEF-12`); the catch event was added at `9138bcc`. Residual limitation: no form field can clear card details that have already reached the process, so the refusal repeats. |
 | AC-10 controlled failure and no duplicates | **Met** | TC-08, TC-11 and TC-12 pass; the duplicate guards are asserted, not assumed. |
 
-**Seven of ten met; three not.** The first release cannot be signed off on this. `DEF-11`, `DEF-12`
-and `DEF-13` are each fixable, and `DEF-11` and `DEF-12` are small - a flow re-target and one
-boundary event - but each needs the scenario re-run afterwards, because all three were found by
-checking rather than by running, which is the only reason they are not already in the evidence.
+**Eight of ten are now fully met; the other two are partial.** No defect in the delivered models
+still blocks a criterion: **`DEF-11`** (AC-05, the urgent no-slot loop) is fixed and driven, so the
+blocker set is the unrun branches rather than a fault. AC-06 and AC-07 are partial for want of a run
+rather than for want of an artefact, and AC-01, AC-07 and AC-10 all have a half that needs a
+signed-in user before it can be exercised (`DEF-07`, `DEF-08`). `DEF-12` and `DEF-13` are closed - the refund catch event
+at `9138bcc` and the forms at `a62e783` - and each needs its scenario re-run before the criterion it
+blocked can be called demonstrated, because both were found by checking rather than by running.
 
 ## 7. Conclusions and actions
 
 1. **The delivery is further ahead than the plan and weaker than the evidence suggests.** The
    pathway runs end to end and the worker level is thorough. The gaps are concentrated in exactly the
-   places a run cannot see: a task with no form, a missing boundary event, and a branch no scenario
-   drives.
-2. **The three open defects must be fixed and re-tested before the initial release.** `DEF-11`
-   (small: re-target the urgent flow so it cannot cycle), `DEF-12` (small: add the missing catch
-   event), `DEF-13` (large: the forms for the 36 tasks, or an explicit decision to accept the
-   limitation for the first release and say so in the demonstration). **`DEF-13` and `DEF-12` are
-   done:** the forms were closed at `a62e783`, where 40 forms came to cover all 55 user tasks, and
-   the catch event at `9138bcc`. `DEF-11` is still open.
+   places a run cannot see: a missing boundary event, a branch no scenario drives, and a condition
+   that reads as a guard without being one. The first edition of this list led with "a task with no
+   form"; that one is closed (`DEF-13`), and the shape of the remaining gaps is unchanged by it.
+2. **One defect must be fixed and re-tested before the initial release.** `DEF-11` - re-target the
+   urgent flow in `core-1` so it cannot cycle - is the only open defect that is a fault in the
+   delivered models. The other two the first edition listed here, `DEF-12` (the missing catch event)
+   and `DEF-13` (the forms for the 36 tasks), **are done:** the catch event at `9138bcc` and the
+   forms at `a62e783`, where 40 forms came to cover all 55 user tasks. Both are inside
+   `release-1.0`. Neither is *demonstrated* yet, because the scenario behind each has not been re-run
+   since it was fixed, and that is the work item that replaces them here.
 3. **The unrun scenarios are the cheapest remaining work.** TC-02, TC-13, TC-16 and TC-20 need no
-   code, only a run - except that TC-13 and TC-20 need forms and a signed-in user first, which makes
-   them depend on `DEF-13` and `DEF-07`. With `DEF-13` closed they depend on `DEF-07` alone: the
-   forms exist, and it is the signed-in user that is still missing.
+   code, only a run - except that TC-13 and TC-20 need a signed-in user, which makes them depend on
+   `DEF-07`. `DEF-13` used to stand in front of them as well; with the forms written, the signed-in
+   user is the only thing still missing.
 4. **The plan process has to start now, not at the review.** The backlog, the task breakdown, the
    sprint backlogs and the contribution matrix are the project's own record of what was planned and
    who did what, and none of them can be reconstructed afterwards. **Partly done:** the product
@@ -239,7 +272,7 @@ checking rather than by running, which is the only reason they are not already i
 5. **The first release needs a tag.** Every result in this repository is tied to a commit, and a
    release with no tag cannot be compared against the second release, which is what Sprint 4 is for.
    **Done:** `release-1.0` tags the first release. It was made at `9ef26df`, re-pointed to
-   `bdcc0e1` so that it covered the Java workers, and re-pointed again to cover the completed form
-   set, so `DEF-13` is closed inside the tag rather than after it. `DEF-11` is still open at it, so
-   the tag and that fix have to be brought together before the release is accepted; `DEF-12` and
-   `DEF-14` came after the tag as well.
+   `bdcc0e1` so that it covered the Java workers, and re-pointed a third time onto `69e01a1` so that
+   it covers the completed form set and the refund fix. `DEF-12`, `DEF-13` and `DEF-14` are all
+   inside it, and `git log release-1.0..HEAD` is empty. `DEF-11` is the one defect still open at the
+   tag, so the tag and that fix have to be brought together before the release is accepted.

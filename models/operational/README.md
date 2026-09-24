@@ -10,7 +10,9 @@ from the referral arriving to the refund of a cancelled paid appointment.
 supporting documents being checked, the consultant's decision to accept, reject, query or redirect
 it, and the booking of the new patient appointment through the external scheduling service,
 including the rule that a patient whose appointment falls inside two weeks is telephoned as well as
-written to, and the case where no suitable slot exists.
+written to, and the case where no suitable slot exists: a routine referral is recorded and
+reviewed with the delay, and an urgent one is escalated at once rather than re-checked, because
+the scheduling service answers the same request with the same result.
 
 `core-2-treatment-authorisation-funding-and-payment.bpmn` covers consent and the authorisation of
 treatment, the determination of the funding route, the payment request to the external payment

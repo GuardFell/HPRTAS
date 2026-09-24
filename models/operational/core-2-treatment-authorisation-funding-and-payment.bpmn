@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_core-2-treatment-authorisation-funding-and-payment" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.51.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
-    <!-- Core business process 2 of 4. The patient attends the appointment, the Consultant records consent and creates the authorised Treatment Booking Request, the Treatment and Chemotherapy Bookings Team coordinates the appointments, the Finance Team determines the funding route and the payment is taken through the external Payment Service Provider. Includes the failures the case study describes: unauthorised requests, unavailable external services, declined or incomplete payments, unconfirmed payments that must not be charged twice, urgent clinical treatment without confirmed payment and treatment modifications. Job types: check-treatment-availability, process-payment, send-correspondence. -->
   <bpmn:error id="Error_INVALID_VARIABLE" name="INVALID_VARIABLE" errorCode="INVALID_VARIABLE" />
   <bpmn:error id="Error_PROHIBITED_FINANCIAL_DATA" name="PROHIBITED_FINANCIAL_DATA" errorCode="PROHIBITED_FINANCIAL_DATA" />
   <bpmn:error id="Error_UNAUTHORISED_BOOKING_REQUEST" name="UNAUTHORISED_BOOKING_REQUEST" errorCode="UNAUTHORISED_BOOKING_REQUEST" />
@@ -10,7 +9,7 @@
     <bpmn:participant id="Participant_TreatmentService" name="External treatment, laboratory and imaging service" />
     <bpmn:participant id="Participant_PaymentProvider" name="External Payment Service Provider" />
     <bpmn:participant id="Participant_FundingOrganisation" name="Approved insurer or funding organisation" />
-    <bpmn:messageFlow id="MessageFlow_M1" name="patient attends" sourceRef="Participant_Patient" targetRef="N_CL_PatientAttends" />
+    <bpmn:messageFlow id="MessageFlow_M1" name="patient attends" sourceRef="Participant_Patient" targetRef="N_CL_AssessPatient" />
     <bpmn:messageFlow id="MessageFlow_M2" name="treatment availability request" sourceRef="N_TB_CheckAvailability" targetRef="Participant_TreatmentService" />
     <bpmn:messageFlow id="MessageFlow_M3" name="funding approval request" sourceRef="N_F_RecordApproval" targetRef="Participant_FundingOrganisation" />
     <bpmn:messageFlow id="MessageFlow_M4" name="secure payment request" sourceRef="N_F_ProcessPayment" targetRef="Participant_PaymentProvider" />
@@ -20,6 +19,34 @@
   <bpmn:process id="core-2-treatment-authorisation-funding-and-payment" name="Core 2 - Treatment authorisation, funding determination and payment" isExecutable="true">
     <bpmn:documentation>Covers FR-007 to FR-009, FR-017 to FR-035 and BR-10 to BR-25, EX-10 to EX-16. Service tasks use the job types and the variable contract of workers/README.md. The error codes are caught on the service task that raises them - UNAUTHORISED_BOOKING_REQUEST and INVALID_VARIABLE on check-treatment-availability, PROHIBITED_FINANCIAL_DATA and INVALID_VARIABLE on process-payment, INVALID_VARIABLE on send-correspondence - because error variables are written to the scope of the activity that raised them and do not survive into the process scope: the reason for a failure is told apart by which boundary event was taken.</bpmn:documentation>
     <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_ClinicalTeam" name="Consultant and clinical team">
+        <bpmn:flowNodeRef>N_CL_PatientAttends</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_AssessPatient</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_ConsentDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_NotProceeding</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_AuthoriseTreatment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_ClinicalRisk</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_ModifyTreatment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_UrgentAuthorise</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_OtherClinical" name="Other Clinical Professionals">
+        <bpmn:flowNodeRef>N_OC_PreCycleReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_OC_FitToContinue</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_TreatmentBookings" name="Treatment and Chemotherapy Bookings Team">
+        <bpmn:flowNodeRef>N_TB_VerifyAuthorisation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_CheckAvailability</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_AvailabilityDecision</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_ConfirmAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_NotifyPatient</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_ReturnRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_KeepPending</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_CorrectBookingInput</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_TB_RecordNotificationFailure</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_TB_Unauthorised</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_TB_InvalidVariables</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_TB_NotifyFailure</bpmn:flowNodeRef>
+      </bpmn:lane>
       <bpmn:lane id="Lane_Finance" name="Finance Team">
         <bpmn:flowNodeRef>N_F_DetermineFunding</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_FundingApprovalRequired</bpmn:flowNodeRef>
@@ -36,36 +63,8 @@
         <bpmn:flowNodeRef>N_F_ReviewFinancialImpact</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_ImpactReviewed</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_PaymentNotPursued</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>B_F_InvalidVariables</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>B_F_ProhibitedData</bpmn:flowNodeRef>
-      </bpmn:lane>
-      <bpmn:lane id="Lane_TreatmentBookings" name="Treatment and Chemotherapy Bookings Team">
-        <bpmn:flowNodeRef>N_TB_VerifyAuthorisation</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_TB_CheckAvailability</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_TB_AvailabilityDecision</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_TB_ConfirmAppointment</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_TB_NotifyPatient</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_TB_ReturnRequest</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_TB_KeepPending</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_TB_CorrectBookingInput</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_TB_RecordNotificationFailure</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>B_TB_NotifyFailure</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>B_TB_InvalidVariables</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>B_TB_Unauthorised</bpmn:flowNodeRef>
-      </bpmn:lane>
-      <bpmn:lane id="Lane_OtherClinical" name="Other Clinical Professionals">
-        <bpmn:flowNodeRef>N_OC_PreCycleReview</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_OC_FitToContinue</bpmn:flowNodeRef>
-      </bpmn:lane>
-      <bpmn:lane id="Lane_ClinicalTeam" name="Consultant and clinical team">
-        <bpmn:flowNodeRef>N_CL_PatientAttends</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_CL_AssessPatient</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_CL_ConsentDecision</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_CL_NotProceeding</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_CL_AuthoriseTreatment</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_CL_ClinicalRisk</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_CL_ModifyTreatment</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>N_CL_UrgentAuthorise</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>B_F_InvalidVariables</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
     <bpmn:startEvent id="N_CL_PatientAttends" name="Patient attends the appointment">
@@ -112,7 +111,7 @@
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
-    <bpmn:userTask id="N_OC_PreCycleReview" name="Pre-cycle review and blood test">
+    <bpmn:userTask id="N_OC_PreCycleReview" name="Review the patient and the blood test">
       <bpmn:documentation>Before each subsequent cycle: review, blood test results and the clinical decision on fitness to continue (BR-25, FR-009).</bpmn:documentation>
       <bpmn:extensionElements>
         <zeebe:userTask />
@@ -267,20 +266,20 @@
     <bpmn:endEvent id="N_F_PaymentNotPursued" name="Payment not pursued">
       <bpmn:documentation>EX-11, BR-17, FR-030: the patient and the responsible administrative team have been notified and no further attempt is to be made, so the case closes with the payment uncollected.</bpmn:documentation>
     </bpmn:endEvent>
-    <bpmn:boundaryEvent id="B_F_InvalidVariables" name="invalid payment input" attachedToRef="N_F_ProcessPayment">
+    <bpmn:boundaryEvent id="B_TB_Unauthorised" name="request not authorised" attachedToRef="N_TB_CheckAvailability">
+      <bpmn:errorEventDefinition errorRef="Error_UNAUTHORISED_BOOKING_REQUEST" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="B_TB_InvalidVariables" name="invalid booking input" attachedToRef="N_TB_CheckAvailability">
+      <bpmn:errorEventDefinition errorRef="Error_INVALID_VARIABLE" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="B_TB_NotifyFailure" name="notification failed" attachedToRef="N_TB_NotifyPatient">
       <bpmn:errorEventDefinition errorRef="Error_INVALID_VARIABLE" />
     </bpmn:boundaryEvent>
     <bpmn:boundaryEvent id="B_F_ProhibitedData" name="prohibited financial data" attachedToRef="N_F_ProcessPayment">
       <bpmn:errorEventDefinition errorRef="Error_PROHIBITED_FINANCIAL_DATA" />
     </bpmn:boundaryEvent>
-    <bpmn:boundaryEvent id="B_TB_NotifyFailure" name="notification failed" attachedToRef="N_TB_NotifyPatient">
+    <bpmn:boundaryEvent id="B_F_InvalidVariables" name="invalid payment input" attachedToRef="N_F_ProcessPayment">
       <bpmn:errorEventDefinition errorRef="Error_INVALID_VARIABLE" />
-    </bpmn:boundaryEvent>
-    <bpmn:boundaryEvent id="B_TB_InvalidVariables" name="invalid booking input" attachedToRef="N_TB_CheckAvailability">
-      <bpmn:errorEventDefinition errorRef="Error_INVALID_VARIABLE" />
-    </bpmn:boundaryEvent>
-    <bpmn:boundaryEvent id="B_TB_Unauthorised" name="request not authorised" attachedToRef="N_TB_CheckAvailability">
-      <bpmn:errorEventDefinition errorRef="Error_UNAUTHORISED_BOOKING_REQUEST" />
     </bpmn:boundaryEvent>
     <bpmn:sequenceFlow id="F1" sourceRef="N_CL_PatientAttends" targetRef="N_CL_AssessPatient" />
     <bpmn:sequenceFlow id="F2" sourceRef="N_CL_AssessPatient" targetRef="N_CL_ConsentDecision" />
@@ -332,11 +331,9 @@
     <bpmn:sequenceFlow id="F18" sourceRef="N_F_RecordApproval" targetRef="N_F_PaymentRequired" />
     <bpmn:sequenceFlow id="F19" name="payment required" sourceRef="N_F_PaymentRequired" targetRef="N_F_CalculateCharge" />
     <bpmn:sequenceFlow id="F24" sourceRef="N_F_CorrectPaymentRequest" targetRef="N_F_CalculateCharge" />
-    <bpmn:sequenceFlow id="F32" sourceRef="N_F_NotifyPatient" targetRef="N_F_RetryDecision" />
     <bpmn:sequenceFlow id="F43" name="retry payment" sourceRef="N_F_RetryDecision" targetRef="N_F_CalculateCharge">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= retryPayment = true</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="F44" name="no further attempt" sourceRef="N_F_RetryDecision" targetRef="N_F_PaymentNotPursued" />
     <bpmn:sequenceFlow id="F21" sourceRef="N_F_CalculateCharge" targetRef="N_F_ProcessPayment" />
     <bpmn:sequenceFlow id="F25" sourceRef="N_F_ProcessPayment" targetRef="N_F_PaymentStatus" />
     <bpmn:sequenceFlow id="F28" name="taken but unconfirmed" sourceRef="N_F_PaymentStatus" targetRef="N_F_InvestigatePayment">
@@ -345,693 +342,685 @@
     <bpmn:sequenceFlow id="F22" sourceRef="B_F_ProhibitedData" targetRef="N_F_CorrectPaymentRequest" />
     <bpmn:sequenceFlow id="F23" sourceRef="B_F_InvalidVariables" targetRef="N_F_CorrectPaymentRequest" />
     <bpmn:sequenceFlow id="F29" sourceRef="N_F_InvestigatePayment" targetRef="N_F_InvestigationComplete" />
+    <bpmn:sequenceFlow id="F32" sourceRef="N_F_NotifyPatient" targetRef="N_F_RetryDecision" />
+    <bpmn:sequenceFlow id="F44" name="no further attempt" sourceRef="N_F_RetryDecision" targetRef="N_F_PaymentNotPursued" />
     <bpmn:sequenceFlow id="F42" sourceRef="N_F_ReviewFinancialImpact" targetRef="N_F_ImpactReviewed" />
   </bpmn:process>
-      <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
       <bpmndi:BPMNShape id="Participant_Hospital_di" bpmnElement="Participant_Hospital" isHorizontal="true">
         <dc:Bounds x="100" y="120" width="5946" height="1758" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="106" y="1854" width="20" height="105" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_Finance_di" bpmnElement="Lane_Finance" isHorizontal="true">
-        <dc:Bounds x="100" y="150" width="5946" height="416" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="106" y="156" width="109" height="20" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_TreatmentBookings_di" bpmnElement="Lane_TreatmentBookings" isHorizontal="true">
-        <dc:Bounds x="100" y="566" width="5946" height="565" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="106" y="572" width="240" height="20" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Lane_OtherClinical_di" bpmnElement="Lane_OtherClinical" isHorizontal="true">
-        <dc:Bounds x="100" y="1131" width="5946" height="305" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="106" y="1137" width="209" height="20" />
+          <dc:Bounds x="106" y="1767" width="20" height="105" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_ClinicalTeam_di" bpmnElement="Lane_ClinicalTeam" isHorizontal="true">
-        <dc:Bounds x="100" y="1436" width="5946" height="396" />
+        <dc:Bounds x="100" y="150" width="5946" height="396" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="106" y="1442" width="212" height="20" />
+          <dc:Bounds x="106" y="156" width="212" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_OtherClinical_di" bpmnElement="Lane_OtherClinical" isHorizontal="true">
+        <dc:Bounds x="100" y="546" width="5946" height="305" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="552" width="209" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_TreatmentBookings_di" bpmnElement="Lane_TreatmentBookings" isHorizontal="true">
+        <dc:Bounds x="100" y="851" width="5946" height="565" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="857" width="240" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Finance_di" bpmnElement="Lane_Finance" isHorizontal="true">
+        <dc:Bounds x="100" y="1416" width="5946" height="416" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="1422" width="109" height="20" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_Patient_di" bpmnElement="Participant_Patient" isHorizontal="true">
-        <dc:Bounds x="6196" y="1189" width="330" height="60" />
+        <dc:Bounds x="6196" y="690" width="330" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_TreatmentService_di" bpmnElement="Participant_TreatmentService" isHorizontal="true">
-        <dc:Bounds x="6196" y="795" width="330" height="60" />
+        <dc:Bounds x="6196" y="1085" width="330" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_PaymentProvider_di" bpmnElement="Participant_PaymentProvider" isHorizontal="true">
-        <dc:Bounds x="6196" y="310" width="330" height="60" />
+        <dc:Bounds x="6196" y="1580" width="330" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_FundingOrganisation_di" bpmnElement="Participant_FundingOrganisation" isHorizontal="true">
-        <dc:Bounds x="6196" y="350" width="330" height="60" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="B_F_InvalidVariables_di" bpmnElement="B_F_InvalidVariables">
-        <dc:Bounds x="2990" y="360" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2928" y="431" width="160" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="B_F_ProhibitedData_di" bpmnElement="B_F_ProhibitedData">
-        <dc:Bounds x="3040" y="360" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2968" y="456" width="179" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_CalculateCharge_di" bpmnElement="N_F_CalculateCharge">
-        <dc:Bounds x="2660" y="300" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2650" y="384" width="170" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_CorrectPaymentRequest_di" bpmnElement="N_F_CorrectPaymentRequest">
-        <dc:Bounds x="3320" y="350" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="3318" y="434" width="154" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_DetermineFunding_di" bpmnElement="N_F_DetermineFunding">
-        <dc:Bounds x="1830" y="300" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1814" y="384" width="182" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_FundingApprovalRequired_di" bpmnElement="N_F_FundingApprovalRequired" isMarkerVisible="true">
-        <dc:Bounds x="2080" y="320" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2039" y="374" width="131" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_ImpactReviewed_di" bpmnElement="N_F_ImpactReviewed">
-        <dc:Bounds x="5840" y="320" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="5790" y="360" width="136" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_InvestigatePayment_di" bpmnElement="N_F_InvestigatePayment">
-        <dc:Bounds x="3650" y="300" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="3650" y="384" width="150" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_InvestigationComplete_di" bpmnElement="N_F_InvestigationComplete">
-        <dc:Bounds x="4060" y="250" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="3984" y="290" width="188" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_NotifyPatient_di" bpmnElement="N_F_NotifyPatient">
-        <dc:Bounds x="4000" y="360" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="4009" y="444" width="132" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_PaymentNotPursued_di" bpmnElement="N_F_PaymentNotPursued">
-        <dc:Bounds x="4670" y="330" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="4607" y="370" width="162" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_PaymentRequired_di" bpmnElement="N_F_PaymentRequired" isMarkerVisible="true">
-        <dc:Bounds x="2500" y="320" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2439" y="374" width="173" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_PaymentStatus_di" bpmnElement="N_F_PaymentStatus" isMarkerVisible="true">
-        <dc:Bounds x="3370" y="250" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="3315" y="304" width="160" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_ProcessPayment_di" bpmnElement="N_F_ProcessPayment">
-        <dc:Bounds x="2960" y="300" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2969" y="409" width="131" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_RecordApproval_di" bpmnElement="N_F_RecordApproval">
-        <dc:Bounds x="2240" y="300" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2257" y="384" width="115" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_RetryDecision_di" bpmnElement="N_F_RetryDecision" isMarkerVisible="true">
-        <dc:Bounds x="4380" y="320" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="4340" y="374" width="129" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_ReviewFinancialImpact_di" bpmnElement="N_F_ReviewFinancialImpact">
-        <dc:Bounds x="5580" y="300" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="5580" y="384" width="151" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="B_TB_InvalidVariables_di" bpmnElement="B_TB_InvalidVariables">
-        <dc:Bounds x="1230" y="840" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1171" y="936" width="154" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="B_TB_NotifyFailure_di" bpmnElement="B_TB_NotifyFailure">
-        <dc:Bounds x="4670" y="840" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="4625" y="936" width="126" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="B_TB_Unauthorised_di" bpmnElement="B_TB_Unauthorised">
-        <dc:Bounds x="1280" y="840" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1213" y="960" width="169" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_TB_AvailabilityDecision_di" bpmnElement="N_TB_AvailabilityDecision" isMarkerVisible="true">
-        <dc:Bounds x="1600" y="660" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1556" y="714" width="138" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_TB_CheckAvailability_di" bpmnElement="N_TB_CheckAvailability">
-        <dc:Bounds x="1200" y="780" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1213" y="889" width="125" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_TB_ConfirmAppointment_di" bpmnElement="N_TB_ConfirmAppointment">
-        <dc:Bounds x="4330" y="790" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="4337" y="874" width="136" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_TB_CorrectBookingInput_di" bpmnElement="N_TB_CorrectBookingInput">
-        <dc:Bounds x="1550" y="920" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1544" y="1004" width="162" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_TB_KeepPending_di" bpmnElement="N_TB_KeepPending">
-        <dc:Bounds x="1830" y="790" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1821" y="874" width="169" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_TB_NotifyPatient_di" bpmnElement="N_TB_NotifyPatient">
-        <dc:Bounds x="4610" y="780" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="4626" y="889" width="118" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_TB_RecordNotificationFailure_di" bpmnElement="N_TB_RecordNotificationFailure">
-        <dc:Bounds x="4910" y="790" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="4915" y="874" width="141" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_TB_ReturnRequest_di" bpmnElement="N_TB_ReturnRequest">
-        <dc:Bounds x="1550" y="770" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1556" y="854" width="137" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_TB_VerifyAuthorisation_di" bpmnElement="N_TB_VerifyAuthorisation">
-        <dc:Bounds x="940" y="790" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="955" y="874" width="120" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_OC_FitToContinue_di" bpmnElement="N_OC_FitToContinue" isMarkerVisible="true">
-        <dc:Bounds x="5170" y="1250" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="5111" y="1304" width="168" height="21" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_OC_PreCycleReview_di" bpmnElement="N_OC_PreCycleReview">
-        <dc:Bounds x="4910" y="1230" width="150" height="80" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="4906" y="1314" width="158" height="41" />
-        </bpmndi:BPMNLabel>
+        <dc:Bounds x="6196" y="1620" width="330" height="60" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_AssessPatient_di" bpmnElement="N_CL_AssessPatient">
-        <dc:Bounds x="280" y="1580" width="150" height="80" />
+        <dc:Bounds x="280" y="290" width="150" height="80" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="283" y="1664" width="144" height="41" />
+          <dc:Bounds x="283" y="374" width="144" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_AuthoriseTreatment_di" bpmnElement="N_CL_AuthoriseTreatment">
-        <dc:Bounds x="690" y="1620" width="150" height="80" />
+        <dc:Bounds x="690" y="340" width="150" height="80" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="689" y="1704" width="152" height="41" />
+          <dc:Bounds x="689" y="424" width="152" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_ClinicalRisk_di" bpmnElement="N_CL_ClinicalRisk" isMarkerVisible="true">
-        <dc:Bounds x="3700" y="1590" width="50" height="50" />
+        <dc:Bounds x="3700" y="310" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3630" y="1644" width="191" height="41" />
+          <dc:Bounds x="3630" y="364" width="191" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_ConsentDecision_di" bpmnElement="N_CL_ConsentDecision" isMarkerVisible="true">
-        <dc:Bounds x="540" y="1590" width="50" height="50" />
+        <dc:Bounds x="540" y="310" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="493" y="1644" width="145" height="41" />
+          <dc:Bounds x="493" y="364" width="145" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_ModifyTreatment_di" bpmnElement="N_CL_ModifyTreatment">
-        <dc:Bounds x="5330" y="1580" width="150" height="80" />
+        <dc:Bounds x="5330" y="290" width="150" height="80" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="5331" y="1664" width="148" height="41" />
+          <dc:Bounds x="5331" y="374" width="148" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_NotProceeding_di" bpmnElement="N_CL_NotProceeding">
-        <dc:Bounds x="750" y="1530" width="36" height="36" />
+        <dc:Bounds x="750" y="250" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="674" y="1570" width="189" height="21" />
+          <dc:Bounds x="674" y="290" width="189" height="21" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_PatientAttends_di" bpmnElement="N_CL_PatientAttends">
-        <dc:Bounds x="130" y="1600" width="36" height="36" />
+        <dc:Bounds x="130" y="310" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="77" y="1640" width="142" height="41" />
+          <dc:Bounds x="77" y="350" width="142" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_UrgentAuthorise_di" bpmnElement="N_CL_UrgentAuthorise">
-        <dc:Bounds x="4000" y="1580" width="150" height="80" />
+        <dc:Bounds x="4000" y="290" width="150" height="80" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="4013" y="1664" width="125" height="41" />
+          <dc:Bounds x="4013" y="374" width="125" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_OC_FitToContinue_di" bpmnElement="N_OC_FitToContinue" isMarkerVisible="true">
+        <dc:Bounds x="5170" y="670" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5111" y="724" width="168" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_OC_PreCycleReview_di" bpmnElement="N_OC_PreCycleReview">
+        <dc:Bounds x="4910" y="640" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4899" y="724" width="173" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_TB_InvalidVariables_di" bpmnElement="B_TB_InvalidVariables">
+        <dc:Bounds x="1280" y="1130" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1221" y="1250" width="154" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_TB_NotifyFailure_di" bpmnElement="B_TB_NotifyFailure">
+        <dc:Bounds x="4670" y="1130" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4625" y="1226" width="126" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_TB_Unauthorised_di" bpmnElement="B_TB_Unauthorised">
+        <dc:Bounds x="1230" y="1130" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1163" y="1226" width="169" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_AvailabilityDecision_di" bpmnElement="N_TB_AvailabilityDecision" isMarkerVisible="true">
+        <dc:Bounds x="1600" y="950" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1556" y="1004" width="138" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_CheckAvailability_di" bpmnElement="N_TB_CheckAvailability">
+        <dc:Bounds x="1200" y="1070" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1213" y="1179" width="125" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_ConfirmAppointment_di" bpmnElement="N_TB_ConfirmAppointment">
+        <dc:Bounds x="4330" y="1080" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4337" y="1164" width="136" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_CorrectBookingInput_di" bpmnElement="N_TB_CorrectBookingInput">
+        <dc:Bounds x="1550" y="1210" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1544" y="1294" width="162" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_KeepPending_di" bpmnElement="N_TB_KeepPending">
+        <dc:Bounds x="1830" y="1080" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1821" y="1164" width="169" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_NotifyPatient_di" bpmnElement="N_TB_NotifyPatient">
+        <dc:Bounds x="4610" y="1070" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4626" y="1179" width="118" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_RecordNotificationFailure_di" bpmnElement="N_TB_RecordNotificationFailure">
+        <dc:Bounds x="4910" y="1080" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4915" y="1164" width="141" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_ReturnRequest_di" bpmnElement="N_TB_ReturnRequest">
+        <dc:Bounds x="1550" y="1050" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1556" y="1134" width="137" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_VerifyAuthorisation_di" bpmnElement="N_TB_VerifyAuthorisation">
+        <dc:Bounds x="940" y="1080" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="955" y="1164" width="120" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_F_InvalidVariables_di" bpmnElement="B_F_InvalidVariables">
+        <dc:Bounds x="3040" y="1630" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2978" y="1726" width="160" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="B_F_ProhibitedData_di" bpmnElement="B_F_ProhibitedData">
+        <dc:Bounds x="2990" y="1630" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2918" y="1701" width="179" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_CalculateCharge_di" bpmnElement="N_F_CalculateCharge">
+        <dc:Bounds x="2660" y="1570" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2650" y="1654" width="170" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_CorrectPaymentRequest_di" bpmnElement="N_F_CorrectPaymentRequest">
+        <dc:Bounds x="3320" y="1620" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3318" y="1704" width="154" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_DetermineFunding_di" bpmnElement="N_F_DetermineFunding">
+        <dc:Bounds x="1830" y="1570" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1814" y="1654" width="182" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_FundingApprovalRequired_di" bpmnElement="N_F_FundingApprovalRequired" isMarkerVisible="true">
+        <dc:Bounds x="2080" y="1580" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2039" y="1634" width="131" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_ImpactReviewed_di" bpmnElement="N_F_ImpactReviewed">
+        <dc:Bounds x="5840" y="1590" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5790" y="1630" width="136" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_InvestigatePayment_di" bpmnElement="N_F_InvestigatePayment">
+        <dc:Bounds x="3650" y="1570" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3650" y="1654" width="150" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_InvestigationComplete_di" bpmnElement="N_F_InvestigationComplete">
+        <dc:Bounds x="4060" y="1510" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3984" y="1550" width="188" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_NotifyPatient_di" bpmnElement="N_F_NotifyPatient">
+        <dc:Bounds x="4000" y="1620" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4009" y="1704" width="132" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_PaymentNotPursued_di" bpmnElement="N_F_PaymentNotPursued">
+        <dc:Bounds x="4670" y="1600" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4607" y="1640" width="162" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_PaymentRequired_di" bpmnElement="N_F_PaymentRequired" isMarkerVisible="true">
+        <dc:Bounds x="2500" y="1580" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2439" y="1634" width="173" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_PaymentStatus_di" bpmnElement="N_F_PaymentStatus" isMarkerVisible="true">
+        <dc:Bounds x="3370" y="1520" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3315" y="1574" width="160" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_ProcessPayment_di" bpmnElement="N_F_ProcessPayment">
+        <dc:Bounds x="2960" y="1570" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2969" y="1679" width="131" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_RecordApproval_di" bpmnElement="N_F_RecordApproval">
+        <dc:Bounds x="2240" y="1570" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2257" y="1654" width="115" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_RetryDecision_di" bpmnElement="N_F_RetryDecision" isMarkerVisible="true">
+        <dc:Bounds x="4380" y="1580" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4340" y="1634" width="129" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_ReviewFinancialImpact_di" bpmnElement="N_F_ReviewFinancialImpact">
+        <dc:Bounds x="5580" y="1570" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="5580" y="1654" width="151" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="F1_di" bpmnElement="F1">
-        <di:waypoint x="166" y="1620" />
-        <di:waypoint x="280" y="1620" />
+        <di:waypoint x="166" y="330" />
+        <di:waypoint x="280" y="330" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F2_di" bpmnElement="F2">
-        <di:waypoint x="430" y="1620" />
-        <di:waypoint x="540" y="1620" />
+        <di:waypoint x="430" y="330" />
+        <di:waypoint x="520" y="330" />
+        <di:waypoint x="520" y="340" />
+        <di:waypoint x="540" y="340" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F3_di" bpmnElement="F3">
-        <di:waypoint x="590" y="1620" />
-        <di:waypoint x="650" y="1620" />
-        <di:waypoint x="650" y="1550" />
-        <di:waypoint x="750" y="1550" />
+        <di:waypoint x="590" y="340" />
+        <di:waypoint x="650" y="340" />
+        <di:waypoint x="650" y="270" />
+        <di:waypoint x="750" y="270" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="594" y="1597" width="52" height="17" />
+          <dc:Bounds x="594" y="317" width="52" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F4_di" bpmnElement="F4">
-        <di:waypoint x="560" y="1640" />
-        <di:waypoint x="560" y="1700" />
-        <di:waypoint x="670" y="1700" />
-        <di:waypoint x="670" y="1660" />
-        <di:waypoint x="690" y="1660" />
+        <di:waypoint x="560" y="360" />
+        <di:waypoint x="560" y="420" />
+        <di:waypoint x="670" y="420" />
+        <di:waypoint x="670" y="380" />
+        <di:waypoint x="690" y="380" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="583" y="1706" width="65" height="17" />
+          <dc:Bounds x="583" y="426" width="65" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F7_di" bpmnElement="F7">
-        <di:waypoint x="1550" y="810" />
-        <di:waypoint x="1390" y="810" />
-        <di:waypoint x="1390" y="1660" />
-        <di:waypoint x="840" y="1660" />
+        <di:waypoint x="1700" y="1090" />
+        <di:waypoint x="1710" y="1090" />
+        <di:waypoint x="1710" y="320" />
+        <di:waypoint x="760" y="320" />
+        <di:waypoint x="760" y="340" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F5_di" bpmnElement="F5">
-        <di:waypoint x="760" y="1620" />
-        <di:waypoint x="760" y="1600" />
-        <di:waypoint x="920" y="1600" />
-        <di:waypoint x="920" y="830" />
-        <di:waypoint x="940" y="830" />
+        <di:waypoint x="840" y="380" />
+        <di:waypoint x="1020" y="380" />
+        <di:waypoint x="1020" y="1080" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F27_di" bpmnElement="F27">
-        <di:waypoint x="3400" y="300" />
-        <di:waypoint x="3400" y="310" />
-        <di:waypoint x="3410" y="310" />
-        <di:waypoint x="3410" y="330" />
-        <di:waypoint x="3480" y="330" />
-        <di:waypoint x="3480" y="490" />
-        <di:waypoint x="2650" y="490" />
-        <di:waypoint x="2650" y="440" />
-        <di:waypoint x="2640" y="440" />
-        <di:waypoint x="2640" y="260" />
-        <di:waypoint x="2020" y="260" />
-        <di:waypoint x="2020" y="1620" />
-        <di:waypoint x="3700" y="1620" />
+        <di:waypoint x="3420" y="1540" />
+        <di:waypoint x="3960" y="1540" />
+        <di:waypoint x="3960" y="1220" />
+        <di:waypoint x="4490" y="1220" />
+        <di:waypoint x="4490" y="270" />
+        <di:waypoint x="3720" y="270" />
+        <di:waypoint x="3720" y="310" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3361" y="277" width="88" height="17" />
+          <dc:Bounds x="3646" y="1517" width="88" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F30_di" bpmnElement="F30">
-        <di:waypoint x="3750" y="1620" />
-        <di:waypoint x="4000" y="1620" />
+        <di:waypoint x="3750" y="340" />
+        <di:waypoint x="3980" y="340" />
+        <di:waypoint x="3980" y="330" />
+        <di:waypoint x="4000" y="330" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3864" y="1597" width="22" height="17" />
+          <dc:Bounds x="3854" y="317" width="22" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F31_di" bpmnElement="F31">
-        <di:waypoint x="3750" y="1620" />
-        <di:waypoint x="3760" y="1620" />
-        <di:waypoint x="3760" y="1370" />
-        <di:waypoint x="5290" y="1370" />
-        <di:waypoint x="5290" y="430" />
-        <di:waypoint x="4160" y="430" />
-        <di:waypoint x="4160" y="400" />
-        <di:waypoint x="4150" y="400" />
+        <di:waypoint x="3700" y="340" />
+        <di:waypoint x="3680" y="340" />
+        <di:waypoint x="3680" y="250" />
+        <di:waypoint x="4510" y="250" />
+        <di:waypoint x="4510" y="1560" />
+        <di:waypoint x="4200" y="1560" />
+        <di:waypoint x="4200" y="1660" />
+        <di:waypoint x="4150" y="1660" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3747" y="1597" width="16" height="17" />
+          <dc:Bounds x="3682" y="317" width="16" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F40_di" bpmnElement="F40">
-        <di:waypoint x="5200" y="1300" />
-        <di:waypoint x="5200" y="1620" />
-        <di:waypoint x="5330" y="1620" />
+        <di:waypoint x="5200" y="670" />
+        <di:waypoint x="5200" y="330" />
+        <di:waypoint x="5330" y="330" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="5208" y="1452" width="34" height="17" />
+          <dc:Bounds x="5208" y="492" width="34" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F41_di" bpmnElement="F41">
-        <di:waypoint x="5480" y="1620" />
-        <di:waypoint x="5560" y="1620" />
-        <di:waypoint x="5560" y="340" />
-        <di:waypoint x="5580" y="340" />
+        <di:waypoint x="5480" y="330" />
+        <di:waypoint x="5660" y="330" />
+        <di:waypoint x="5660" y="1570" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="5439" y="1597" width="162" height="17" />
+          <dc:Bounds x="5489" y="307" width="162" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F33_di" bpmnElement="F33">
-        <di:waypoint x="4150" y="1620" />
-        <di:waypoint x="4400" y="1620" />
-        <di:waypoint x="4400" y="870" />
+        <di:waypoint x="4150" y="330" />
+        <di:waypoint x="4470" y="330" />
+        <di:waypoint x="4470" y="1060" />
+        <di:waypoint x="4500" y="1060" />
+        <di:waypoint x="4500" y="1120" />
+        <di:waypoint x="4480" y="1120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F37_di" bpmnElement="F37">
-        <di:waypoint x="4760" y="820" />
-        <di:waypoint x="4890" y="820" />
-        <di:waypoint x="4890" y="1270" />
-        <di:waypoint x="4910" y="1270" />
+        <di:waypoint x="4760" y="1110" />
+        <di:waypoint x="4880" y="1110" />
+        <di:waypoint x="4880" y="680" />
+        <di:waypoint x="4910" y="680" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F38_di" bpmnElement="F38">
-        <di:waypoint x="5060" y="1270" />
-        <di:waypoint x="5090" y="1270" />
-        <di:waypoint x="5090" y="1230" />
-        <di:waypoint x="5200" y="1230" />
-        <di:waypoint x="5200" y="1250" />
+        <di:waypoint x="5060" y="680" />
+        <di:waypoint x="5150" y="680" />
+        <di:waypoint x="5150" y="700" />
+        <di:waypoint x="5170" y="700" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F39_di" bpmnElement="F39">
-        <di:waypoint x="5170" y="1280" />
-        <di:waypoint x="5070" y="1280" />
-        <di:waypoint x="5070" y="970" />
-        <di:waypoint x="4490" y="970" />
-        <di:waypoint x="4490" y="830" />
-        <di:waypoint x="4480" y="830" />
+        <di:waypoint x="5170" y="700" />
+        <di:waypoint x="5080" y="700" />
+        <di:waypoint x="5080" y="1260" />
+        <di:waypoint x="4400" y="1260" />
+        <di:waypoint x="4400" y="1160" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="5115" y="1257" width="11" height="17" />
+          <dc:Bounds x="5120" y="677" width="11" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F8_di" bpmnElement="F8">
-        <di:waypoint x="1090" y="830" />
-        <di:waypoint x="1180" y="830" />
-        <di:waypoint x="1180" y="820" />
-        <di:waypoint x="1200" y="820" />
+        <di:waypoint x="1090" y="1120" />
+        <di:waypoint x="1180" y="1120" />
+        <di:waypoint x="1180" y="1110" />
+        <di:waypoint x="1200" y="1110" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F10_di" bpmnElement="F10">
-        <di:waypoint x="1550" y="960" />
-        <di:waypoint x="1410" y="960" />
-        <di:waypoint x="1410" y="820" />
-        <di:waypoint x="1350" y="820" />
+        <di:waypoint x="1620" y="1210" />
+        <di:waypoint x="1620" y="1190" />
+        <di:waypoint x="1530" y="1190" />
+        <di:waypoint x="1530" y="1110" />
+        <di:waypoint x="1350" y="1110" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F14_di" bpmnElement="F14">
-        <di:waypoint x="1830" y="830" />
-        <di:waypoint x="1710" y="830" />
-        <di:waypoint x="1710" y="750" />
-        <di:waypoint x="1280" y="750" />
-        <di:waypoint x="1280" y="780" />
+        <di:waypoint x="1980" y="1120" />
+        <di:waypoint x="2010" y="1120" />
+        <di:waypoint x="2010" y="1680" />
+        <di:waypoint x="1140" y="1680" />
+        <di:waypoint x="1140" y="1150" />
+        <di:waypoint x="1180" y="1150" />
+        <di:waypoint x="1180" y="1160" />
+        <di:waypoint x="1220" y="1160" />
+        <di:waypoint x="1220" y="1130" />
+        <di:waypoint x="1280" y="1130" />
+        <di:waypoint x="1280" y="1150" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F11_di" bpmnElement="F11">
-        <di:waypoint x="1350" y="820" />
-        <di:waypoint x="1360" y="820" />
-        <di:waypoint x="1360" y="680" />
-        <di:waypoint x="1600" y="680" />
+        <di:waypoint x="1280" y="1070" />
+        <di:waypoint x="1280" y="980" />
+        <di:waypoint x="1600" y="980" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F12_di" bpmnElement="F12">
-        <di:waypoint x="1650" y="680" />
-        <di:waypoint x="1790" y="680" />
-        <di:waypoint x="1790" y="340" />
-        <di:waypoint x="1830" y="340" />
+        <di:waypoint x="1650" y="980" />
+        <di:waypoint x="1800" y="980" />
+        <di:waypoint x="1800" y="1610" />
+        <di:waypoint x="1830" y="1610" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1692" y="657" width="55" height="17" />
+          <dc:Bounds x="1697" y="957" width="55" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F13_di" bpmnElement="F13">
-        <di:waypoint x="1620" y="710" />
-        <di:waypoint x="1620" y="740" />
-        <di:waypoint x="1900" y="740" />
-        <di:waypoint x="1900" y="790" />
+        <di:waypoint x="1650" y="980" />
+        <di:waypoint x="1660" y="980" />
+        <di:waypoint x="1660" y="960" />
+        <di:waypoint x="1900" y="960" />
+        <di:waypoint x="1900" y="1080" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1721" y="717" width="78" height="17" />
+          <dc:Bounds x="1616" y="957" width="78" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F20_di" bpmnElement="F20">
-        <di:waypoint x="2550" y="340" />
-        <di:waypoint x="2630" y="340" />
-        <di:waypoint x="2630" y="830" />
-        <di:waypoint x="4330" y="830" />
+        <di:waypoint x="2550" y="1600" />
+        <di:waypoint x="2640" y="1600" />
+        <di:waypoint x="2640" y="1120" />
+        <di:waypoint x="4330" y="1120" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2540" y="317" width="100" height="17" />
+          <dc:Bounds x="2545" y="1577" width="100" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F26_di" bpmnElement="F26">
-        <di:waypoint x="3420" y="280" />
-        <di:waypoint x="3630" y="280" />
-        <di:waypoint x="3630" y="770" />
-        <di:waypoint x="4400" y="770" />
-        <di:waypoint x="4400" y="790" />
+        <di:waypoint x="3400" y="1520" />
+        <di:waypoint x="3400" y="1060" />
+        <di:waypoint x="4400" y="1060" />
+        <di:waypoint x="4400" y="1080" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3493" y="257" width="65" height="17" />
+          <dc:Bounds x="3408" y="1282" width="65" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F34_di" bpmnElement="F34">
-        <di:waypoint x="4480" y="830" />
-        <di:waypoint x="4590" y="830" />
-        <di:waypoint x="4590" y="820" />
-        <di:waypoint x="4610" y="820" />
+        <di:waypoint x="4480" y="1120" />
+        <di:waypoint x="4490" y="1120" />
+        <di:waypoint x="4490" y="1130" />
+        <di:waypoint x="4590" y="1130" />
+        <di:waypoint x="4590" y="1110" />
+        <di:waypoint x="4610" y="1110" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F36_di" bpmnElement="F36">
-        <di:waypoint x="4980" y="790" />
-        <di:waypoint x="4980" y="760" />
-        <di:waypoint x="4680" y="760" />
-        <di:waypoint x="4680" y="780" />
+        <di:waypoint x="5060" y="1120" />
+        <di:waypoint x="5290" y="1120" />
+        <di:waypoint x="5290" y="620" />
+        <di:waypoint x="4680" y="620" />
+        <di:waypoint x="4680" y="1070" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F6_di" bpmnElement="F6">
-        <di:waypoint x="1300" y="876" />
-        <di:waypoint x="1300" y="910" />
-        <di:waypoint x="1370" y="910" />
-        <di:waypoint x="1370" y="940" />
-        <di:waypoint x="1400" y="940" />
-        <di:waypoint x="1400" y="980" />
-        <di:waypoint x="1520" y="980" />
-        <di:waypoint x="1520" y="1030" />
-        <di:waypoint x="1720" y="1030" />
-        <di:waypoint x="1720" y="860" />
-        <di:waypoint x="1620" y="860" />
-        <di:waypoint x="1620" y="850" />
+        <di:waypoint x="1266" y="1150" />
+        <di:waypoint x="1320" y="1150" />
+        <di:waypoint x="1320" y="1160" />
+        <di:waypoint x="1360" y="1160" />
+        <di:waypoint x="1360" y="1090" />
+        <di:waypoint x="1550" y="1090" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F9_di" bpmnElement="F9">
-        <di:waypoint x="1250" y="876" />
-        <di:waypoint x="1250" y="910" />
-        <di:waypoint x="1150" y="910" />
-        <di:waypoint x="1150" y="1050" />
-        <di:waypoint x="1740" y="1050" />
-        <di:waypoint x="1740" y="960" />
-        <di:waypoint x="1700" y="960" />
+        <di:waypoint x="1300" y="1166" />
+        <di:waypoint x="1300" y="1200" />
+        <di:waypoint x="1530" y="1200" />
+        <di:waypoint x="1530" y="1250" />
+        <di:waypoint x="1550" y="1250" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F35_di" bpmnElement="F35">
-        <di:waypoint x="4706" y="860" />
-        <di:waypoint x="4720" y="860" />
-        <di:waypoint x="4720" y="870" />
-        <di:waypoint x="4870" y="870" />
-        <di:waypoint x="4870" y="830" />
-        <di:waypoint x="4910" y="830" />
+        <di:waypoint x="4706" y="1150" />
+        <di:waypoint x="4720" y="1150" />
+        <di:waypoint x="4720" y="1160" />
+        <di:waypoint x="4890" y="1160" />
+        <di:waypoint x="4890" y="1120" />
+        <di:waypoint x="4910" y="1120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F15_di" bpmnElement="F15">
-        <di:waypoint x="1980" y="340" />
-        <di:waypoint x="2080" y="340" />
+        <di:waypoint x="1980" y="1610" />
+        <di:waypoint x="2060" y="1610" />
+        <di:waypoint x="2060" y="1600" />
+        <di:waypoint x="2080" y="1600" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F16_di" bpmnElement="F16">
-        <di:waypoint x="2100" y="370" />
-        <di:waypoint x="2100" y="440" />
-        <di:waypoint x="2400" y="440" />
-        <di:waypoint x="2400" y="340" />
-        <di:waypoint x="2390" y="340" />
+        <di:waypoint x="2130" y="1600" />
+        <di:waypoint x="2220" y="1600" />
+        <di:waypoint x="2220" y="1610" />
+        <di:waypoint x="2240" y="1610" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2224" y="446" width="51" height="17" />
+          <dc:Bounds x="2149" y="1577" width="51" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F17_di" bpmnElement="F17">
-        <di:waypoint x="2130" y="340" />
-        <di:waypoint x="2220" y="340" />
-        <di:waypoint x="2220" y="280" />
-        <di:waypoint x="2520" y="280" />
-        <di:waypoint x="2520" y="320" />
+        <di:waypoint x="2100" y="1580" />
+        <di:waypoint x="2100" y="1550" />
+        <di:waypoint x="2520" y="1550" />
+        <di:waypoint x="2520" y="1580" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2138" y="317" width="75" height="17" />
+          <dc:Bounds x="2108" y="1557" width="75" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F18_di" bpmnElement="F18">
-        <di:waypoint x="2390" y="340" />
-        <di:waypoint x="2500" y="340" />
+        <di:waypoint x="2390" y="1610" />
+        <di:waypoint x="2480" y="1610" />
+        <di:waypoint x="2480" y="1600" />
+        <di:waypoint x="2500" y="1600" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F19_di" bpmnElement="F19">
-        <di:waypoint x="2550" y="340" />
-        <di:waypoint x="2560" y="340" />
-        <di:waypoint x="2560" y="320" />
-        <di:waypoint x="2630" y="320" />
-        <di:waypoint x="2630" y="330" />
-        <di:waypoint x="2640" y="330" />
-        <di:waypoint x="2640" y="340" />
-        <di:waypoint x="2660" y="340" />
+        <di:waypoint x="2520" y="1630" />
+        <di:waypoint x="2520" y="1690" />
+        <di:waypoint x="2630" y="1690" />
+        <di:waypoint x="2630" y="1610" />
+        <di:waypoint x="2660" y="1610" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2501" y="346" width="109" height="17" />
+          <dc:Bounds x="2521" y="1696" width="109" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F24_di" bpmnElement="F24">
-        <di:waypoint x="3400" y="350" />
-        <di:waypoint x="3400" y="330" />
-        <di:waypoint x="3120" y="330" />
-        <di:waypoint x="3120" y="280" />
-        <di:waypoint x="2820" y="280" />
-        <di:waypoint x="2820" y="340" />
-        <di:waypoint x="2810" y="340" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="F32_di" bpmnElement="F32">
-        <di:waypoint x="4150" y="400" />
-        <di:waypoint x="4320" y="400" />
-        <di:waypoint x="4320" y="300" />
-        <di:waypoint x="4400" y="300" />
-        <di:waypoint x="4400" y="320" />
+        <di:waypoint x="3400" y="1620" />
+        <di:waypoint x="3400" y="1600" />
+        <di:waypoint x="3480" y="1600" />
+        <di:waypoint x="3480" y="1500" />
+        <di:waypoint x="2740" y="1500" />
+        <di:waypoint x="2740" y="1570" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F43_di" bpmnElement="F43">
-        <di:waypoint x="4380" y="340" />
-        <di:waypoint x="3810" y="340" />
-        <di:waypoint x="3810" y="230" />
-        <di:waypoint x="2740" y="230" />
-        <di:waypoint x="2740" y="300" />
+        <di:waypoint x="4400" y="1630" />
+        <di:waypoint x="4400" y="1780" />
+        <di:waypoint x="2740" y="1780" />
+        <di:waypoint x="2740" y="1650" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="4052" y="346" width="86" height="17" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="F44_di" bpmnElement="F44">
-        <di:waypoint x="4430" y="340" />
-        <di:waypoint x="4650" y="340" />
-        <di:waypoint x="4650" y="350" />
-        <di:waypoint x="4670" y="350" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="4485" y="317" width="111" height="17" />
+          <dc:Bounds x="4408" y="1697" width="86" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F21_di" bpmnElement="F21">
-        <di:waypoint x="2740" y="380" />
-        <di:waypoint x="2740" y="440" />
-        <di:waypoint x="2910" y="440" />
-        <di:waypoint x="2910" y="340" />
-        <di:waypoint x="2960" y="340" />
+        <di:waypoint x="2810" y="1610" />
+        <di:waypoint x="2960" y="1610" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F25_di" bpmnElement="F25">
-        <di:waypoint x="3110" y="340" />
-        <di:waypoint x="3140" y="340" />
-        <di:waypoint x="3140" y="280" />
-        <di:waypoint x="3370" y="280" />
+        <di:waypoint x="3110" y="1610" />
+        <di:waypoint x="3300" y="1610" />
+        <di:waypoint x="3300" y="1540" />
+        <di:waypoint x="3370" y="1540" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F28_di" bpmnElement="F28">
-        <di:waypoint x="3420" y="280" />
-        <di:waypoint x="3430" y="280" />
-        <di:waypoint x="3430" y="260" />
-        <di:waypoint x="3720" y="260" />
-        <di:waypoint x="3720" y="300" />
+        <di:waypoint x="3400" y="1570" />
+        <di:waypoint x="3400" y="1580" />
+        <di:waypoint x="3630" y="1580" />
+        <di:waypoint x="3630" y="1610" />
+        <di:waypoint x="3650" y="1610" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3356" y="235" width="139" height="17" />
+          <dc:Bounds x="3446" y="1547" width="139" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F22_di" bpmnElement="F22">
-        <di:waypoint x="3060" y="396" />
-        <di:waypoint x="3060" y="440" />
-        <di:waypoint x="3400" y="440" />
-        <di:waypoint x="3400" y="430" />
+        <di:waypoint x="3026" y="1650" />
+        <di:waypoint x="3080" y="1650" />
+        <di:waypoint x="3080" y="1660" />
+        <di:waypoint x="3120" y="1660" />
+        <di:waypoint x="3120" y="1650" />
+        <di:waypoint x="3300" y="1650" />
+        <di:waypoint x="3300" y="1660" />
+        <di:waypoint x="3320" y="1660" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F23_di" bpmnElement="F23">
-        <di:waypoint x="3026" y="380" />
-        <di:waypoint x="3080" y="380" />
-        <di:waypoint x="3080" y="390" />
-        <di:waypoint x="3120" y="390" />
-        <di:waypoint x="3120" y="380" />
-        <di:waypoint x="3300" y="380" />
-        <di:waypoint x="3300" y="390" />
-        <di:waypoint x="3320" y="390" />
+        <di:waypoint x="3060" y="1666" />
+        <di:waypoint x="3060" y="1700" />
+        <di:waypoint x="3300" y="1700" />
+        <di:waypoint x="3300" y="1760" />
+        <di:waypoint x="3480" y="1760" />
+        <di:waypoint x="3480" y="1660" />
+        <di:waypoint x="3470" y="1660" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F29_di" bpmnElement="F29">
-        <di:waypoint x="3800" y="340" />
-        <di:waypoint x="3820" y="340" />
-        <di:waypoint x="3820" y="320" />
-        <di:waypoint x="3960" y="320" />
-        <di:waypoint x="3960" y="270" />
-        <di:waypoint x="4060" y="270" />
+        <di:waypoint x="3800" y="1610" />
+        <di:waypoint x="3980" y="1610" />
+        <di:waypoint x="3980" y="1600" />
+        <di:waypoint x="4180" y="1600" />
+        <di:waypoint x="4180" y="1530" />
+        <di:waypoint x="4096" y="1530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F32_di" bpmnElement="F32">
+        <di:waypoint x="4080" y="1700" />
+        <di:waypoint x="4080" y="1760" />
+        <di:waypoint x="4320" y="1760" />
+        <di:waypoint x="4320" y="1600" />
+        <di:waypoint x="4380" y="1600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F44_di" bpmnElement="F44">
+        <di:waypoint x="4430" y="1600" />
+        <di:waypoint x="4650" y="1600" />
+        <di:waypoint x="4650" y="1620" />
+        <di:waypoint x="4670" y="1620" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="4485" y="1577" width="111" height="17" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F42_di" bpmnElement="F42">
-        <di:waypoint x="5730" y="340" />
-        <di:waypoint x="5840" y="340" />
+        <di:waypoint x="5730" y="1610" />
+        <di:waypoint x="5840" y="1610" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_M1_di" bpmnElement="MessageFlow_M1">
-        <di:waypoint x="6200" y="1249" />
-        <di:waypoint x="6200" y="1220" />
-        <di:waypoint x="5070" y="1220" />
-        <di:waypoint x="5070" y="1510" />
-        <di:waypoint x="150" y="1510" />
-        <di:waypoint x="150" y="1600" />
+        <di:waypoint x="6200" y="750" />
+        <di:waypoint x="6200" y="720" />
+        <di:waypoint x="5230" y="720" />
+        <di:waypoint x="5230" y="430" />
+        <di:waypoint x="360" y="430" />
+        <di:waypoint x="360" y="370" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_M2_di" bpmnElement="MessageFlow_M2">
-        <di:waypoint x="1280" y="780" />
-        <di:waypoint x="1280" y="750" />
-        <di:waypoint x="6180" y="750" />
-        <di:waypoint x="6180" y="820" />
-        <di:waypoint x="6200" y="820" />
-        <di:waypoint x="6200" y="855" />
+        <di:waypoint x="1350" y="1110" />
+        <di:waypoint x="1530" y="1110" />
+        <di:waypoint x="1530" y="1180" />
+        <di:waypoint x="6180" y="1180" />
+        <di:waypoint x="6180" y="1120" />
+        <di:waypoint x="6200" y="1120" />
+        <di:waypoint x="6200" y="1145" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_M3_di" bpmnElement="MessageFlow_M3">
-        <di:waypoint x="2320" y="300" />
-        <di:waypoint x="2320" y="230" />
-        <di:waypoint x="6180" y="230" />
-        <di:waypoint x="6180" y="380" />
-        <di:waypoint x="6200" y="380" />
-        <di:waypoint x="6200" y="410" />
+        <di:waypoint x="2390" y="1610" />
+        <di:waypoint x="2480" y="1610" />
+        <di:waypoint x="2480" y="1710" />
+        <di:waypoint x="6360" y="1710" />
+        <di:waypoint x="6360" y="1680" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_M4_di" bpmnElement="MessageFlow_M4">
-        <di:waypoint x="3110" y="340" />
-        <di:waypoint x="3300" y="340" />
-        <di:waypoint x="3300" y="450" />
-        <di:waypoint x="6540" y="450" />
-        <di:waypoint x="6540" y="340" />
-        <di:waypoint x="6526" y="340" />
+        <di:waypoint x="3110" y="1610" />
+        <di:waypoint x="3300" y="1610" />
+        <di:waypoint x="3300" y="1490" />
+        <di:waypoint x="6360" y="1490" />
+        <di:waypoint x="6360" y="1580" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_M5_di" bpmnElement="MessageFlow_M5">
-        <di:waypoint x="4760" y="820" />
-        <di:waypoint x="4890" y="820" />
-        <di:waypoint x="4890" y="1170" />
-        <di:waypoint x="6360" y="1170" />
-        <di:waypoint x="6360" y="1249" />
+        <di:waypoint x="4760" y="1110" />
+        <di:waypoint x="4890" y="1110" />
+        <di:waypoint x="4890" y="770" />
+        <di:waypoint x="6360" y="770" />
+        <di:waypoint x="6360" y="750" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MessageFlow_M6_di" bpmnElement="MessageFlow_M6">
-        <di:waypoint x="1980" y="830" />
-        <di:waypoint x="4310" y="830" />
-        <di:waypoint x="4310" y="770" />
-        <di:waypoint x="4590" y="770" />
-        <di:waypoint x="4590" y="760" />
-        <di:waypoint x="4770" y="760" />
-        <di:waypoint x="4770" y="770" />
-        <di:waypoint x="6160" y="770" />
-        <di:waypoint x="6160" y="880" />
-        <di:waypoint x="6360" y="880" />
-        <di:waypoint x="6360" y="855" />
+        <di:waypoint x="1830" y="1120" />
+        <di:waypoint x="1710" y="1120" />
+        <di:waypoint x="1710" y="1030" />
+        <di:waypoint x="1180" y="1030" />
+        <di:waypoint x="1180" y="1300" />
+        <di:waypoint x="6360" y="1300" />
+        <di:waypoint x="6360" y="1145" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

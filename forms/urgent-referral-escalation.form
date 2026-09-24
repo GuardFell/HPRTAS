@@ -1,0 +1,76 @@
+{
+  "id": "urgent-referral-escalation",
+  "components": [
+    {
+      "type": "group",
+      "label": "Urgent Referral Escalation",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "escalationRoute",
+          "label": "Escalation Route",
+          "description": "The referral could not be booked inside the period the Consultant asked for and cannot wait for normal administrative timescales.",
+          "validate": {
+            "required": true
+          },
+          "options": [
+            {
+              "label": "Expedited Slot with the Scheduling Service",
+              "value": "expedited_slot"
+            },
+            {
+              "label": "Referred to the Responsible Clinician",
+              "value": "clinical_review"
+            },
+            {
+              "label": "Returned to the Referring Organisation",
+              "value": "returned_to_referrer"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "key": "patientInformedOfDelay",
+          "label": "Patient Informed of the Delay"
+        },
+        {
+          "type": "textfield",
+          "key": "escalatedBy",
+          "label": "Escalated By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "escalationNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

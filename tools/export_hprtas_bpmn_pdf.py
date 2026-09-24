@@ -10,9 +10,9 @@ interchange in the file.
 
 Everything is drawn at the position the file records, including the label
 boxes, so the output is what the model says rather than a re-layout. The page is
-sized to the diagram and the text is set to 12 pt, which is what makes the
-export readable: a model this wide cannot be squeezed onto A4 without the labels
-becoming unreadable.
+sized to the diagram and an element label is set to `TARGET_PT`, which is what
+makes the export readable: a model this wide cannot be squeezed onto A4 without
+the labels becoming unreadable.
 
 Usage:
     python tools\\export_hprtas_bpmn_pdf.py            # every model, both PDF and PNG
@@ -63,6 +63,11 @@ def label_bounds(el):
     if lb is None:
         return None
     return bounds(lb)
+
+
+def _is_vertical(box):
+    """True for a label box the model turns a quarter turn; see `_size_for`."""
+    return box is not None and box[3] > box[2]
 
 
 class Diagram(object):
@@ -138,21 +143,36 @@ class Diagram(object):
         # files do not all agree on which one. Taking the smallest size that fits
         # every stored box keeps each label inside the space the model gives it,
         # and gives one size per category rather than one per label.
+        #
+        # A pool drawn horizontally keeps its name in the narrow header on the
+        # left, and the model records that label as a box taller than it is wide:
+        # the name is turned a quarter turn. Measuring such a box as though the
+        # text ran across it is what collapsed every container label to about
+        # three model units - unreadable, and far smaller than the element
+        # labels beside them. The orientation is respected here, and the label is
+        # drawn turned to match.
         self.container_size = self._size_for(
-            [(nm, lb) for _, nm, lb in self.pools + self.lanes], 16.0)
+            [(nm, lb, _is_vertical(lb)) for _, nm, lb in self.pools + self.lanes], 16.0)
         self.node_size = self._size_for(
-            [(s["name"], s["label"]) for s in self.shapes.values()], 13.0)
+            [(s["name"], s["label"], False) for s in self.shapes.values()], 13.0)
         self.flow_size = self._size_for(
-            [(e["text"], e["label"]) for e in self.edges], 11.0)
+            [(e["text"], e["label"], False) for e in self.edges], 11.0)
 
     @staticmethod
     def _size_for(entries, fallback):
-        """Smallest font size that fits every stored label box, in model units."""
+        """Smallest font size that fits every label box, in model units.
+
+        Entries are `(text, box, vertical)`. A vertical box holds a label the
+        model turns a quarter turn, so its length runs down the box rather than
+        across it and the two constraints swap.
+        """
         sizes = []
-        for text, lb in entries:
+        for text, lb, vertical in entries:
             if not text or not lb:
                 continue
             width, height = lb[2], lb[3]
+            if vertical:
+                width, height = height, width
             by_height = height / R.LINE_SPACING
             per_unit = R.text_width(text, 1.0)
             by_width = width / per_unit if per_unit > 0 else by_height
@@ -181,6 +201,28 @@ class Diagram(object):
                 xs += [e["label"][0], e["label"][0] + e["label"][2]]
                 ys += [e["label"][1], e["label"][1] + e["label"][3]]
         return min(xs), min(ys), max(xs), max(ys)
+
+
+def _paste_rotated_text(img, text, box, size_units, scale, origin, color=R.INK):
+    """Set a label a quarter turn anticlockwise and centre it in its box.
+
+    PIL draws no rotated text, so the label is set on a tile of its own - cut
+    tight to the glyphs, so the empty margin does not push a narrow header out
+    of shape - turned, and pasted. Reading bottom to top is the direction the
+    modeller uses for the name in a horizontal pool's header.
+    """
+    x, y, w, h = box
+    ox, oy = origin
+    font = R._font(size_units * scale)
+    probe = ImageDraw.Draw(Image.new("L", (1, 1)))
+    l, t, r, b = probe.textbbox((0, 0), text, font=font)
+    tile = Image.new("RGBA", (max(1, r - l), max(1, b - t)), (255, 255, 255, 0))
+    ImageDraw.Draw(tile).text((-l, -t), text, font=font, fill=color)
+    tile = tile.rotate(90, expand=True)
+    cx = (x - ox) * scale + w * scale / 2.0
+    cy = (y - oy) * scale + h * scale / 2.0
+    img.paste(tile, (int(round(cx - tile.width / 2.0)),
+                     int(round(cy - tile.height / 2.0))), tile)
 
 
 def _open_arrow(draw, tip, previous, size, scale):
@@ -262,11 +304,19 @@ def render(diagram, png_path, scale=SCALE, pad=PAD):
 
     # --- 4. labels: containers first, then nodes, then flows
     for box, name, lb in diagram.pools:
-        if name:
+        if not name:
+            continue
+        if _is_vertical(lb):
+            _paste_rotated_text(img, name, lb, diagram.container_size, scale, origin)
+        else:
             R._draw_label(draw, name, lb or box, diagram.container_size, scale,
                           origin, align="left" if lb else "center")
     for box, name, lb in diagram.lanes:
-        if name:
+        if not name:
+            continue
+        if _is_vertical(lb):
+            _paste_rotated_text(img, name, lb, diagram.container_size, scale, origin)
+        else:
             R._draw_label(draw, name, lb or box, diagram.container_size, scale,
                           origin, align="left" if lb else "center")
     for s in diagram.shapes.values():

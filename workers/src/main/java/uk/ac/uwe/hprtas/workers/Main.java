@@ -10,6 +10,7 @@ import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -24,6 +25,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * {@code mvn exec:java -Dexec.args=--check} validates the configuration and the wiring without
  * connecting to an engine, which is useful before a demonstration.
+ *
+ * {@code mvn exec:java "-Dexec.args=--publish-message <name> [--variables <json>]"} publishes one
+ * BPMN message and exits. It is the sending half of the two message start events in {@code core-4}:
+ * a cancellation arriving and a patient enquiry arriving are begun by sending the message they wait
+ * for, not from the Processes page.
  */
 public final class Main {
 
@@ -47,9 +53,13 @@ public final class Main {
 
     final Config config = Config.load();
 
-    for (String argument : args) {
-      if ("--check".equals(argument)) {
+    for (int i = 0; i < args.length; i++) {
+      if ("--check".equals(args[i])) {
         check(config);
+        return;
+      }
+      if ("--publish-message".equals(args[i])) {
+        publishMessage(config, args, i);
         return;
       }
     }
@@ -176,6 +186,88 @@ public final class Main {
           settings.timeoutMs());
     }
     Console.out("Configuration and wiring are valid.");
+  }
+
+  /**
+   * Publishes one BPMN message and exits: the sending half of a message a model waits for.
+   *
+   * A message start event is begun by the message name alone. It holds no subscription, so it has no
+   * correlation key and none is sent; a correlation key belongs to the intermediate catch events a
+   * long-running process waits on. The engine answers a publication it recorded, which is not the
+   * same as an instance receiving it - a name no deployed model declares is accepted and correlated
+   * with nothing - so what follows says what was published rather than that it worked.
+   */
+  static void publishMessage(Config config, String[] args, int at) {
+    final String name = at + 1 < args.length ? args[at + 1] : null;
+    if (name == null || name.startsWith("--")) {
+      usage();
+      return;
+    }
+
+    final Map<String, Object> variables = new LinkedHashMap<>();
+    for (int i = at + 2; i < args.length - 1; i++) {
+      if ("--variables".equals(args[i])) {
+        variables.putAll(parseVariables(args[i + 1]));
+      }
+    }
+
+    final CamundaClient client = CamundaClients.create(config);
+    final long messageKey;
+    try {
+      messageKey =
+          client
+              .newPublishMessageCommand()
+              .messageName(name)
+              // The models wait for these two messages on message start events, and a start event
+              // holds no subscription, so it has no correlation key to name. The builder makes the
+              // choice explicit rather than defaulting it, because the two are not interchangeable.
+              .withoutCorrelationKey()
+              .variables(variables)
+              .timeToLive(Duration.ofMinutes(1))
+              .send()
+              .join()
+              .getMessageKey();
+    } catch (RuntimeException error) {
+      client.close();
+      throw new IllegalStateException(
+          "the message \""
+              + name
+              + "\" could not be published to "
+              + config.connection().get("ZEEBE_GRPC_ADDRESS")
+              + " ("
+              + messageOf(error)
+              + ")",
+          error);
+    }
+    client.close();
+
+    Console.out(
+        "Published \"%s\" as message %d%s.",
+        name, messageKey, variables.isEmpty() ? "" : " with " + Json.write(variables));
+    Console.out(
+        "  The engine recorded the publication. That is not proof that a process instance received"
+            + " it: a message name no deployed model declares is correlated with nothing.");
+    Console.out("  Confirm the instance it started in Operate before relying on it.");
+  }
+
+  private static Map<String, Object> parseVariables(String json) {
+    try {
+      @SuppressWarnings("unchecked")
+      final Map<String, Object> parsed = Json.mapper().readValue(json, Map.class);
+      return parsed;
+    } catch (Exception error) {
+      throw new IllegalStateException(
+          "the --variables value is not a JSON object: " + json + " (" + messageOf(error) + ")",
+          error);
+    }
+  }
+
+  private static void usage() {
+    Console.out("Usage: --publish-message <message name> [--variables <json object>]");
+    Console.out("");
+    Console.out("Publishes one BPMN message. The name is the name of the bpmn:message a model");
+    Console.out("waits for, and the variables are its payload. The messages the operational");
+    Console.out("models declare are named in ../README.md and in the model that waits for them.");
   }
 
   /** Connects, registers every worker, and runs until the process is asked to stop. */

@@ -13,7 +13,7 @@
   UNAUTHORISED_BOOKING_REQUEST business error the worker throws, which is how
   the model path for BR-04 is shown to work rather than raising an incident.
 
-  Deployed by `npm run test:smoke`.
+  Deployed by `mvn test -Pengine -Dtest=SmokeTest`.
 -->
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
                   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"

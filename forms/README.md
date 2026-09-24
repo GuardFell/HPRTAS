@@ -10,7 +10,7 @@ Every `.form` file carries a top-level `id`, which is the form's key. A user tas
 from its extension elements:
 
 ```xml
-<bpmn:userTask id="N_C_ClinicalReview" name="Clinical review of referral">
+<bpmn:userTask id="N_C_ClinicalReview" name="Review the referral clinically">
   <bpmn:extensionElements>
     <zeebe:userTask />
     <zeebe:formDefinition formId="referral-review" />
@@ -292,11 +292,11 @@ with the task completion call instead, so they do not exercise the form bindings
 
 What has been checked about the forms themselves:
 
-- All 40 deploy to the engine, and every user task in the four operational models resolves a form
+- All 41 deploy to the engine, and every user task in the four operational models resolves a form
   key.
-- All 40 import in `@bpmn-io/form-js`, the library Tasklist renders them with, and each one's
-  submission carries exactly its own field keys and nothing else, at the top level — 287 fields,
-  287 variables. That is the check that a field's output name is its `key`.
+- All 41 import in `@bpmn-io/form-js`, the library Tasklist renders them with, and each one's
+  submission carries exactly its own field keys and nothing else, at the top level — 293 fields,
+  293 variables. That is the check that a field's output name is its `key`.
 - The form bound to `N_MS_CheckReferral` renders in Tasklist with all ten of its fields, becomes
   editable once the task is assigned, and enables `Complete Task` only when the required fields are
   filled.

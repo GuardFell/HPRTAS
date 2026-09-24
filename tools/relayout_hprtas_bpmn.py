@@ -753,10 +753,15 @@ def write_diagram(model, geometry, routes, lane_boxes, pool_box, other_pools, la
     lines.append('      <bpmndi:BPMNShape id="%s_di" bpmnElement="%s" isHorizontal="true">'
                  % (hospital["id"], hospital["id"]))
     lines.append(bounds_xml(px, py, pw, ph, "        "))
-    # a horizontal pool carries its name at the foot, turned on its side
+    # A horizontal pool carries its name at the foot of the left header, turned
+    # on its side, so the box is narrow and as tall as the name is long. The
+    # name is what sets the height, which is why the box is placed by
+    # subtracting that height from the foot - placing it by a fixed offset
+    # instead put the name outside the pool, below its bottom edge, where the
+    # export drew it hanging under the border.
     lines.append("        <bpmndi:BPMNLabel>")
-    lines.append(bounds_xml(px + 6, py + ph - 24, 20.0,
-                            min(140.0, R.text_width(hospital["name"], LABEL_SIZE)), "          "))
+    name_h = min(140.0, R.text_width(hospital["name"], LABEL_SIZE))
+    lines.append(bounds_xml(px + 6, py + ph - name_h - 6, 20.0, name_h, "          "))
     lines.append("        </bpmndi:BPMNLabel>")
     lines.append("      </bpmndi:BPMNShape>")
 

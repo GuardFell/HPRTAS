@@ -5,7 +5,8 @@ commit, in front of an audience, without editing anything while it runs.
 
 **What it demonstrates:** the delivered system at an identified version - the five operational models,
 the 41 Camunda Forms bound to their user tasks, and the seven external workers - with the normal path,
-a decision that ends a referral, and one exception path that a defect used to block.
+a decision that ends a referral, one exception path that a defect used to block, and the message
+exchange where a process waits for an answer rather than assuming one.
 
 **Read `## What this does not demonstrate` before giving it.** Everything simulated or not
 implemented is listed there, and it is part of the demonstration rather than an apology for it.
@@ -17,7 +18,7 @@ implemented is listed there, and it is part of the demonstration rather than an 
 | Repository | `https://github.com/GuardFell/HPRTAS` |
 | Commit to demonstrate | the commit this file is committed in; `git rev-parse --short HEAD` names it |
 | Release tag | `submission-2026-09-29`, the tag on the commit this file is committed in. `release-1.0` names the earlier first release |
-| Recorded run at that shape of the tree | `../../tests/evidence/core-5-message-exchange-and-layout-tidy_2c3c2eb_2026-09-28.txt` - all three levels and the checks, at the version that added `core-5`; the per-scenario paths are in `../../tests/evidence/operational-models-and-forms_end-to-end_57b3c1d_2026-09-28.txt` |
+| Recorded run in this shape of the tree | `../../tests/evidence/core-5-message-exchange-and-layout-tidy_2c3c2eb_2026-09-28.txt` (the current one: five models, nine scenarios, seven workers, 42 unit and 11 engine tests) and `../../tests/evidence/operational-models-and-forms_end-to-end_57b3c1d_2026-09-28.txt` (the same engine run written out per task, before `core-5` existed) |
 | Defects open at this version | `DEF-07` (no authentication, no enforced role separation), `DEF-08` (no form submitted by a signed-in user), `DEF-10` (simulated ledgers are per worker process), `DEF-14` (a condition on an activity's only outgoing flow is not evaluated) - `../../tests/test-plan.md` section 6 |
 
 Say the commit out loud at the start. The test plan's rule is that a claim belongs to one version, and
@@ -30,14 +31,19 @@ is missing. Do this in advance.
 
 ### 1. The engine
 
+The repository documents `camunda-runtime\start-camunda.bat`. **On the machine this script was
+rehearsed on there is no `camunda-runtime\` directory** - Camunda 8 Run is installed at `D:\camunda`
+and started with `D:\camunda\camunda-start.bat`. Check which you have before the demonstration rather
+than during it:
+
 ```cmd
-camunda-runtime\start-camunda.bat
+D:\camunda\camunda-start.bat            :: the install the rehearsal used (Camunda 8.10.0-alpha5)
+camunda-runtime\start-camunda.bat       :: the path this repository documents
 ```
 
 First start takes about a minute. Check it **and read the version it reports**, because the repository
-states 8.9.19 while the machine the recorded runs were made on has 8.10.0-alpha5 installed at
-`D:\camunda\c8run-8.10.0-alpha5` - see the note under the execution record in
-`../../tests/test-plan.md` section 5:
+states 8.9.19 while the rehearsal machine has 8.10.0-alpha5 - see the note under the execution record
+in `../../tests/test-plan.md` section 5:
 
 ```bash
 curl -s http://localhost:8080/v2/topology
@@ -45,11 +51,14 @@ curl -s http://localhost:8080/v2/topology
 
 Expect the broker to name a version and Tasklist to be at http://localhost:8080/tasklist, login
 `demo` / `demo`. If the version is not 8.9.19, say so at the start of the demonstration: a result
-belongs to the version it was produced on, and that applies to what you are about to show.
+belongs to the version it was produced on, and that applies to what you are about to show. The
+rehearsal machine's engine answers `8.10.0-alpha5`.
 
 ### 2. The models and the forms
 
 A model points at its forms **by key**, so Tasklist needs both deployed or a user task shows no form.
+The loops below deploy all five models and all 41 forms, which is what a demonstration of the whole
+system needs:
 
 ```bash
 cd models/operational
@@ -57,6 +66,19 @@ for f in *.bpmn; do curl -s -X POST "http://localhost:8080/v2/deployments" -F "r
 cd ../../forms
 for f in *.form; do curl -s -X POST "http://localhost:8080/v2/deployments" -F "resources=@$f;type=application/json"; echo; done
 ```
+
+If `core-5` is the one you are demonstrating and it is not already deployed, it needs
+`missing-information-request.form` and `referral-check.form` with it. The `forms` loop covers both.
+
+Check what the engine actually holds before you start, rather than assuming the deployment took:
+
+```bash
+curl -s -X POST "http://localhost:8080/v2/process-definitions/search" -H "Content-Type: application/json" -d '{}'
+```
+
+Expect a definition for each `core-N` you intend to demonstrate. Note that a re-deploy adds a **new
+version** rather than replacing the old one, so seeing several versions of the same process is
+normal - Tasklist starts the latest.
 
 ### 3. The workers - **leave this terminal visible**
 
@@ -66,7 +88,8 @@ cp .env.example .env          # once
 mvn compile exec:java
 ```
 
-Wait for the line that names all seven:
+Wait for the line that names all seven. **The names it lists are job types, not worker names** - the
+worker class behind a job type is in `../../workers/README.md`:
 
 ```
 HPRTAS external workers are running (7 workers). Press Ctrl-C to stop.
@@ -78,6 +101,11 @@ HPRTAS external workers are running (7 workers). Press Ctrl-C to stop.
   send-correspondence
   process-refund
 ```
+
+`request-referral-documents` is the one that matters for scenario 4 below: it is the only worker that
+**publishes a message** rather than returning a result, and the only one whose work the process then
+waits on. If it is missing from that list, the `core-5` exchange will stall at the sending step and
+look like a model fault.
 
 **This has to keep running for the whole demonstration.** The workers are separate processes, not part
 of the engine. If they are not running, every service task stalls and the process sits where it is
@@ -97,7 +125,7 @@ Both should pass. The bindings check prints `PASS: the models, the forms and the
 
 ## The demonstration
 
-Three scenarios, about fifteen minutes with talking. Each one starts a new process instance, so a
+Four scenarios, about twenty minutes with talking. Each one starts a new process instance, so a
 scenario that goes wrong can be abandoned and restarted without disturbing the others.
 
 **The one thing to know about the simulated services.** The scheduling, treatment and payment services
@@ -186,7 +214,68 @@ path and ends at `N_PC_Referred` instead. Both endings are correct; only one is 
 
 ---
 
-### Optional: the other four models, if there is time
+### Scenario 4 - a process that waits for an answer instead of assuming one
+
+This is the one to give if there is time for only one more, because it shows something none of the
+other three do: a step the hospital cannot complete on its own, and a process that **stops and waits**
+for the other party rather than marking the work done.
+
+Start `Core 5 - Missing information message exchange`. Work it in Tasklist as before.
+
+| Step | Task in Tasklist | Fill in | What it shows |
+|---|---|---|---|
+| 1 | Record the missing information | a `referralId` (**write it down** - everything depends on it), `requestedItems` (the items missing), and `requestedFrom` | The Medical Secretaries record what is missing and who to ask |
+| - | *no task - the worker acts* | | `request-referral-documents` publishes `missing-information-requested` to the referring organisation, **correlated by the `referralId`**, and the process then waits at `N_MS_DocumentsSupplied` |
+| 2 | Check the supplied documents | `documentsComplete` ticked | The referral is released for clinical review |
+
+**Rehearsed, and one trap worth knowing.** The three variables the sending worker reads are
+**`referralId`, `requestedFrom` and `requestedItems`** - and `requestedItems`, not `missingItems`, is
+the one the `missing-information-request` form writes. Completing step 1 without `requestedItems`
+raises `INVALID_VARIABLE`, the boundary event `B_MS_RequestInvalid` catches it and the token returns
+to step 1: the instance does not stall, it comes *back*, so a wrong field name looks like a form that
+refused to submit rather than a broken exchange. The form supplies all three, so a person filling it
+in cannot hit this.
+
+**The step that makes this worth showing is the wait.** Between those two tasks the instance is
+sitting on an intermediate message catch event, with **no open user task and no job running** - ask
+someone to find something to click, and there is nothing. Nothing in the hospital can move it; it
+moves when the referring organisation answers. Leave it waiting on screen while you explain that - it
+is the honest picture of an exchange with an outside party, and it is why this is a separate model
+from `core-1`, where the same step is recorded and the process carries straight on.
+
+Now send the answer, standing in for the referring organisation. **Run this from the `workers`
+directory**: the workers resolve their configuration from the directory they are started in, so from
+anywhere else it fails with `Configuration file is missing: .../config/workers.default.json` rather
+than publishing anything.
+
+```bash
+cd workers
+mvn compile exec:java -Dexec.args="--publish-message missing-information-supplied --correlation-key <the referralId you wrote down>"
+```
+
+The instance resumes and step 2 appears.
+
+**Point at the correlation key - and prove it rather than assert it.** The reply is matched to the
+waiting instance by `referralId`. Send the same message first with a **deliberately wrong** key:
+
+```bash
+mvn compile exec:java -Dexec.args="--publish-message missing-information-supplied --correlation-key REF-NOT-THIS-REFERRAL"
+```
+
+The command reports that it published, and the instance **does not move** - still no open task, still
+on `N_MS_DocumentsSupplied`. Then send it with the real key and it resumes. That pair is the whole
+point: a publication correlated by a key no subscription is waiting on is accepted by the engine and
+correlated with nothing, and it is what stops one patient's documents releasing another patient's
+referral. It is also why the command's own output warns that the engine recording a publication is
+not proof that an instance received it.
+
+**If the instance does not resume:** check the key first, character for character, against the
+`referralId` the form wrote at step 1. Check that the command ran from `workers/` second. Check the
+workers terminal third, for the publication line.
+
+---
+
+### Optional: the other models, if there is time
 
 Each is a separate process and is started separately.
 
@@ -209,7 +298,9 @@ mvn compile exec:java -Dexec.args="--publish-message patient-enquiry"
 
 The engine accepting the message is not proof that an instance appeared - check **Operate** for the
 new instance. If the message name matches nothing deployed, the publication is still accepted and
-correlates with nothing.
+correlates with nothing. Note the contrast with scenario 4: **these two take no correlation key**,
+because a start event holds no subscription to correlate against, while the `core-5` exchange is
+addressed by one.
 
 `core-5` is the other way round: it starts from the Processes page like any other model, and then
 **waits**. Start it with a referral reference on the instance, complete *Record the missing
@@ -267,6 +358,7 @@ section 6. Quote the count from there rather than from memory.
 | A user task shows no form | The form was not deployed with the model, or the task is unassigned | Deploy `forms/*.form` as well; assign the task to yourself. A form is resolved when the task is **created**, so a form deployed after the task exists does not reach it - the task has to be created again |
 | The instance sits on a service task | Same as the first row | Same |
 | A condition seems ignored | It is on an activity's only outgoing flow (`DEF-14`) | Expect it, and say so. Conditions are enforced on gateways |
+| The `core-5` instance will not resume | The correlation key is not the `referralId` the form wrote, or the message name is wrong | Re-send with the exact key. A publication that matches no subscription is accepted and does nothing |
 | Too many instances in Tasklist | Previous runs | Filter by process, or work in **Operate** where the diagram shows which instance is which |
 | The Processes page offers a process of nearly the right name that this script never mentions | The engine keeps every definition ever deployed to it, and the models the `core-N` set replaced are still there - `referral-to-appointment`, `treatment-authorisation-and-booking` and `clinic-letter-and-pathway-monitoring` sit beside `core-1`, `core-2` and `core-3` | Start the one whose name begins **`Core 1`** ... **`Core 5`**. Those five are the delivered models; everything else on that page is an earlier edition or another exercise, and none of it is demonstrated here |
 
@@ -280,14 +372,17 @@ Ctrl-C in the workers terminal, then: mvn compile exec:java
 ```
 
 **Restart the engine only as a last resort.** It is slower, and `c8run stop` is unreliable - the
-supported way to stop it is `camunda-runtime\stop-camunda.bat`, and the check that it really stopped
-is that `http://localhost:8080/v2/topology` stops answering.
+repository's supported way to stop it is `camunda-runtime\stop-camunda.bat`, and on the rehearsal
+machine it is `D:\camunda\camunda-stop.bat`. Either way the check that it really stopped is that
+`http://localhost:8080/v2/topology` stops answering. Start it again from the same directory you found
+it in, and give it a minute.
 
 ## The thirty-second version, if asked to summarise
 
 > Five executable processes on Camunda 8, forty-one forms bound to their user tasks, and seven Java
 > workers behind the service tasks. It runs the pathway from a referral arriving to the refund after a
-> cancelled appointment. Nineteen of the twenty-one recorded test scenarios have a result - twelve
-> pass, seven pass in part - and the two that do not are blocked on a signed-in user and on the
-> seven-day letter timer. What is not there is authentication and the audit trail, and no form has
+> cancelled appointment, and one exchange where the process waits for the referring organisation to
+> answer rather than assuming it has. Nineteen of the twenty-one recorded test scenarios have a result
+> - twelve pass, seven pass in part - and the two that do not are blocked on a signed-in user and on
+> the seven-day letter timer. What is not there is authentication and the audit trail, and no form has
 > been submitted by a signed-in user; both are recorded as open defects rather than left out.

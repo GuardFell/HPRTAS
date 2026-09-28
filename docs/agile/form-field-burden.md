@@ -8,10 +8,17 @@ been done. This records what was counted, how, and what the count does and does 
 | NFR-009 | "Administrative recording must not reduce the time clinical staff have available for patient care." | "Count the fields and steps a clinician must complete in the clinical tasks (the forms in `forms/`) and review with the group." - `../requirements/requirements.md` |
 | NFR-011 | "Patients must be able to receive communication in their preferred form, including accessible formats, translation support and assistance from an authorised representative." | "The channel preference is recorded on the user tasks and used by [the correspondence service]; review the options offered in the forms." - `../requirements/requirements.md` |
 
-**Version measured.** `57b3c1d`, working tree clean. Every figure below is read out of the committed
+**Version measured.** `8cbed4b`, working tree clean. Every figure below is read out of the committed
 `.form` files and the committed models, so it can be reproduced rather than taken on trust. A field's
 `key` is the process variable it writes, so the number of fields in a form is the number of variables
 its task supplies.
+
+> The measurement was first made at `57b3c1d`, when there were four operational models and 56 user
+> task elements. `2c3c2eb` added a fifth model, `core-5`, with two more user tasks - and both of them
+> bind forms that already existed (`missing-information-request` and `referral-check`), so the form
+> count, the field count and every figure in the NFR-009 and NFR-011 sections below are unchanged.
+> What moved is the number of tasks the forms serve, which is now 58 elements over 56 distinct ids.
+> That is why nothing below had to be revised: the design was measured, not the tree.
 
 ## What was counted
 
@@ -28,8 +35,12 @@ burden is its bound form's field count, because a user task cannot be completed 
 | Leaf fields across all forms | 293 |
 | Sections across all forms | 55 |
 | Fields carrying a description | 66 of 293 |
-| User tasks in the four operational models | 56 elements over 54 distinct ids |
+| User tasks in the five operational models | 58 elements over 56 distinct ids |
 | Largest single form | 10 fields (`referral-check`, `referral-review`, `appointment-confirmation`, `cancellation-record`) |
+
+Every one of the 58 user tasks binds a form, and no form is left unbound: 41 form files carry 41
+distinct `formId`s, every one is referenced, and nothing references a form that does not exist. That
+is the same check `tools/verify_hprtas_bpmn_bindings.py` makes.
 
 ## NFR-009 - the recording burden on clinical staff
 
@@ -42,6 +53,12 @@ The lanes that carry clinical responsibility, and what they ask a clinician to f
 | Clinical Nurse Specialist Team | 3 | 23 | 7.7 | 8 (`pathway-review`, `urgent-escalation`) |
 | Other Clinical Professionals | 1 | 7 | 7.0 | 7 (`pre-cycle-review`) |
 | **All clinical lanes** | **12** | **97** | **8.1** | |
+
+The `core-5` model adds two tasks to the **Medical Secretaries** lane rather than to a clinical one
+(`N_MS_RecordMissingItems` on `missing-information-request`, 7 fields, and `N_MS_CheckSuppliedDocuments`
+on `referral-check`, 10), which is why that lane now carries 9 tasks and 74 fields where it carried 7
+and 57. `core-5` is administrative everywhere: it records what is missing, publishes the request and
+waits. It adds nothing to the clinical recording burden this requirement is about.
 
 The decision-bearing tasks, isolated from the purely recording ones, because NFR-009 is about the time
 a decision takes and not only about keying:
@@ -180,8 +197,12 @@ repository (it was written for this review); it reads `forms/*.form` as JSON, wa
 `components` collecting the leaves (descending into `group.components`), parses
 `models/operational/*.bpmn` for `<bpmn:userTask>` elements and their `<zeebe:formDefinition formId>`,
 and maps each task to its lane through the model's `<bpmn:lane>` / `<bpmn:flowNodeRef>` elements.
-Keying the task map by **model and id together** matters: `N_OB_CorrectRequest` and
+It reads **every** `*.bpmn` in `models/operational/` rather than a list of filenames, because a list
+is how a count goes stale: an earlier version of it named the four models explicitly and silently
+reported 55 where the tree held 56.
+
+Keying the task map by **model and id together** matters too: `N_OB_CorrectRequest` and
 `N_OB_RecordDispatchFailure` each appear once in `core-1` and once in `core-4`, and keying on the id
-alone silently drops one of each pair and reports 54 where there are 56.
+alone silently drops one of each pair and reports 56 where there are 58 elements.
 
 `python ../../tools/verify_hprtas_bpmn_bindings.py` checks the binding half of this without an engine.

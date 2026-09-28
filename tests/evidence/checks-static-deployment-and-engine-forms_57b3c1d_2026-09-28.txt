@@ -1,0 +1,100 @@
+The static checks, the deployment and the engine form binding, at the current HEAD
+==================================================================================
+
+Version under test
+------------------
+57b3c1d7aaf52ca1a4601ebf112e9084fea6e455, the tip of `main` and one commit past `release-1.0`.
+
+Date: 2026-09-28.  Tester: M5, automated.
+
+Why these are recorded separately
+---------------------------------
+`workers_java-all-three-levels_57b3c1d_2026-09-28.txt` records what the workers do. These four
+checks are about the artefacts instead: that the models, the forms and the workers agree with each
+other, that the diagrams follow the layout and BPMN rules, that the exported diagrams are legible,
+and that a deployment of the delivered files is accepted by the engine. None of them needs a worker
+to be running, and three of the four need no engine at all.
+
+Method, and what was actually run
+---------------------------------
+Run from the repository root. `PYTHONIOENCODING=utf-8` is set for the export check (see the caveat
+below). The engine was up and answered `GET /v2/topology` with `200` for the two checks that need it.
+
+    python tools/verify_hprtas_bpmn_bindings.py
+    python tools/verify_hprtas_bpmn_layout.py
+    python tools/verify_hprtas_bpmn_export.py
+    python tools/verify_hprtas_engine_forms.py
+
+    # the deployment recipe from README.md, models then forms, one request per file
+    curl -X POST http://localhost:8080/v2/deployments -F "resources=@<model>.bpmn;type=application/xml"
+    curl -X POST http://localhost:8080/v2/deployments -F "resources=@<form>.form;type=application/json"
+
+Results
+-------
+    verify_hprtas_bpmn_bindings.py     PASS
+      4 operational models, 41 forms, 6 workers
+      "PASS: the models, the forms and the workers agree"
+
+    verify_hprtas_bpmn_layout.py       PASS
+      "PASS: 6 models follow the layout and BPMN rules checked here"
+      109 crossings remain, reported as flows crossing where the process leaves no other way
+      round; they are not failures and the check does not count them as such.
+
+    verify_hprtas_bpmn_export.py       VERIFICATION PASSED
+      Word coverage read back from the exported PNGs by the Windows OCR engine, against the 0.6
+      threshold:
+        core-1-referral-and-new-patient-appointment          64% (47/74)
+        core-2-treatment-authorisation-funding-and-payment   85% (79/93)
+        core-3-clinic-letter-and-pathway-escalation          88% (56/64)
+        core-4-follow-up-cancellation-enquiry-and-refund      80% (82/102)
+        patient-pathway-all-entities                         78% (71/91)
+        referral-to-treatment-pathway                        80% (48/60)
+      All six are above the threshold. The words not read back are mostly pool and lane names
+      ("Hospital", "Trust", "External") and title-case words, not flow labels.
+
+    verify_hprtas_engine_forms.py      PASS
+      41 forms deployed, then each model deployed, started, and driven to a user task:
+        core-1 -> N_MS_CheckReferral   binds referral-check
+        core-2 -> N_CL_AssessPatient   binds patient-assessment
+        core-3 -> N_C_PrepareLetter    binds clinic-letter
+        core-4 -> N_OB_ArrangeFollowUp binds booking-request
+      "PASS: every model deploys, starts, and reaches a task that binds a deployed form"
+
+    Deployment of the delivered files
+      4 of 4 models accepted, each returning a deploymentKey and a processDefinition at version 1.
+      41 of 41 forms accepted. No model and no form was refused.
+      The strategic model was deployed too, deliberately, as the negative case: it was refused
+      with HTTP 400 and
+        "INVALID_ARGUMENT: ... 'patient-pathway-all-entities.bpmn': - Element: definitions -
+         ERROR: Must contain at least one executable process"
+      which is the behaviour README.md and models/strategic/README.md both describe. The refusal
+      is the expected result, not a failure.
+
+Environment recorded with the run
+---------------------------------
+    Engine     Camunda 8 Run 8.10.0-alpha5, on the bundled Temurin JRE 25.0.4.1
+    Python     3.11.7, with Pillow; the export check also uses the Windows OCR engine through
+               tools/ocr_diagram_text.ps1
+    Host       Windows, user 98419
+
+Caveat on repeating the export check
+------------------------------------
+`verify_hprtas_bpmn_export.py` prints its result with the words "词覆盖" in it. On a console whose
+code page is cp1252 rather than UTF-8, Python raises `UnicodeEncodeError` while printing and the
+script exits 1 even though every model passed. Setting `PYTHONIOENCODING=utf-8` (or `PYTHONUTF8=1`)
+avoids it. `verify_hprtas_bpmn_bindings.py`, `verify_hprtas_bpmn_layout.py` and
+`verify_hprtas_engine_forms.py` are unaffected. This is a portability of the check, not a result of
+it: the run recorded above is the one with the encoding set.
+
+What this run does not cover
+----------------------------
+* The strategic and socio-technical models are checked as documents only. They contain no
+  executable process, so no instance of them can be started and none is claimed to run.
+* The layout check measures geometry and the BPMN rules the lectures set out. It does not judge
+  whether a diagram is a good model of the process.
+* The export check reads text back with OCR. It says the labels are legible, not that they are
+  correct, and a word can be missed because the recogniser misread it rather than because it was
+  drawn badly.
+* These checks do not exercise a task being completed by a person, so they say nothing about
+  `DEF-08`; they are the evidence for the bindings that `DEF-08` leaves unproved on the Tasklist
+  side.

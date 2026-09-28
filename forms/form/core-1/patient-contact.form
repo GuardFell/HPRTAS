@@ -1,0 +1,68 @@
+{
+  "id": "patient-contact",
+  "components": [
+    {
+      "type": "group",
+      "label": "Patient Contact Details",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "contactMethod",
+          "label": "Contact Method",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            { "label": "Telephone", "value": "telephone" },
+            { "label": "Letter", "value": "letter" },
+            { "label": "Email", "value": "email" }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "contactOutcome",
+          "label": "Contact Outcome",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            { "label": "Contacted", "value": "contacted" },
+            { "label": "Unanswered", "value": "unanswered" },
+            { "label": "Wrong Number", "value": "wrong_number" },
+            { "label": "Alternative Requested", "value": "alternative_requested" }
+          ]
+        },
+        {
+          "type": "number",
+          "key": "contactAttemptNumber",
+          "label": "Attempt Number",
+          "description": "Which attempt this is, so each attempt and its outcome is kept.",
+          "validate": {
+            "min": 1
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "contactNotes",
+          "label": "Contact Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

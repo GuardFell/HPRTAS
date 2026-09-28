@@ -1,0 +1,88 @@
+{
+  "id": "treatment-modification",
+  "components": [
+    {
+      "type": "group",
+      "label": "Modification",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "proposedTreatment",
+          "label": "Modified Treatment",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "treatmentStartDate",
+          "label": "Revised Start Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "specialResources",
+          "label": "Special Resources Required",
+          "description": "One resource per line, or separated by commas."
+        },
+        {
+          "type": "textarea",
+          "key": "modificationReason",
+          "label": "Reason for the Modification",
+          "description": "Only a formally submitted modification is processed. One requested by email, telephone or informal communication is refused.",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Authorisation",
+      "components": [
+        {
+          "type": "checkbox",
+          "key": "affectsCharge",
+          "label": "The Modification Affects an Existing Charge, Funding Approval or Payment",
+          "description": "Where this is ticked the case is referred to the Finance Team before the change is applied."
+        },
+        {
+          "type": "checkbox",
+          "key": "clinicalAuthorised",
+          "label": "Clinical Authorisation Confirmed",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "authorisingClinician",
+          "label": "Authorising Clinician",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

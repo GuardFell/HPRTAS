@@ -1,0 +1,64 @@
+{
+  "id": "correspondence-monitoring",
+  "components": [
+    {
+      "type": "group",
+      "label": "Monitoring",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "letterWithinSevenDays",
+          "label": "Letter Completed Within Seven Days",
+          "description": "Tick where the letter was approved within seven days of the appointment. Where it was not, reminders are issued until it is complete."
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "monitoringDate",
+          "label": "Date Checked",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "number",
+          "key": "daysOutstanding",
+          "label": "Days Outstanding",
+          "validate": {
+            "min": 0
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "monitoredBy",
+          "label": "Checked By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "monitoringNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

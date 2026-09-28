@@ -1,0 +1,77 @@
+{
+  "id": "funding-approval",
+  "components": [
+    {
+      "type": "group",
+      "label": "Approval",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "fundingOrganisation",
+          "label": "Funding Organisation",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "authorisationReference",
+          "label": "Authorisation Reference",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "number",
+          "key": "approvedAmount",
+          "label": "Approved Amount (£)",
+          "validate": {
+            "required": true,
+            "min": 0,
+            "max": 100000
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "approvalDate",
+          "label": "Approval Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "approvalLimitations",
+          "label": "Limitations on the Approval",
+          "description": "Any treatment, period or amount the approval does not cover."
+        },
+        {
+          "type": "textfield",
+          "key": "approvedBy",
+          "label": "Approved By",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

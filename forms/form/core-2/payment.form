@@ -1,0 +1,59 @@
+{
+  "id": "payment",
+  "components": [
+    {
+      "type": "group",
+      "label": "Payment Details",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "number",
+          "key": "chargeAmount",
+          "label": "Charge Amount (£)",
+          "validate": {
+            "required": true,
+            "min": 0,
+            "max": 100000
+          }
+        },
+        {
+          "type": "select",
+          "key": "fundingRoute",
+          "label": "Funding Route",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            { "label": "Hospital Funded", "value": "hospital" },
+            { "label": "Approved Insurer", "value": "insurer" },
+            { "label": "Patient Payment", "value": "patient" },
+            { "label": "Exempt", "value": "exempt" }
+          ]
+        },
+        {
+          "type": "textfield",
+          "key": "paymentReference",
+          "label": "Payment Reference",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

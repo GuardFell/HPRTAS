@@ -1,0 +1,125 @@
+{
+  "id": "referral-review",
+  "components": [
+    {
+      "type": "group",
+      "label": "Referral Information",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientName",
+          "label": "Patient Name",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "referringOrganisation",
+          "label": "Referring Organisation",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Clinical Review",
+      "components": [
+        {
+          "type": "textarea",
+          "key": "clinicalSummary",
+          "label": "Clinical Summary",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "decision",
+          "label": "Review Decision",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            { "label": "Accept Referral", "value": "accepted" },
+            { "label": "Reject Referral", "value": "rejected" },
+            { "label": "Request Further Information", "value": "further_information" },
+            { "label": "Redirect to Another Service", "value": "redirected" }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "decisionReason",
+          "label": "Reason for Decision",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Booking Request",
+      "components": [
+        {
+          "type": "select",
+          "key": "speciality",
+          "label": "Required Speciality",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            { "label": "Oncology", "value": "oncology" },
+            { "label": "Chemotherapy", "value": "chemotherapy" },
+            { "label": "General", "value": "general" }
+          ]
+        },
+        {
+          "type": "select",
+          "key": "priority",
+          "label": "Appointment Priority",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            { "label": "Urgent", "value": "urgent" },
+            { "label": "Routine", "value": "routine" }
+          ]
+        },
+        {
+          "type": "number",
+          "key": "requestedWindow",
+          "label": "Preferred Timeframe (days)",
+          "validate": {
+            "required": true,
+            "min": 1,
+            "max": 365
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "patientRequirements",
+          "label": "Patient Requirements (if any)"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

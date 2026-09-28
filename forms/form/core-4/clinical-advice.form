@@ -1,0 +1,73 @@
+{
+  "id": "clinical-advice",
+  "components": [
+    {
+      "type": "group",
+      "label": "Clinical Advice",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "enquiryReference",
+          "label": "Enquiry Reference",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "adviceGiven",
+          "label": "Advice or Support Given",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "urgentClinicalConcern",
+          "label": "An Urgent Clinical Concern Is Present",
+          "description": "Where this is ticked the enquiry is highlighted and escalated immediately rather than closed."
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "adviceDate",
+          "label": "Date of the Advice",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "advisedBy",
+          "label": "Advised By",
+          "description": "An appropriately qualified member of the Clinical Nurse Specialist Team.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "adviceNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

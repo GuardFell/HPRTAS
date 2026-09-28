@@ -1,0 +1,58 @@
+{
+  "id": "funding-route",
+  "components": [
+    {
+      "type": "group",
+      "label": "Funding Information",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "treatmentRequestId",
+          "label": "Treatment Request ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "fundingRoute",
+          "label": "Funding Route",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            { "label": "Hospital Funded", "value": "hospital" },
+            { "label": "Approved Insurer", "value": "insurer" },
+            { "label": "Patient Payment", "value": "patient" },
+            { "label": "Exempt", "value": "exempt" }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "fundingNotes",
+          "label": "Additional Notes"
+        },
+        {
+          "type": "checkbox",
+          "key": "fundingApprovalRequired",
+          "label": "Funding Approval Required From the Funding Organisation",
+          "description": "Tick where the funding organisation must approve before anything further happens. Where this is left unticked the approval step is skipped, so tick it unless no approval is needed."
+        },
+        {
+          "type": "checkbox",
+          "key": "paymentRequiredFromPatient",
+          "label": "Payment Required From the Patient",
+          "description": "Tick for a treatment the patient pays for. Where this is left unticked the appointment is confirmed without taking payment, so tick it unless the hospital, an insurer or an exemption covers the treatment."
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

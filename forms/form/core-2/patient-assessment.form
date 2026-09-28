@@ -1,0 +1,92 @@
+{
+  "id": "patient-assessment",
+  "components": [
+    {
+      "type": "group",
+      "label": "Assessment",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "assessmentDate",
+          "label": "Assessment Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "diagnosis",
+          "label": "Diagnosis",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "diagnosisDiscussed",
+          "label": "Diagnosis Discussed with the Patient",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "treatmentOptionsExplained",
+          "label": "Treatment Options Explained",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "assessmentNotes",
+          "label": "Assessment Notes"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Clinical Decisions",
+      "components": [
+        {
+          "type": "checkbox",
+          "key": "consentGiven",
+          "label": "Patient Consents to Proceed",
+          "description": "The patient agreed to proceed with treatment. Without consent the process records that no treatment was agreed."
+        },
+        {
+          "type": "checkbox",
+          "key": "delayingCareIsClinicalRisk",
+          "label": "Delaying Care Is a Clinical Risk",
+          "description": "Answered now because it decides what happens if the funding or payment gate later fails. Recorded by a clinician only."
+        },
+        {
+          "type": "textfield",
+          "key": "assessingClinician",
+          "label": "Assessing Clinician",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

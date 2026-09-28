@@ -41,6 +41,13 @@ every model re-laid out).
   export checks all pass, all four models and all 41 forms are accepted by the engine, and every
   model reaches a user task that binds a deployed form. It also records the refusal of the
   strategic model, which is the expected result rather than a failure.
+- `operational-models-and-forms_end-to-end_57b3c1d_2026-09-28.txt` — **the same engine run as the
+  first file, written out per scenario**: for every scenario and every user task, the element path
+  the engine took and the variables the task was completed with, plus which test-plan scenarios each
+  one is a result for. The first file states what each level concluded; this one is what those
+  conclusions rest on, so a claim about a particular gateway can be checked without re-running the
+  engine. It was produced by M4 from the same command at the same commit, and it agrees with the M5
+  record on every result.
 
 **The Java implementation, at `76a7fdc`.** The first record made against the Java implementation,
 and the current one until `57b3c1d`. It covers all three levels at one version — the configuration
@@ -113,17 +120,24 @@ operational models of the first edition, which the four `core-N` models have sin
   on the engine by `../tools/verify_hprtas_engine_forms.py`, which is recorded in the second
   `57b3c1d` file. What is still not proved is a person using one. Role-based access cannot be
   exercised at all (`DEF-07`).
-- **The exception paths that no engine run has driven.** The between-cycle review's refusals and the
-  suspected-clinical-error return in `core-3`. The unit suite covers the worker side of both, which
-  is not the same as covering the model's branch. The no-slot-in-period case, which used to belong
-  on this list at model level, is now driven: scenario 8 of `OperationalModelsTest` takes the urgent
-  variant of it to the escalation `DEF-11` was raised for, and the instance completes. The
-  another-appointment and pathway-review branches of the cancellation are driven in scenarios 5
-  and 6 of the same run.
+- **The exception paths that no engine run has driven.** The informal-request refusal in the
+  between-cycle review, the suspected-clinical-error return in `core-3`, the offer-another-appointment
+  and pathway-review branches of the cancellation, and the third decision of the referral
+  (`further_information`). The unit suite covers the worker side of several of them, which is not the
+  same as covering the model's branch. Three paths that used to belong on this list are now driven by
+  the `57b3c1d` run: the no-slot-in-period case at model level, in scenario 8, where the urgent
+  variant reaches the escalation `DEF-11` was raised for and the instance completes; the two
+  non-accepting referral decisions, in scenario 7; and the enquiry routing, in scenario 6. The
+  cancellation's other two branches are **not** driven - scenario 5 takes `offerAnotherAppointment`
+  and `pathwayReviewRequired` both false, so it exercises the Finance-referral branch only.
 - **The job-failure path and the shutdown path are unproven end to end.** No run has driven a job
   failure through the engine, so the retry behaviour the Java client had to express explicitly is
   only covered at handler level, and no run has sent the workers a Ctrl-C.
-- **Four scenarios have never been run**: `TC-02`, `TC-13`, `TC-16` and `TC-20`.
+- **Two scenarios have never been run**: `TC-13` and `TC-16`. `TC-02` and `TC-20` were on this list
+  until the `57b3c1d` run, which gave each a partial result: `TC-02` has two of its three decisions
+  driven and `TC-20` has its routing driven but not the recording `BR-37` asks for. `TC-13` needs a
+  signed-in user and `TC-16` needs the seven-day timer to fire, so neither can be closed by a run
+  alone. `../test-plan.md` section 5 states which rows moved and why.
 - **The engine runs stand on one machine's engine.** The deployment versions printed in the
   `76a7fdc` record are that development instance's, not first deployments.
 

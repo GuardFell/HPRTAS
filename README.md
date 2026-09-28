@@ -44,6 +44,10 @@ than taken on trust. `tools/README.md` says what each one does and what it needs
 `Enterprise Architecture/` holds the portfolio deliverable describing the enterprise and its
 information systems, and the Zachman Framework view of them.
 
+`HPRTAS - Five Executable Processes.pptx` is the presentation deck for the second release: the five
+executable processes one to a slide, and the ten acceptance criteria with the scenario and the
+result recorded for each. Its footers name the version its claims belong to.
+
 ## Running it
 
 The processes run on Camunda 8 Run 8.9.19, driven through the Orchestration Cluster API on `/v2/`.

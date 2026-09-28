@@ -3,6 +3,7 @@ package uk.ac.uwe.hprtas.workers;
 import uk.ac.uwe.hprtas.workers.workers.AppointmentAvailability;
 import uk.ac.uwe.hprtas.workers.workers.CorrespondenceDispatch;
 import uk.ac.uwe.hprtas.workers.workers.PaymentProcessing;
+import uk.ac.uwe.hprtas.workers.workers.ReferralDocumentRequest;
 import uk.ac.uwe.hprtas.workers.workers.ReferralValidation;
 import uk.ac.uwe.hprtas.workers.workers.RefundProcessing;
 import uk.ac.uwe.hprtas.workers.workers.TreatmentAvailability;
@@ -17,6 +18,7 @@ public final class Workers {
   public static final List<WorkerModule> ALL =
       List.of(
           new ReferralValidation(),
+          new ReferralDocumentRequest(),
           new AppointmentAvailability(),
           new TreatmentAvailability(),
           new PaymentProcessing(),

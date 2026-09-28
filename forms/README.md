@@ -1,7 +1,7 @@
 # Camunda Forms
 
 The Camunda Forms the staff fill in, one `.form` file per form, and the user tasks in the
-operational models they are bound to. Every one of the 55 user tasks in the four operational models
+operational models they are bound to. Every one of the 59 user tasks in the five operational models
 binds a form.
 
 ## How a form is bound to a task
@@ -98,12 +98,18 @@ meaningful and which nothing reads uses a Yes/No `select` instead, so the answer
 validation refuses it, in `core-1`. It records the referral and patient identifiers, the referring
 organisation, the identification check (BR-46) and the completeness decision. It supplies
 `documentsComplete`, `missingItems` and `referringOrganisation` to `validate-referral`; a referral
-ticked as complete must not also list missing items, or the check cannot be decided.
+ticked as complete must not also list missing items, or the check cannot be decided. In `core-5` the
+same checklist is applied to the documentation that the referring organisation has just supplied, so
+`documentsComplete` is what decides whether the request goes out again.
 
 `missing-information-request` and `referral-exception-review` cover the incomplete referral. The
 request records what was asked for and from whom; the exception review is for the case where the
 referral was marked incomplete but named nothing, and it records the items so the re-run validation
-has something to request.
+has something to request. In `core-5` the same request form feeds `request-referral-documents`: it
+supplies `referralId`, `requestedFrom` and `requestedItems`, and `referralId` is also the value the
+referring organisation's reply is correlated by, so an answer cannot be delivered to another
+patient's referral. A request that names no item is refused rather than published, because the
+referring organisation could not answer it (EX-01).
 
 `referral-review` is bound to the consultant's clinical review of a referral in `core-1`. It records
 the patient and referral identifiers, the referring organisation, the clinical summary and the
@@ -208,7 +214,7 @@ result, and `fitToContinue`, which is the clinical decision the model branches o
 ## Every binding
 
 A form shared by several tasks is listed once per task, because the same form is the variable
-contract for each of them. Every user task in the four operational models appears exactly once.
+contract for each of them. Every user task in the five operational models appears exactly once.
 
 | Form | Tasks bound to it |
 |---|---|
@@ -233,7 +239,7 @@ contract for each of them. Every user task in the four operational models appear
 | `funding-route.form` | `N_F_DetermineFunding` |
 | `letter-processing.form` | `N_MS_ProcessLetter` |
 | `management-escalation.form` | `N_AM_EscalateHigher` |
-| `missing-information-request.form` | `N_MS_RequestMissing` |
+| `missing-information-request.form` | `N_MS_RequestMissing`, `N_MS_RecordMissingItems` |
 | `no-suitable-slot.form` | `N_OB_RecordNoSlot` |
 | `pathway-review.form` | `N_CNS_PathwayReview` |
 | `patient-assessment.form` | `N_CL_AssessPatient` |
@@ -242,7 +248,7 @@ contract for each of them. Every user task in the four operational models appear
 | `payment-notification.form` | `N_F_NotifyPatient` |
 | `payment.form` | `N_F_CalculateCharge`, `N_F_CorrectPaymentRequest` |
 | `pre-cycle-review.form` | `N_OC_PreCycleReview` |
-| `referral-check.form` | `N_MS_CheckReferral`, `N_MS_CorrectReferralInput` |
+| `referral-check.form` | `N_MS_CheckReferral`, `N_MS_CorrectReferralInput`, `N_MS_CheckSuppliedDocuments` |
 | `referral-exception-review.form` | `N_MS_ReviewException` |
 | `referral-review.form` | `N_C_ClinicalReview` |
 | `referrer-notification.form` | `N_OB_NotifyReferrer` |
@@ -292,7 +298,7 @@ with the task completion call instead, so they do not exercise the form bindings
 
 What has been checked about the forms themselves:
 
-- All 41 deploy to the engine, and every user task in the four operational models resolves a form
+- All 41 deploy to the engine, and every user task in the five operational models resolves a form
   key.
 - All 41 import in `@bpmn-io/form-js`, the library Tasklist renders them with, and each one's
   submission carries exactly its own field keys and nothing else, at the top level — 293 fields,

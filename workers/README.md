@@ -61,9 +61,10 @@ mvn test                                          # unit tests, no engine requir
 mvn compile exec:java -Dexec.args="--check"               # validate the configuration and the wiring
 mvn compile exec:java                                     # run the workers
 mvn compile exec:java -Dexec.args="--publish-message <name>"   # send a message a model waits for
+mvn compile exec:java -Dexec.args="--publish-message <name> --correlation-key <value>"   # the same, addressed to a subscription
 mvn test -Pengine                                 # the fixture and the models, engine running
 mvn test -Pengine -Dtest=SmokeTest                # the fixture only
-mvn test -Pengine -Dtest=OperationalModelsTest    # the four operational models only
+mvn test -Pengine -Dtest=OperationalModelsTest    # the five operational models only
 mvn package                                       # a self-contained jar
 ```
 
@@ -98,6 +99,53 @@ Before any worker is registered the gateway is asked for its topology. A worker 
 gateway would otherwise start, look alive, and quietly take no work at all, which is the stalled job
 described under *Failure handling* below.
 
+## Publishing a message
+
+`referral-document-request` is the one worker that sends rather than calls. What it sends is the
+request `core-5` is about, and the model then waits for the answer - so the two halves of messaging
+in this project are not the same kind of publication, and the client keeps them apart rather than
+treating an empty key as no key at all:
+
+| | message start event (`core-4`) | intermediate catch event (`core-5`) |
+|---|---|---|
+| Who sends it | the participant that starts the process | the worker `referral-document-request`, or `--publish-message` |
+| Is it correlated | no: a start event holds no subscription | yes: the publication is matched to a subscription by a key |
+| The key | none is sent (`.withoutCorrelationKey()`) | the referral, `referralId` |
+| The variable | - | the instance has to hold `referralId` **before** it reaches the waiting step |
+
+The guide's configuration check, filled in for the exchange in `core-5`:
+
+| Setting | Value |
+|---|---|
+| Sending step | `N_MS_RequestDocuments` in `core-5-missing-information-message-exchange` |
+| Task definition type | `request-referral-documents` |
+| Worker | `referral-document-request`, registered against that job type |
+| Published message name | `missing-information-requested` |
+| Receiving message name | `missing-information-supplied` |
+| Subscription correlation key | `=referralId`, a FEEL expression reading a process variable |
+| Correlation key variable | `referralId`, written by the `missing-information-request` form before the waiting step is reached |
+| Published correlation key | the `referralId` of the referral the request is about |
+| Message id | `missing-information-requested:<referralId>:<jobKey>`, which is what makes a retry of one job one publication |
+| Time to live | two minutes (`MessagePublisher.TIME_TO_LIVE`) |
+
+**The reply is not the hospital's to send.** `missing-information-supplied` comes from the referring
+organisation, so no worker here publishes it on the hospital's behalf: the demonstration sends it
+with `--publish-message` (or from the engine test), which is standing in for the participant that
+owns that message. Publishing it and seeing the engine accept it proves nothing on its own - a
+publication correlated by a key no subscription is waiting on is accepted and correlated with
+nothing - which is why scenario 9 of `OperationalModelsTest` publishes one addressed to a *different*
+referral first and asserts the instance has not moved.
+
+**Two minutes, not the guide's ten.** A message outlives its moment otherwise: one still held when a
+later instance reaches a waiting step with the same key would move a process it was never meant for.
+Two minutes is long enough for the receiving instance to get there and short enough that a stale
+publication expires.
+
+**A publication that cannot be made fails the job.** It is not a business rule being broken, so it
+does not travel a modelled error path: the handler wrapper fails the job with one fewer retry and
+the broker tries again. The message id is what keeps that retry from sending a second copy, which is
+the duplicate the guide's step 6 warns about.
+
 ## The workers
 
 **`referral-validation`** (job type `validate-referral`) checks that a referral has the supporting
@@ -105,6 +153,13 @@ information it needs. It reads `documentsComplete`, `missingItems` and `referrin
 writes `validationResult`, `requestedItems`, `missingInformationRequestedFrom` and
 `missingInformationRequestedDate`. It calls no external service, and it deliberately records no
 clinical judgement: whether a referral should be accepted is not its business.
+
+**`referral-document-request`** (job type `request-referral-documents`) is the one worker that does
+not call anything: it **publishes a message**. It reads `referralId`, `requestedFrom` and
+`requestedItems`, publishes `missing-information-requested` correlated by the referral, and writes
+`informationRequestStatus` and `informationRequestMessageKey`. It serves `N_MS_RequestDocuments` in
+`core-5`, which is the sending half of the exchange that model waits on - see *Publishing a message*
+below for what the correlation key does and why the publication carries an id.
 
 **`appointment-availability`** (job type `check-appointment-availability`) asks the simulated
 scheduling service for a new patient appointment. It reads `speciality`, `priority` and
@@ -150,7 +205,7 @@ that case the provider is not called at all.
 ## Where the workers run in the models
 
 The job type in the configuration is the `<zeebe:taskDefinition type="...">` of the matching
-service task, so this is the binding between the workers and the four operational processes.
+service task, so this is the binding between the workers and the five operational processes.
 
 In `core-1`, `N_MS_ValidateReferral` runs `referral-validation`, `N_OB_CheckAvailability` runs
 `appointment-availability` and `N_OB_SendNotification` runs `correspondence-dispatch`.
@@ -162,6 +217,9 @@ In `core-3`, `N_MS_SendLetter` runs `correspondence-dispatch`.
 
 In `core-4`, `N_OB_CheckAvailability` runs `appointment-availability`, `N_OB_SendFollowUpLetter`
 runs `correspondence-dispatch` and `N_F_ProcessRefund` runs `refund-processing`.
+
+In `core-5`, `N_MS_RequestDocuments` runs `referral-document-request`, the worker that publishes
+rather than calls.
 
 Every service task in the operational models is covered. The strategic and socio-technical models
 contain no service tasks, so nothing is bound to them.
@@ -194,7 +252,9 @@ failure to `N_TB_RecordNotificationFailure`, and both payment failures to
 `N_F_CorrectPaymentRequest`. In `core-3` a dispatch failure returns to
 `N_MS_HandleDispatchFailure`. In `core-4` the follow-up input error returns to `N_OB_CorrectRequest`,
 the dispatch failure to `N_OB_RecordDispatchFailure`, and the refund error to
-`N_F_CorrectRefundRequest`.
+`N_F_CorrectRefundRequest`. In `core-5` an unusable request returns to `N_MS_RecordMissingItems`,
+which is the task that owns it: the referral reference, the organisation to ask and the items are
+all recorded there, so correcting the request needs no second task.
 
 `core-3` also carries a timer boundary event of seven days on `N_C_ApproveLetter`, which is what
 starts the delayed-letter path without a worker being involved.
@@ -202,7 +262,7 @@ starts the delayed-letter path without a worker being involved.
 **A gateway's fallback has to be declared.** Camunda does not treat a sequence flow without a
 condition as a fallback: an exclusive gateway only falls back to the flow named in its `default`
 attribute, and raises "Expected at least one condition to evaluate to true, or to have a default
-flow" when no condition matches. Every exclusive gateway in the four operational models declares
+flow" when no condition matches. Every exclusive gateway in the five operational models declares
 one, and the flow it names carries no condition of its own.
 
 **A variable written on an error does not reach the process.** The variables attached to a BPMN
@@ -299,17 +359,25 @@ receives a job of its type, returns its result and lets the process continue, an
 error is caught by the model's boundary event.
 
 `mvn test -Pengine -Dtest=OperationalModelsTest` drives the delivered models rather than a fixture.
-It deploys the four operational models and the forms, starts the workers and runs five scenarios:
+It deploys the five operational models and the forms, starts the workers and runs nine scenarios:
 the normal referral path in `core-1` to the appointment being arranged; authorisation, funding,
 payment and the between-cycle review in `core-2`; the clinic letter in `core-3` to its distribution;
-a follow-up requested and booked in `core-4`; and a paid appointment cancelled and refunded in
-`core-4`.
+a follow-up requested and booked in `core-4`; a paid appointment cancelled and refunded in `core-4`;
+an urgent clinical enquiry routed to the clinical team in `core-4`; the two decisions that end
+`core-1` before an appointment; the urgent referral with no slot escalated out of the booking; and
+the message exchange in `core-5`, where the request is published by the worker and the reply is
+correlated by the referral the instance is waiting on.
 
 The refund scenario is run after the payment scenario on purpose: the refund it records is made
 against the payment reference the earlier scenario settled with the provider, which is the only way
 to show the refund worker working against a transaction that really exists rather than one the test
 assumed. The scenarios therefore declare the order they run in rather than leaving it to the test
 runner.
+
+Scenario 9 publishes one reply addressed to a different referral before the real one, and asserts the
+instance has not moved: a publication whose key no subscription is waiting on is accepted by the
+engine and correlated with nothing, so a scenario that only published the right key would pass
+whether or not the correlation key did anything.
 
 Both engine runs are recorded in `../tests/evidence/`, named after the commit they were run at.
 Forms and role-based access are out of scope here and are tested separately; see

@@ -14,7 +14,7 @@ test evidence for that system.
 
 `models/` holds the BPMN. `models/strategic/` contains the high-level view of the wider process,
 `models/socio-technical/` the i\* Strategic Dependency and Strategic Rationale models, and
-`models/operational/` the four executable processes that Camunda runs.
+`models/operational/` the five executable processes that Camunda runs.
 
 `forms/` holds the Camunda Forms the user tasks are bound to, one `.form` file per form, each with
 the form key the model refers to.
@@ -77,7 +77,7 @@ They need Java 21, which is the runtime the engine uses. `mvn compile exec:java 
 validates the configuration and the wiring without connecting to the engine, which is useful before
 a demonstration.
 
-The four operational processes are separate, so each is started separately from Tasklist under
+The five operational processes are separate, so each is started separately from Tasklist under
 Processes. Complete the user tasks on an instance as it reaches them; each task is assigned to the
 candidate group its lane represents. `core-4-follow-up-cancellation-enquiry-and-refund` also has
 two message start events, for a cancellation arriving and for a patient enquiry arriving, which are
@@ -93,6 +93,19 @@ Neither path is requested by the hospital, so neither can be an ordinary start e
 can hold only one of those. The command names the message the model waits for; see
 `workers/README.md` under *Starting a process by message* for what it does and does not prove.
 
+`core-5-missing-information-message-exchange` is the other way round: it waits for a message. Start
+it from the Processes page with the referral reference on the instance, complete the recording task,
+and it will send the request and then wait at the catch event until the reply arrives. Send the reply
+with the correlation key, which is what addresses it to that referral:
+
+```bash
+cd workers
+mvn compile exec:java -Dexec.args="--publish-message missing-information-supplied --correlation-key REF-2026-0001"
+```
+
+Without the key the publication is accepted and correlated with nothing, so the instance stays where
+it is. `workers/README.md` under *Publishing a message* has the two kinds of message side by side.
+
 The strategic model is a non-executable view of the process. Do not deploy it: Camunda rejects a
 deployment that contains no executable process.
 
@@ -105,7 +118,7 @@ cd workers
 mvn test                                          # the worker unit tests, no engine
 mvn compile exec:java -Dexec.args="--check"               # the configuration and the worker wiring, no engine
 mvn test -Pengine -Dtest=SmokeTest                # the workers against a purpose-built fixture, engine running
-mvn test -Pengine -Dtest=OperationalModelsTest    # the four operational models and the forms, engine running
+mvn test -Pengine -Dtest=OperationalModelsTest    # the five operational models and the forms, engine running
 ```
 
 The engine tests are left out of the default build because they need Camunda 8 Run to be up and they

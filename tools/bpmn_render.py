@@ -32,6 +32,8 @@ ARIAL = r"C:\Windows\Fonts\arial.ttf"
 SHAPE_KINDS = {
     "startEvent": "start",
     "endEvent": "end",
+    # a waiting event: a thin ring, with the envelope a message subscription displays
+    "intermediateCatchEvent": "catch",
     "task": "task",
     "userTask": "task",
     "serviceTask": "task",
@@ -132,6 +134,9 @@ class Model(object):
                 "default": el.get("default") or "",
                 "outgoing": [f.text for f in el.findall("bpmn:outgoing", NS)],
                 "incoming": [f.text for f in el.findall("bpmn:incoming", NS)],
+                # a waiting event that waits on a message carries the envelope marker, which is
+                # how the diagram says what it is waiting for
+                "message": el.find("bpmn:messageEventDefinition", NS) is not None,
             }
 
         self.flows = {}           # id -> dict(kind, src, tgt, condition, name, waypoints, label)
@@ -319,6 +324,10 @@ def render(path, png_path, scale=2.5, pad=14):
             _ring(draw, box, 1.5 * scale, 0)
         elif kind == "end":
             _ring(draw, box, 3.4 * scale, 0)
+        elif kind == "catch":
+            _ring(draw, box, 1.5 * scale, 0)
+            if s.get("message"):
+                _envelope(draw, box, scale)
         elif kind in ("xor", "and", "or", "complex"):
             cx, cy, r = x + w / 2.0, y + h / 2.0, w / 2.0
             draw.polygon([(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)],
@@ -359,6 +368,21 @@ def _ring(draw, box, width, inner):
         x0, y0, x1, y1 = box
         draw.ellipse((x0 + inner, y0 + inner, x1 - inner, y1 - inner), outline=INK,
                      width=max(1, int(round(width))))
+
+
+def _envelope(draw, box, scale):
+    """The message marker a message catch event displays: an envelope in the middle of the ring."""
+    x0, y0, x1, y1 = box
+    cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+    half_w = (x1 - x0) * 0.29
+    half_h = (y1 - y0) * 0.20
+    left, top = cx - half_w, cy - half_h
+    right, bottom = cx + half_w, cy + half_h
+    lw = max(1, int(round(1.1 * scale)))
+    draw.rectangle((left, top, right, bottom), outline=INK, width=lw)
+    # the flap: both top corners meeting in the middle, which is what makes it read as an envelope
+    draw.line([(left, top), (cx, cy)], fill=INK, width=lw)
+    draw.line([(right, top), (cx, cy)], fill=INK, width=lw)
 
 
 def _gateway_marker(draw, kind, cx, cy, r, scale):

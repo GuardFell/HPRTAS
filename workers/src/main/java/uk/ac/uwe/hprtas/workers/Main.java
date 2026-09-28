@@ -1,6 +1,7 @@
 package uk.ac.uwe.hprtas.workers;
 
 import io.camunda.client.CamundaClient;
+import io.camunda.client.api.command.PublishMessageCommandStep1;
 import io.camunda.client.api.worker.JobHandler;
 import io.camunda.client.api.worker.JobWorker;
 import uk.ac.uwe.hprtas.workers.services.Services;
@@ -26,10 +27,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * {@code mvn exec:java -Dexec.args=--check} validates the configuration and the wiring without
  * connecting to an engine, which is useful before a demonstration.
  *
- * {@code mvn exec:java "-Dexec.args=--publish-message <name> [--variables <json>]"} publishes one
- * BPMN message and exits. It is the sending half of the two message start events in {@code core-4}:
- * a cancellation arriving and a patient enquiry arriving are begun by sending the message they wait
- * for, not from the Processes page.
+ * {@code mvn exec:java "-Dexec.args=--publish-message <name> [--variables <json>] [--correlation-key
+ * <value>]"} publishes one BPMN message and exits. It is the sending half of the messages the models
+ * wait for: the two message start events in {@code core-4}, and the reply
+ * {@code core-5-missing-information-message-exchange} waits on, which is the one that needs a
+ * correlation key because it is caught by a subscription rather than a start event.
  */
 public final class Main {
 
@@ -72,7 +74,11 @@ public final class Main {
    * and an unexpected exception has to be reported rather than left to stall the job.
    */
   public static JobHandler createTaskHandler(
-      WorkerModule workerModule, Config config, JsonLogger log, Services services) {
+      WorkerModule workerModule,
+      Config config,
+      JsonLogger log,
+      Services services,
+      MessagePublisher messages) {
 
     return (jobClient, job) ->
         handle(
@@ -80,6 +86,7 @@ public final class Main {
             config,
             log,
             services,
+            messages,
             new ClientJobActions(jobClient, job),
             new JobFacts(
                 job.getKey(),
@@ -103,6 +110,7 @@ public final class Main {
       Config config,
       JsonLogger log,
       Services services,
+      MessagePublisher messages,
       JobActions actions,
       JobFacts job) {
 
@@ -112,7 +120,14 @@ public final class Main {
 
     try {
       final WorkerContext context =
-          new WorkerContext(Instant.now(), job.processInstanceKey(), services, config, workerLog);
+          new WorkerContext(
+              Instant.now(),
+              job.key(),
+              job.processInstanceKey(),
+              services,
+              messages,
+              config,
+              workerLog);
 
       final Outcome outcome = workerModule.handle(job.variables(), context);
 
@@ -193,8 +208,9 @@ public final class Main {
    *
    * A message start event is begun by the message name alone. It holds no subscription, so it has no
    * correlation key and none is sent; a correlation key belongs to the intermediate catch events a
-   * long-running process waits on. The engine answers a publication it recorded, which is not the
-   * same as an instance receiving it - a name no deployed model declares is accepted and correlated
+   * long-running process waits on, and one of those is why {@code --correlation-key} exists. The
+   * engine answers a publication it recorded, which is not the same as an instance receiving it - a
+   * name no deployed model declares, or a key no instance is waiting on, is accepted and correlated
    * with nothing - so what follows says what was published rather than that it worked.
    */
   static void publishMessage(Config config, String[] args, int at) {
@@ -205,25 +221,32 @@ public final class Main {
     }
 
     final Map<String, Object> variables = new LinkedHashMap<>();
+    String correlationKey = null;
     for (int i = at + 2; i < args.length - 1; i++) {
       if ("--variables".equals(args[i])) {
         variables.putAll(parseVariables(args[i + 1]));
+      }
+      if ("--correlation-key".equals(args[i])) {
+        correlationKey = args[i + 1];
       }
     }
 
     final CamundaClient client = CamundaClients.create(config);
     final long messageKey;
     try {
+      final PublishMessageCommandStep1.PublishMessageCommandStep2 named =
+          client.newPublishMessageCommand().messageName(name);
+      // A start event holds no subscription, so it has no key to name, and the client makes the two
+      // cases separate commands rather than treating them as the same one with an empty value.
+      final PublishMessageCommandStep1.PublishMessageCommandStep3 addressed =
+          correlationKey == null
+              ? named.withoutCorrelationKey()
+              : named.correlationKey(correlationKey);
+
       messageKey =
-          client
-              .newPublishMessageCommand()
-              .messageName(name)
-              // The models wait for these two messages on message start events, and a start event
-              // holds no subscription, so it has no correlation key to name. The builder makes the
-              // choice explicit rather than defaulting it, because the two are not interchangeable.
-              .withoutCorrelationKey()
+          addressed
               .variables(variables)
-              .timeToLive(Duration.ofMinutes(1))
+              .timeToLive(MessagePublisher.TIME_TO_LIVE)
               .send()
               .join()
               .getMessageKey();
@@ -242,8 +265,11 @@ public final class Main {
     client.close();
 
     Console.out(
-        "Published \"%s\" as message %d%s.",
-        name, messageKey, variables.isEmpty() ? "" : " with " + Json.write(variables));
+        "Published \"%s\" as message %d%s%s.",
+        name,
+        messageKey,
+        correlationKey == null ? "" : " correlated by \"" + correlationKey + "\"",
+        variables.isEmpty() ? "" : " with " + Json.write(variables));
     Console.out(
         "  The engine recorded the publication. That is not proof that a process instance received"
             + " it: a message name no deployed model declares is correlated with nothing.");
@@ -263,11 +289,16 @@ public final class Main {
   }
 
   private static void usage() {
-    Console.out("Usage: --publish-message <message name> [--variables <json object>]");
+    Console.out(
+        "Usage: --publish-message <message name> [--variables <json object>]"
+            + " [--correlation-key <value>]");
     Console.out("");
     Console.out("Publishes one BPMN message. The name is the name of the bpmn:message a model");
-    Console.out("waits for, and the variables are its payload. The messages the operational");
-    Console.out("models declare are named in ../README.md and in the model that waits for them.");
+    Console.out("waits for, and the variables are its payload. The correlation key is what a");
+    Console.out("subscription is matched on, so it is needed for a message an intermediate catch");
+    Console.out("event waits on and must be left out for a message start event. The messages the");
+    Console.out("operational models declare are named in ../README.md and in the model that waits");
+    Console.out("for them.");
   }
 
   /** Connects, registers every worker, and runs until the process is asked to stop. */
@@ -303,6 +334,7 @@ public final class Main {
     }
 
     final long processId = ProcessHandle.current().pid();
+    final MessagePublisher messages = new ClientMessagePublisher(client);
     final List<String> jobTypes = new ArrayList<>();
     final List<JobWorker> workers = new ArrayList<>();
 
@@ -312,7 +344,7 @@ public final class Main {
           client
               .newWorker()
               .jobType(settings.taskType())
-              .handler(createTaskHandler(workerModule, config, log, services))
+              .handler(createTaskHandler(workerModule, config, log, services, messages))
               .maxJobsActive(settings.maxJobsToActivate())
               .timeout(Duration.ofMillis(settings.timeoutMs()))
               .name(workerModule.name() + "-" + processId)

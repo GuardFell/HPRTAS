@@ -96,6 +96,7 @@ class SmokeTest {
 
     final JsonLogger log = JsonLogger.create("warn", null);
     final long processId = ProcessHandle.current().pid();
+    final MessagePublisher messages = new ClientMessagePublisher(client);
 
     for (WorkerModule workerModule : Workers.ALL) {
       final Config.WorkerSettings settings = config.worker(workerModule.name());
@@ -103,7 +104,7 @@ class SmokeTest {
           client
               .newWorker()
               .jobType(settings.taskType())
-              .handler(Main.createTaskHandler(workerModule, config, log, services))
+              .handler(Main.createTaskHandler(workerModule, config, log, services, messages))
               .maxJobsActive(settings.maxJobsToActivate())
               .timeout(Duration.ofMillis(settings.timeoutMs()))
               .name(workerModule.name() + "-smoke-" + processId)
@@ -133,6 +134,12 @@ class SmokeTest {
     return Vars.of(
         "documentsComplete", true,
         "referringOrganisation", "St Mary GP Surgery",
+        // The fixture is linear, so the messaging worker is called on this path too. It is given
+        // something to ask for, because a request that names no missing item is refused - which is
+        // the rule that stops the referring organisation being asked for nothing (EX-01).
+        "referralId", "REF-SMOKE-" + instanceSuffix,
+        "requestedFrom", "St Mary GP Surgery",
+        "requestedItems", List.of("investigation results", "diagnostic reports"),
         "speciality", "Oncology",
         "priority", "routine",
         "requestedWindow", 14,
@@ -176,10 +183,18 @@ class SmokeTest {
         250, normal.get("paidAmount"), "the amount returned by the provider should be recorded");
     assertEquals("post", normal.get("dispatchChannel"), "the letter should be dispatched by post");
     assertNotNull(normal.get("dispatchReference"), "the dispatch should be referenced");
+    assertEquals(
+        "sent",
+        normal.get("informationRequestStatus"),
+        "the request for the missing information should have been published");
+    assertNotNull(
+        normal.get("informationRequestMessageKey"),
+        "the publication should have returned the key it was recorded under");
 
     final List<String> expectedNormalPath =
         List.of(
             "StartEvent_Smoke",
+            "Task_RequestDocuments",
             "Task_ValidateReferral",
             "Task_AppointmentAvailability",
             "Task_TreatmentAvailability",

@@ -1,5 +1,7 @@
 package uk.ac.uwe.hprtas.workers;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.io.IOException;
@@ -9,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,9 @@ public final class TestSupport {
   public static final Instant NOW = Instant.parse("2026-09-16T09:00:00Z");
 
   public static final long INSTANCE_KEY = 2251799813685249L;
+
+  /** The job a context is built for. A worker that publishes derives its message id from it. */
+  public static final long JOB_KEY = 2251799813685300L;
 
   private TestSupport() {}
 
@@ -71,11 +77,21 @@ public final class TestSupport {
 
   /** A context of the same shape the worker builds from a real job. */
   public static WorkerContext buildContext(Config config) {
-    return buildContext(config, NOW, INSTANCE_KEY);
+    return buildContext(config, NOW, INSTANCE_KEY, JOB_KEY, RecordingMessagePublisher.recording());
   }
 
   public static WorkerContext buildContext(Config config, Instant now, long instanceKey) {
-    return new WorkerContext(now, instanceKey, Services.create(config), config, silentLogger());
+    return buildContext(config, now, instanceKey, JOB_KEY, RecordingMessagePublisher.recording());
+  }
+
+  /**
+   * The same, with the publisher the test wants - the recorder it will assert on, or one that fails
+   * so the job-failure path can be exercised.
+   */
+  public static WorkerContext buildContext(
+      Config config, Instant now, long instanceKey, long jobKey, MessagePublisher messages) {
+    return new WorkerContext(
+        now, jobKey, instanceKey, Services.create(config), messages, config, silentLogger());
   }
 
   /** A context whose payment provider is the one given, so a test can watch what it is asked to do. */
@@ -87,7 +103,70 @@ public final class TestSupport {
             new TreatmentService(simulated.treatment()),
             provider,
             new CorrespondenceService(simulated.correspondence()));
-    return new WorkerContext(NOW, INSTANCE_KEY, services, config, silentLogger());
+    return new WorkerContext(
+        NOW, JOB_KEY, INSTANCE_KEY, services, RecordingMessagePublisher.recording(),
+        config, silentLogger());
+  }
+
+  /**
+   * A publisher that records what a handler published instead of sending it.
+   *
+   * What the messaging worker has to get right is which message it publishes, which value it is
+   * correlated by and what payload it carries - none of which needs a broker to check. The failing
+   * one is the other half: a publication that cannot be made has to leave the job failed rather than
+   * completed, so the broker retries it.
+   */
+  public static final class RecordingMessagePublisher implements MessagePublisher {
+
+    /** One publication, as the test sees it. */
+    public record Publication(
+        String messageName,
+        String correlationKey,
+        String messageId,
+        Map<String, Object> variables) {}
+
+    private static final long FIRST_MESSAGE_KEY = 4503599627370496L;
+
+    private final List<Publication> publications = new ArrayList<>();
+    private final boolean failing;
+
+    private RecordingMessagePublisher(boolean failing) {
+      this.failing = failing;
+    }
+
+    /** A publisher that accepts everything and remembers it. */
+    public static RecordingMessagePublisher recording() {
+      return new RecordingMessagePublisher(false);
+    }
+
+    /** A publisher that refuses, standing in for a gateway that cannot be reached. */
+    public static RecordingMessagePublisher failing() {
+      return new RecordingMessagePublisher(true);
+    }
+
+    @Override
+    public long publish(
+        String messageName, String correlationKey, String messageId, Map<String, Object> variables) {
+
+      if (failing) {
+        throw new IllegalStateException("the gateway the message would be published to is not there");
+      }
+      publications.add(
+          new Publication(
+              messageName, correlationKey, messageId, Map.copyOf(variables)));
+      return FIRST_MESSAGE_KEY + publications.size();
+    }
+
+    /** Everything published, in the order it was published. */
+    public List<Publication> publications() {
+      return List.copyOf(publications);
+    }
+
+    /** The only publication made, which is what a test asserting on one of them wants. */
+    public Publication only() {
+      assertEquals(1, publications.size(), "expected exactly one publication");
+      return publications.get(0);
+    }
   }
 
   /**

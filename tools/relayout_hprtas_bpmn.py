@@ -93,7 +93,11 @@ class Model(object):
         self.nodes = {}
         for el in self.process:
             tag = local(el.tag)
-            if tag in ("startEvent", "endEvent"):
+            # An intermediate catch event is laid out as the event it is: the same 36x36 box a
+            # start or end event gets, because that is what the notation draws it as. A model
+            # that waits on a message needs one, and a kind this list does not name is dropped
+            # from the diagram rather than laid out badly.
+            if tag in ("startEvent", "endEvent", "intermediateCatchEvent"):
                 kind = "event"
             elif tag in ("userTask", "serviceTask", "manualTask", "businessRuleTask",
                          "sendTask", "receiveTask", "task", "callActivity", "subProcess"):
@@ -421,7 +425,12 @@ class Router(object):
             return None
         base = 1.0
         if (x, y) in self.soft:
-            base += 90.0                 # running through a label is untidy
+            # A line through a word is the worst of the two: a reader can follow a flow that
+            # crosses another line, but a label with a line through it cannot be read at all, and
+            # an activity's name is drawn under its box, which is exactly where a flow arrives from
+            # below. So the penalty is above the one for crossing a line (600 a cell), and the
+            # router goes round the words and comes in at an edge instead.
+            base += 1500.0
         seen = self.used.get((x, y), 0)
         if seen:
             # a flow already goes through here: crossing it is a last resort, so
@@ -463,6 +472,14 @@ class Router(object):
                 ("top", (sx + sw / 2.0, sy), (0, -1))):
             ports.append(("src", name, (int(round(point[0] / CELL)), int(round(point[1] / CELL))),
                           first_step))
+
+        # The same rule at the other end: a flow that leaves through a label leaves through the
+        # words, and the first segment is drawn straight from the border. A departure port the
+        # label covers is dropped, and the flow leaves by an edge that is clear.
+        clear_ports = [port for port in ports if port[2] not in self.soft]
+        if clear_ports:
+            ports = clear_ports
+
         goals = []
         for name, point, _ in (
                 ("left", (tx, ty + th / 2.0), None),
@@ -470,6 +487,16 @@ class Router(object):
                 ("top", (tx + tw / 2.0, ty), None),
                 ("bottom", (tx + tw / 2.0, ty + th), None)):
             goals.append((name, (int(round(point[0] / CELL)), int(round(point[1] / CELL)))))
+
+        # An activity's name is drawn under its box, so the middle of the bottom edge is where a
+        # label usually sits: arriving there means arriving through the words, and the last segment
+        # is drawn straight to the border however the search got there. An edge whose middle is
+        # covered is therefore not offered as an arrival, and the flow comes in at an edge that can
+        # be reached cleanly. If every edge is covered the full set is kept, because a flow with no
+        # way in at all would be a line missing from the diagram.
+        clear = [goal for goal in goals if goal[1] not in self.soft]
+        if clear:
+            goals = clear
 
         goal_cells = {cell: name for name, cell in goals}
         best = None
@@ -590,6 +617,23 @@ class Router(object):
                 y = p[1] + (q[1] - p[1]) * i / float(steps)
                 cell = (int(round(x / CELL)), int(round(y / CELL)))
                 self.used[cell] = self.used.get(cell, 0) + 1
+
+    def soft_reserve(self, points):
+        """A line a later route may run along, but would rather not: another flow's route.
+
+        `reserve` makes a route impassable when the router is hard, which is right between the
+        sequence flows of one process and wrong for a message flow, because a message flow has to
+        reach a node inside the pool however the solid lines are arranged. This marks the same
+        cells as merely expensive, so the dashed line takes the next lane instead of lying on top
+        of a solid one - which is what it otherwise does, because a message flow is routed by a
+        router of its own that is told about the shapes and nothing else.
+        """
+        for p, q in zip(points, points[1:]):
+            steps = int(max(abs(q[0] - p[0]), abs(q[1] - p[1])) / CELL) + 1
+            for i in range(steps + 1):
+                x = p[0] + (q[0] - p[0]) * i / float(steps)
+                y = p[1] + (q[1] - p[1]) * i / float(steps)
+                self.soft.add((int(round(x / CELL)), int(round(y / CELL))))
 
 
 def route_one(router, flow, geometry, make_region, pool_region, strict):
@@ -1073,6 +1117,14 @@ def relayout(path, verbose=True):
             message_router.block_rect(box["x"], box["y"], box["w"], box["h"])
     for pool_row in other_pools:
         message_router.block_rect(pool_row["x"], pool_row["y"], pool_row["w"], pool_row["h"])
+    # The dashed lines are routed by a router of their own, so they are told what the solid ones
+    # already had to keep off: the labels, and the routes themselves. Without this a message flow
+    # runs straight through the text under an activity and along the top of a sequence flow that
+    # happens to be going the same way, which is what a reader sees as a mess.
+    for label in placer.boxes:
+        message_router.soft_block_rect(*label)
+    for points in routes.values():
+        message_router.soft_reserve(points)
 
     for message in model.messages:
         box_of_pool = {p["id"]: p for p in other_pools}

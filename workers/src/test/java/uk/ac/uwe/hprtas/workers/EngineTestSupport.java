@@ -121,9 +121,42 @@ final class EngineTestSupport {
     }
   }
 
+  /**
+   * Whether the instance is sitting at this element now.
+   *
+   * A process that waits on a message is not finished and not doing anything, so the only way to
+   * tell "waiting for the reply" from "moved on" is to ask the engine which element is active.
+   */
+  @SuppressWarnings("unchecked")
+  static boolean isActiveAt(long processInstanceKey, String elementId) {
+    final Map<String, Object> body =
+        post(
+            "/v2/element-instances/search",
+            Map.of(
+                "filter",
+                Map.of(
+                    "processInstanceKey", String.valueOf(processInstanceKey),
+                    "elementId", elementId,
+                    "state", "ACTIVE")));
+
+    return !((List<Object>) body.getOrDefault("items", List.of())).isEmpty();
+  }
+
+  /** Waits for the instance to arrive at an element, and fails the scenario if it never does. */
+  static void awaitActiveAt(long processInstanceKey, String elementId, long timeoutMs) {
+    final long deadline = System.currentTimeMillis() + timeoutMs;
+    while (System.currentTimeMillis() < deadline) {
+      if (isActiveAt(processInstanceKey, elementId)) {
+        return;
+      }
+      sleep(500);
+    }
+    throw new IllegalStateException(
+        "the instance " + processInstanceKey + " never became active at " + elementId);
+  }
+
   /** An open user task, as the Tasklist API reports it. */
   record UserTask(String userTaskKey, String elementId, String state) {}
-
   @SuppressWarnings("unchecked")
   static List<UserTask> openUserTasks(long processInstanceKey) {
     final Map<String, Object> body =

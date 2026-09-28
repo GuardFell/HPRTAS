@@ -40,7 +40,7 @@ import uk.ac.uwe.hprtas.workers.services.Services;
  * completed the way a Tasklist user completes them, and the path is read back from the Orchestration
  * Cluster API.
  *
- * Eight scenarios:
+ * Nine scenarios:
  *
  * <ol>
  *   <li>{@code core-1} normal referral path, to the appointment being arranged</li>
@@ -51,10 +51,14 @@ import uk.ac.uwe.hprtas.workers.services.Services;
  *   <li>{@code core-4} an urgent clinical enquiry routed to the Clinical Nurse Specialist Team</li>
  *   <li>{@code core-1} a referral the consultant rejects and one it redirects, neither booked</li>
  *   <li>{@code core-1} an urgent referral with no suitable slot, escalated out of the booking</li>
+ *   <li>{@code core-5} the request for missing documentation published by the worker, and the
+ *       reply correlated by the referral that the instance is waiting for</li>
  * </ol>
  *
  * Scenarios 5 and 6 are the two the models are started for by a message rather than by a direct
- * instance creation, so they are what proves the message start events work end to end.
+ * instance creation, so they are what proves the message start events work end to end. Scenario 9
+ * is the other half of messaging: the process waits on a subscription, and a publication is
+ * matched to it by its correlation key rather than by the message name.
  *
  * Scenario 5 runs after scenario 2 on purpose: it refunds the payment reference scenario 2 settled,
  * which is the only way to exercise {@code refund-processing} against a provider that really holds
@@ -70,7 +74,8 @@ class OperationalModelsTest {
           "core-1-referral-and-new-patient-appointment.bpmn",
           "core-2-treatment-authorisation-funding-and-payment.bpmn",
           "core-3-clinic-letter-and-pathway-escalation.bpmn",
-          "core-4-follow-up-cancellation-enquiry-and-refund.bpmn");
+          "core-4-follow-up-cancellation-enquiry-and-refund.bpmn",
+          "core-5-missing-information-message-exchange.bpmn");
 
   private static final String PAYMENT_REFERENCE = "PAY-E2E-0001";
 
@@ -112,6 +117,7 @@ class OperationalModelsTest {
 
     final JsonLogger log = JsonLogger.create("warn", null);
     final long processId = ProcessHandle.current().pid();
+    final MessagePublisher messages = new ClientMessagePublisher(client);
 
     for (WorkerModule workerModule : Workers.ALL) {
       final Config.WorkerSettings settings = config.worker(workerModule.name());
@@ -119,7 +125,7 @@ class OperationalModelsTest {
           client
               .newWorker()
               .jobType(settings.taskType())
-              .handler(Main.createTaskHandler(workerModule, config, log, services))
+              .handler(Main.createTaskHandler(workerModule, config, log, services, messages))
               .maxJobsActive(settings.maxJobsToActivate())
               .timeout(Duration.ofMillis(settings.timeoutMs()))
               .name(workerModule.name() + "-e2e-" + processId)
@@ -458,16 +464,150 @@ class OperationalModelsTest {
     assertFalse(
         run.elements().contains("N_PC_ReviewDelay"),
         "an urgent referral takes the escalation path, not the routine delay review");
+  }
+
+  @Test
+  @Order(9)
+  @DisplayName(
+      "Scenario 9 - core-5, the request is published and only this referral's reply moves it on")
+  void core5MissingInformationExchange() {
+    assumeTrue(client != null, EngineTestSupport.engineNotRunningMessage());
+    // The message exchange the guide describes, on a delivered model: a worker publishes the
+    // request, the process waits on a subscription, and the reply is correlated by a key the
+    // instance already holds. The negative half is the part worth driving - a reply addressed to
+    // another referral must leave this instance exactly where it is, which is what the correlation
+    // key is for and what a message name alone would not do.
+    final String referralId = "REF-CORE5-" + System.currentTimeMillis();
+    final String processId = "core-5-missing-information-message-exchange";
+
+    report("");
+    report("Scenario 9 - core-5, missing information requested from, and supplied by, the referring");
+    report("organisation");
+
+    final long instanceKey =
+        client
+            .newCreateInstanceCommand()
+            .bpmnProcessId(processId)
+            .latestVersion()
+            // The first step of the guide: the variable a subscription is correlated by is
+            // initialised before the instance runs, not when the waiting step is reached.
+            .variables(Vars.of("referralId", referralId))
+            .send()
+            .join()
+            .getProcessInstanceKey();
+    report("  instance %d, referral %s", instanceKey, referralId);
+
+    completeUserTask(
+        instanceKey,
+        "N_MS_RecordMissingItems",
+        Vars.of(
+            "referralId", referralId,
+            "requestedFrom", "St Mary GP Surgery",
+            "requestedItems", List.of("investigation results", "diagnostic reports")));
+
+    // The worker publishes the request and completes its job, so the instance reaches the waiting
+    // step rather than stalling on the service task.
+    EngineTestSupport.awaitActiveAt(instanceKey, "N_MS_DocumentsSupplied", 30000);
+    report("  the request was published and the instance is waiting on N_MS_DocumentsSupplied");
+
+    publishCorrelated("missing-information-supplied", "REF-NOT-THIS-REFERRAL", Vars.of());
+    EngineTestSupport.sleep(2000);
+    assertTrue(
+        EngineTestSupport.isActiveAt(instanceKey, "N_MS_DocumentsSupplied"),
+        "a reply correlated by another referral must not move this instance: the message name is"
+            + " the same, so the key is the only thing that tells the two apart");
+    assertFalse(
+        EngineTestSupport.visitedElementIds(instanceKey).contains("N_MS_CheckSuppliedDocuments"),
+        "the referral must not have carried on from another referral's reply");
+
+    publishCorrelated(
+        "missing-information-supplied",
+        referralId,
+        Vars.of("suppliedItems", "investigation results, diagnostic reports"));
+    EngineTestSupport.awaitActiveAt(instanceKey, "N_MS_CheckSuppliedDocuments", 30000);
+    report("  the reply for this referral was correlated and the instance carried on");
+
+    completeUserTask(
+        instanceKey,
+        "N_MS_CheckSuppliedDocuments",
+        Vars.of(
+            "referralId", referralId,
+            "documentsComplete", true,
+            "supportingDocuments", "investigation results, diagnostic reports",
+            "checkedBy", "Medical Secretary"));
+
+    final List<String> path =
+        EngineTestSupport.visitedElementIds(
+            instanceKey,
+            List.of("N_MS_ReadyForReview"),
+            30000);
+    report("  path: %s", String.join(" -> ", path));
+
+    assertEquals(
+        "COMPLETED",
+        EngineTestSupport.instanceState(instanceKey),
+        "the referral should have finished once the documentation arrived");
+    assertTrue(
+        path.contains("N_MS_RequestDocuments"),
+        "the request for the missing information should have been published by the worker");
+    assertTrue(
+        path.contains("N_MS_DocumentsSupplied"),
+        "the process should have waited on the message subscription");
+    assertTrue(
+        path.contains("N_MS_ReadyForReview"),
+        "the referral should have been ready for clinical review");
+    assertFalse(
+        path.contains("B_MS_RequestInvalid"),
+        "a usable request should not have taken the error path back to the recording task");
 
     report("");
     report("=".repeat(74));
-    report("All four operational models ran against the real workers. Both messages core-4 is");
+    report("All five operational models ran against the real workers. Both messages core-4 is");
     report("started by were sent - the cancellation in scenario 5 and the enquiry in scenario 6 -");
-    report("scenario 7 drove both decisions that end core-1 before an appointment, and scenario 8");
-    report("drove an urgent referral that could not be booked to the escalation DEF-11 was about.");
+    report("scenario 7 drove both decisions that end core-1 before an appointment, scenario 8 drove");
+    report("an urgent referral that could not be booked to the escalation DEF-11 was about, and");
+    report("scenario 9 drove the message exchange: the request was published by the worker and the");
+    report("reply was correlated by the referral, with a reply for another referral ignored.");
     report("Every service task was reached and every gateway routed on what the workers returned.");
     report("The refund in scenario 5 was recorded by the provider against the payment scenario 2");
     report("settled.");
+  }
+
+  /** Completes the open user task at an element, which is how a Tasklist user would do it. */
+  private static void completeUserTask(
+      long instanceKey, String elementId, Map<String, Object> variables) {
+
+    // The task list is served from the exported records, so a task that was created a moment ago
+    // is not there yet. The other scenarios poll for it inside the drive loop; this waits the same
+    // way, so that a task which never appears is a timeout rather than a race.
+    final long deadline = System.currentTimeMillis() + 30000;
+    while (System.currentTimeMillis() < deadline) {
+      for (EngineTestSupport.UserTask task : EngineTestSupport.openUserTasks(instanceKey)) {
+        if (elementId.equals(task.elementId())) {
+          EngineTestSupport.completeUserTask(task.userTaskKey(), variables);
+          report("  %-32s completed with %s", elementId, Json.write(variables));
+          return;
+        }
+      }
+      EngineTestSupport.sleep(500);
+    }
+    throw new IllegalStateException(
+        "the instance " + instanceKey + " has no open user task at " + elementId);
+  }
+
+  /** Publishes a message addressed to one subscription, which is what a correlation key does. */
+  private static void publishCorrelated(
+      String message, String correlationKey, Map<String, Object> variables) {
+
+    client
+        .newPublishMessageCommand()
+        .messageName(message)
+        .correlationKey(correlationKey)
+        .timeToLive(Duration.ofMinutes(2))
+        .variables(variables)
+        .send()
+        .join();
+    report("  published %s correlated by %s", message, correlationKey);
   }
 
   // ---------------------------------------------------------------------------

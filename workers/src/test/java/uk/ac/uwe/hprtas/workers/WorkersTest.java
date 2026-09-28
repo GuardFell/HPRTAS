@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
@@ -19,6 +20,7 @@ import uk.ac.uwe.hprtas.workers.TestSupport.CountingPaymentProvider;
 import uk.ac.uwe.hprtas.workers.workers.AppointmentAvailability;
 import uk.ac.uwe.hprtas.workers.workers.CorrespondenceDispatch;
 import uk.ac.uwe.hprtas.workers.workers.PaymentProcessing;
+import uk.ac.uwe.hprtas.workers.workers.ReferralDocumentRequest;
 import uk.ac.uwe.hprtas.workers.workers.ReferralValidation;
 import uk.ac.uwe.hprtas.workers.workers.RefundProcessing;
 import uk.ac.uwe.hprtas.workers.workers.TreatmentAvailability;
@@ -35,6 +37,8 @@ class WorkersTest {
   private static final Config CONFIG = TestSupport.buildConfig();
 
   private static final ReferralValidation REFERRAL_VALIDATION = new ReferralValidation();
+  private static final ReferralDocumentRequest REFERRAL_DOCUMENT_REQUEST =
+      new ReferralDocumentRequest();
   private static final AppointmentAvailability APPOINTMENT_AVAILABILITY =
       new AppointmentAvailability();
   private static final TreatmentAvailability TREATMENT_AVAILABILITY = new TreatmentAvailability();
@@ -156,6 +160,114 @@ class WorkersTest {
                 + "\"");
       }
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // referral-document-request
+  // ---------------------------------------------------------------------------
+
+  @Test
+  @DisplayName(
+      "referral-document-request: the request is published, correlated by the referral (FR-003)")
+  void theDocumentRequestIsPublishedAgainstTheReferral() {
+    final TestSupport.RecordingMessagePublisher messages =
+        TestSupport.RecordingMessagePublisher.recording();
+
+    final Outcome outcome =
+        REFERRAL_DOCUMENT_REQUEST.handle(
+            Vars.of(
+                "referralId", "REF-2026-0001",
+                "requestedFrom", "St Mary GP Surgery",
+                "requestedItems", "investigation results, diagnostic reports"),
+            TestSupport.buildContext(
+                CONFIG, TestSupport.NOW, TestSupport.INSTANCE_KEY, TestSupport.JOB_KEY, messages));
+
+    final TestSupport.RecordingMessagePublisher.Publication sent = messages.only();
+    assertEquals(
+        ReferralDocumentRequest.MESSAGE_NAME,
+        sent.messageName(),
+        "the message name has to be the one the receiving subscription waits on");
+    assertEquals(
+        "REF-2026-0001",
+        sent.correlationKey(),
+        "the referral reference is what the receiving side correlates by, so that one referral's"
+            + " request cannot be delivered to another patient's subscription");
+    assertEquals(
+        List.of("investigation results", "diagnostic reports"),
+        sent.variables().get("requestedItems"),
+        "a comma-separated field is split into the items the referring organisation is asked for");
+
+    final Map<String, Object> variables = completedVariables(outcome);
+    assertEquals("sent", variables.get("informationRequestStatus"));
+    assertNotNull(
+        variables.get("informationRequestMessageKey"),
+        "the key the publication was recorded under is what ties the record to the message");
+  }
+
+  @Test
+  @DisplayName(
+      "referral-document-request: a retry of one job publishes under the same id, a new job under a new one")
+  void theMessageIdIsStableForAJob() {
+    final String first = ReferralDocumentRequest.messageIdFor("REF-2026-0001", 100L);
+
+    assertEquals(
+        first,
+        ReferralDocumentRequest.messageIdFor("REF-2026-0001", 100L),
+        "the broker retries a job with the key it was activated with, so a retry republishes"
+            + " under the id the first attempt used and the engine records one message");
+    assertNotEquals(
+        first,
+        ReferralDocumentRequest.messageIdFor("REF-2026-0001", 101L),
+        "a new job is a new request - the same referral chased again - and must reach the engine");
+  }
+
+  @Test
+  @DisplayName(
+      "referral-document-request: a request that names no missing item is refused and nothing is sent (EX-01)")
+  void anEmptyDocumentRequestIsRefused() {
+    final TestSupport.RecordingMessagePublisher messages =
+        TestSupport.RecordingMessagePublisher.recording();
+    final WorkerContext context =
+        TestSupport.buildContext(
+            CONFIG, TestSupport.NOW, TestSupport.INSTANCE_KEY, TestSupport.JOB_KEY, messages);
+
+    final Outcome outcome =
+        REFERRAL_DOCUMENT_REQUEST.handle(
+            Vars.of(
+                "referralId", "REF-2026-0001",
+                "requestedFrom", "St Mary GP Surgery",
+                "requestedItems", List.of()),
+            context);
+
+    assertBusinessError(outcome, ErrorCode.INVALID_VARIABLE);
+    assertEquals(
+        List.of(),
+        messages.publications(),
+        "a request that asks for nothing must not be published, rather than sent as an empty one");
+  }
+
+  @Test
+  @DisplayName("referral-document-request: a publication that cannot be made is not a business outcome")
+  void aFailedPublicationIsNotABusinessError() {
+    final WorkerContext context =
+        TestSupport.buildContext(
+            CONFIG,
+            TestSupport.NOW,
+            TestSupport.INSTANCE_KEY,
+            TestSupport.JOB_KEY,
+            TestSupport.RecordingMessagePublisher.failing());
+
+    final Map<String, Object> variables =
+        Vars.of(
+            "referralId", "REF-2026-0001",
+            "requestedFrom", "St Mary GP Surgery",
+            "requestedItems", List.of("investigation results"));
+
+    // The publication failing is an infrastructure fault, not a rule being broken: it has to leave
+    // the job failed so the broker retries it, which is what the wrapper in Main does with a
+    // throw. A returned business error would send the process down a modelled error path instead.
+    assertThrows(
+        IllegalStateException.class, () -> REFERRAL_DOCUMENT_REQUEST.handle(variables, context));
   }
 
   // ---------------------------------------------------------------------------
@@ -672,6 +784,7 @@ class WorkersTest {
         CONFIG,
         TestSupport.silentLogger(),
         TestSupport.buildContext(CONFIG).services(),
+        TestSupport.RecordingMessagePublisher.recording(),
         actions,
         TestSupport.buildJob(
             Vars.of("documentsComplete", true, "referringOrganisation", "St Mary GP Surgery")));
@@ -690,6 +803,7 @@ class WorkersTest {
         CONFIG,
         TestSupport.silentLogger(),
         TestSupport.buildContext(CONFIG).services(),
+        TestSupport.RecordingMessagePublisher.recording(),
         actions,
         TestSupport.buildJob(
             Vars.of(
@@ -730,6 +844,7 @@ class WorkersTest {
         CONFIG,
         TestSupport.silentLogger(),
         TestSupport.buildContext(CONFIG).services(),
+        TestSupport.RecordingMessagePublisher.recording(),
         actions,
         TestSupport.buildJob(Vars.of()));
 
@@ -768,6 +883,7 @@ class WorkersTest {
         CONFIG,
         TestSupport.silentLogger(),
         TestSupport.buildContext(CONFIG).services(),
+        TestSupport.RecordingMessagePublisher.recording(),
         actions,
         TestSupport.buildJob(Vars.of()));
 

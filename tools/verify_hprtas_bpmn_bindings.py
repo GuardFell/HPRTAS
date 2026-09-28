@@ -204,6 +204,31 @@ def model_facts(path):
         code = codes.get(definition.get("errorRef"))
         if code:
             facts["error_catch"].setdefault(boundary.get("attachedToRef"), set()).add(code)
+
+    # the variables the process's own message subscriptions are correlated by. A message element
+    # is declared once at the top of the file and can be waited on from anywhere, so only the ones
+    # a catch event of this process refers to count here. The key is a FEEL expression reading a
+    # process variable, and if nothing in this model writes that variable the subscription cannot
+    # be created when the instance reaches the event: it raises an incident rather than waiting.
+    messages = {}
+    for element in root.iter(BPMN + "message"):
+        subscription = element.find(".//" + ZEBBE + "subscription")
+        if subscription is not None and subscription.get("correlationKey"):
+            messages[element.get("id")] = subscription.get("correlationKey")
+
+    facts["correlation_keys"] = {}
+    for event in process.iter():
+        if not event.tag.endswith("Event"):
+            continue
+        definition = event.find(BPMN + "messageEventDefinition")
+        if definition is None or definition.get("messageRef") not in messages:
+            continue
+        expression = messages[definition.get("messageRef")]
+        # = is FEEL assignment, and a quoted value is a literal rather than a variable
+        names = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", re.sub(r'"[^"]*"', " ", expression))
+        for name in names:
+            if name not in keywords:
+                facts["correlation_keys"][name] = event.get("id")
     return facts
 
 
@@ -332,6 +357,14 @@ def main():
                 continue
             problems.append("%s: gateway reads %r, which no form in this model writes and no "
                             "worker it runs returns" % (model, variable))
+        for variable, event in sorted(facts["correlation_keys"].items()):
+            if variable in ENGINE_VARIABLES or variable in produced_here:
+                continue
+            problems.append(
+                "%s: the message subscription on %s is correlated by %r, which no form in this "
+                "model writes and no worker it runs returns, so the instance would raise an "
+                "incident when it reached the event instead of waiting on it"
+                % (model, event, variable))
         for worker_name in sorted(model_workers):
             for variable in workers[worker_name]["required"]:
                 if variable in produced_here:

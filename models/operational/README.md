@@ -32,10 +32,23 @@ appointment and the decision that follows it, the handling and routing of patien
 the financial decision on a paid appointment that has been cancelled or changed, ending in a refund
 where one is due.
 
+`core-5-missing-information-message-exchange.bpmn` covers the referral that is missing
+documentation: the Medical Secretaries record what is missing, the request goes out to the referring
+organisation as a message the worker publishes, and the referral then **waits** on an intermediate
+message catch event until the documents are supplied, correlated by the referral reference so that
+one patient's answer cannot move another patient's referral. `core-1` records the same step inside
+one process, with a user task standing in for the answer; this model is the exchange modelled as what
+it is, and it is where the process waits rather than assuming.
+
 Each file holds one executable process. The processes are deployed and started separately, and
 `core-4` has three start events: one ordinary start event for the follow-up being requested, and
 two message start events for the cancellation and for the enquiry, which arrive unannounced and
 cannot share the single ordinary start event that Camunda allows a process.
+
+A message start event and an intermediate catch event are addressed differently. A start event holds
+no subscription, so the publication carries no correlation key at all; the catch event in `core-5`
+holds one, and the publication that releases it has to carry the same value. `workers/README.md`
+under *Publishing a message* has the pair side by side and the commands for both.
 
 ## What the models require
 

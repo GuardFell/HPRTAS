@@ -46,7 +46,7 @@ exchange, which is the current evidence.
 | Current `main` | `2c3c2eb`: five `core-N` models, 58 user tasks, 41 Camunda Forms, seven workers, and the message exchange `core-5` waits on. `57b3c1d` is one commit past the tag and has 56 user tasks and six workers |
 | Earlier tag targets | `9ef26df` (Node.js workers, superseded), then `bdcc0e1` (Java workers, before the forms were completed) |
 | Commit each result was produced at | `c8556ba` at worker level (Node.js), `a7f0dd6` at model level, `76a7fdc` at all three levels (Java), `57b3c1d` at all three levels and in the artefact checks, `2c3c2eb` at all levels with the message exchange (current) |
-| Artefact versions | the four `core-N` models; 41 Camunda Forms covering all 56 user tasks (`a62e783`, extended at `57b3c1d`); workers in Java (`4eb3fee`) |
+| Artefact versions | the five `core-N` models (four at `release-1.0`; `core-5` added at `2c3c2eb`); 41 Camunda Forms covering all 58 user tasks (40 and 55 at `a62e783`, 41 and 56 at `57b3c1d`); seven workers (six before `2c3c2eb`); workers in Java since `4eb3fee` |
 | Requirement basis for the criteria | `../docs/requirements/requirements.md` (FR-001 - FR-052, NFR-001 - NFR-013) |
 | Rule and exception basis | `../docs/case-study-summary.md` section 5 (BR-01 - BR-47) and section 6 (EX-01 - EX-23) |
 
@@ -191,11 +191,13 @@ in that directory and are accounted for there: `referral-to-appointment_normal-p
 `error-paths-and-urgent-path_e852224_...` were run against the first edition of the operational
 models, which the four `core-N` models replaced.
 
-Summary at `c8556ba`, re-run at `76a7fdc`, and re-run again at `57b3c1d`: **19 of the 21 scenarios
-have a recorded result - 13 pass, 6 pass only in part. Two have not been run at all: `TC-13` and
-`TC-16`.** `TC-02` and `TC-20` were on that list until the `57b3c1d` run: `TC-02` gained two of its
-three decisions and `TC-20` gained its routing and its urgent branch, each as a partial result rather
-than a pass, for the reason stated in its row. Seven of the ten acceptance criteria have a fully
+Summary at `c8556ba`, re-run at `76a7fdc`, re-run again at `57b3c1d`, and re-run once more at
+`2c3c2eb`: **19 of the 21 scenarios have a recorded result - 12 pass, 7 pass only in part. Two have
+never been run: `TC-13` and `TC-16`.** `TC-02` and `TC-20` were on that list until the `57b3c1d` run:
+`TC-02` gained two of its three decisions and `TC-20` gained its routing and its urgent branch, each as
+a partial result rather than a pass, for the reason stated in its row. `2c3c2eb` then added the
+`core-5` exchange, which is `TC-03`'s missing-documentation half. Seven of the ten acceptance criteria
+have a fully
 passing result: AC-01, AC-02, AC-03, AC-04, AC-08, AC-09 and AC-10.
 
 Of the other three, **AC-05** was the one that could not be accepted: it passes at worker level but

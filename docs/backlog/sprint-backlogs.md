@@ -57,7 +57,7 @@ failure path, with test evidence against an identified version.
 | 2 | TB-012 | Complete the case study summary. | M2 | M5 | 8 | Every stated rule and exception captured. | `../case-study-summary.md` | Done |
 | 2 | TB-013 | Record the requirements and the traceability table. | M2 | M5 | 8 | Every requirement traceable to a source. | `../requirements/requirements.md` | Done |
 | 2 | TB-014 | Complete the test plan: the acceptance criteria and the scenarios. | M5 | M3 | 5 | Criteria measurable and linked to a requirement and a business rule. | `../../tests/test-plan.md` sections 3 and 4 | Done |
-| 2 | TB-015 | Run the scenarios and record the evidence. | M5 | M3 | 5 | Normal, alternative and failure paths evidenced. | `../../tests/evidence/` | In progress - 17 of the 21 scenarios have a recorded result (11 pass, 6 pass in part); `TC-02`, `TC-13`, `TC-16` and `TC-20` are recorded as `Not run` |
+| 2 | TB-015 | Run the scenarios and record the evidence. | M5 | M3 | 5 | Normal, alternative and failure paths evidenced. | `../../tests/evidence/` | In progress - 19 of the 21 scenarios have a recorded result (12 pass, 7 pass in part); `TC-13` and `TC-16` are the two still recorded as `Not run`, and neither can be closed by a run alone |
 
 **How the sprint went.** The integrated increment was delivered ahead of the sprint end and ahead of
 its planned breadth: all four models, all eight forms and all six workers, with five scenarios each

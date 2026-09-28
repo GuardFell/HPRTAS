@@ -1,0 +1,334 @@
+The four operational models and the forms driven end to end, at 57b3c1d - the per-task record
+===============================================================================================
+
+Version under test
+------------------
+57b3c1d7aaf52ca1a4601ebf112e9084fea6e455 ("Close DEF-11, publish the messages, and check the models
+against the drawing rules"), the tip of `main` and one commit past `release-1.0`.
+
+Date          2026-09-28
+Tester        M4, automated
+Command       cd workers && mvn test -Pengine
+Result        BUILD SUCCESS - Tests run: 10, Failures: 0, Errors: 0, Skipped: 0   (10 min 13 s)
+
+How this relates to the other two records at this commit
+--------------------------------------------------------
+Three files describe this commit and they are not duplicates:
+
+* `workers_java-all-three-levels_57b3c1d_2026-09-28.txt` (M5) is the record of the run as a whole -
+  all three test levels, the configuration check, and what each level concluded.
+* `checks-static-deployment-and-engine-forms_57b3c1d_2026-09-28.txt` (M5) is the record of the
+  artefact checks: the bindings, the layout, the exports and the deployment, none of which needs a
+  worker.
+* **This file** is the per-scenario detail of the same engine run M5 records: for every scenario and
+  every user task, the element path the engine took and the variables the task was completed with.
+  M5's file states the outcome of each scenario; this one is what those outcomes rest on, and it is
+  here so that a claim about a particular gateway can be checked without re-running the engine.
+
+**The run was made at a clean tree whose content is `57b3c1d`.** The checkout used was
+`57b3c1d` plus one local commit, `038452a`, which removed a single stray carriage return from
+`models/strategic/patient-pathway-all-entities.bpmn`. That commit is not in `main`: the same fault
+was fixed independently at `ce95ad9`, which is, and the resulting file is byte-identical
+(`eb83e3b03143cbb4f21d37e0030b4d6112f4c3d2`). No model, form or worker source differs between the
+tree that was run and `57b3c1d`, which is why this record names `57b3c1d`.
+
+WHAT THIS RECORD COVERS, AND WHAT IT DOES NOT
+---------------------------------------------
+
+Covers, at one identified version and with the tree clean:
+
+  - all four operational models deployed together with all 41 Camunda Forms in one run, so every
+    user task reached resolves a form key that was deployed in the same session;
+  - every service task in the four models reached, every gateway routing on what a worker or a task
+    returned, and every process instance reaching an end event with no incident;
+  - eight model scenarios (OperationalModelsTest) and two fixture scenarios (SmokeTest).
+
+Does NOT cover, and no result below should be read as covering:
+
+  - a person filling a form in through Tasklist. Every user task here was completed through
+    POST /v2/user-tasks/<key>/completion with the variables a validated form would supply. Task
+    claiming, form validation and the candidate-group restriction are therefore still untested.
+    This is `DEF-08` in ../test-plan.md section 6, and it is unchanged by this run.
+  - the seven-day clinic-letter timer (`TC-16`). Scenario 3 approves the letter inside the window, so
+    the `P7D` boundary event does not fire and the delayed path is not entered.
+  - `TC-13`, the contact outcomes, for the same reason as the first point.
+  - what the forms look like or how a long form reads on screen. The forms are exercised through the
+    variables they write, not through their rendering.
+  - the strategic and socio-technical models. They hold no executable process and are not deployed.
+  - `DEF-14`: nothing here would fail if the condition on `N_CL_ModifyTreatment`'s only outgoing flow
+    were false, because that condition is never evaluated.
+
+Which test-plan scenarios this run provides a result for
+--------------------------------------------------------
+
+  TC-01  scenario 1  - the normal referral-to-appointment path completes.
+  TC-02  scenario 7  - **two of the three decisions** that end core-1 before an appointment were
+                       driven: `rejected` reached `N_C_Rejected`, `redirected` reached
+                       `N_C_Redirected`, and neither path reached the booking step. The third
+                       decision, `further_information`, was not driven.
+  TC-05  scenario 8  - the no-slot branch for an urgent referral.
+  TC-18  scenario 8  - the urgent referral with no slot escalates and the instance completes. **This
+                       is the branch `DEF-11` was about, and this is its recorded re-run.**
+  TC-07  scenario 2  - the charge route through the provider to confirmation.
+  TC-14  scenario 2  - the between-cycle review, the charge-affecting modification and the financial
+                       referral. The informal-request refusal was not driven.
+  TC-15  scenario 3  - preparation, approval, processing and distribution. The suspected-clinical-error
+                       return was not driven.
+  TC-17  scenario 4  - a follow-up requested and booked, started by the real message.
+  TC-19  scenario 5  - a paid cancellation recorded and referred to the Finance Team. The
+                       another-appointment and pathway-review branches were not driven.
+  TC-20  scenario 6  - the enquiry routing and the urgent branch. The record `BR-37` asks for is still
+                       not shown being captured from a form by a signed-in user.
+  TC-21  scenario 5  - the refund recorded against the payment scenario 2 settled in the same run.
+  TC-13  not covered  - the contact outcomes are user tasks and need a signed-in user.
+  TC-16  not covered  - the timer does not fire, see above.
+
+That is **eleven scenarios**, and it moves `TC-02` and `TC-20` off the list of scenarios that had never
+been run: each now has a partial result. `TC-13` and `TC-16` remain `Not run`.
+
+ENVIRONMENT
+-----------
+
+  Engine            Camunda 8 Run **8.10.0-alpha5**, REST http://localhost:8080, gRPC
+                    grpc://localhost:26500, CAMUNDA_AUTH_STRATEGY=NONE (the local installation is
+                    unsecured, which is why role-based access cannot be exercised - `DEF-07`).
+                    `/v2/topology` reported `8.10.0-alpha5` for the broker that answered.
+                    **This is not the version the repository states.** README.md says 8.9.19, and the
+                    probe behind `DEF-14` was measured on 8.9.19. Every result below therefore belongs
+                    to 8.10.0-alpha5. The deployment, the element ids, the forms and the worker
+                    behaviour were unchanged, but a run on 8.9.19 is a different run and should be
+                    recorded separately. `workers_java-all-three-levels_57b3c1d_2026-09-28.txt` records
+                    the same version independently.
+  Workers           Java 21.0.12.1 LTS (Temurin), Apache Maven 3.9.10
+  Deployment        each model deployed as a new version; the deployment versions printed below are
+                    this machine's engine history, not first deployments
+  Database          the engine's own H2 store, so the instances listed here persist in Operate
+
+WHAT WAS DEPLOYED
+-----------------
+
+  core-1-referral-and-new-patient-appointment        version 2
+  core-2-treatment-authorisation-funding-and-payment version 2
+  core-3-clinic-letter-and-pathway-escalation        version 2
+  core-4-follow-up-cancellation-enquiry-and-refund   version 2
+  all 41 forms, deployed by key:
+    appointment-confirmation, authorisation-return, authorisation-verification, booking-pending,
+    booking-request, cancellation-record, clinic-letter, clinical-advice, clinical-error-review,
+    consultant-contact, consultant-reminder, correspondence-monitoring, delay-review,
+    dispatch-failure, enquiry-classification, enquiry-response, financial-impact-review,
+    funding-approval, funding-route, letter-processing, management-escalation,
+    missing-information-request, no-suitable-slot, pathway-review, patient-assessment,
+    patient-contact, payment-investigation, payment-notification, payment, pre-cycle-review,
+    referral-check, referral-exception-review, referral-review, referrer-notification, refund,
+    treatment-booking, treatment-modification, unbooked-case-review, urgent-authorisation,
+    urgent-escalation, urgent-referral-escalation
+  six workers registered:
+    referral-validation, appointment-availability, treatment-availability, payment-processing,
+    correspondence-dispatch, refund-processing
+
+MODEL SCENARIOS - OperationalModelsTest
+---------------------------------------
+
+Scenario 1 - core-1, normal referral and new patient appointment
+  instance 2251799813722398   final state COMPLETED
+  user tasks completed and the variables supplied:
+    N_MS_CheckReferral     {"documentsComplete":true,"referringOrganisation":"St Mary GP Surgery"}
+    N_C_ClinicalReview     {"decision":"accepted"}
+    N_OB_PrepareRequest    {"speciality":"Oncology","priority":"routine","requestedWindow":14,
+                            "recipients":["patient","GP"],"documentType":"new_patient_clinic_letter"}
+    N_OB_TelephonePatient  {"contactOutcome":"contacted"}
+  path: N_MS_ReferralReceived -> N_MS_CheckReferral -> N_MS_ValidateReferral ->
+        N_MS_DocumentsComplete -> N_C_ClinicalReview -> N_C_ReferralDecision -> N_OB_PrepareRequest ->
+        N_OB_CheckAvailability -> N_OB_SlotAvailable -> N_OB_SendNotification -> N_OB_WithinTwoWeeks ->
+        N_OB_TelephonePatient -> N_OB_ContactOutcome -> N_OB_AppointmentArranged
+
+Scenario 2 - core-2, treatment authorisation, funding, payment and review
+  instance 2251799813722484   final state COMPLETED
+  user tasks completed and the variables supplied:
+    N_CL_AssessPatient        {"consentGiven":true}
+    N_CL_AuthoriseTreatment   {"proposedTreatment":"FOLFOX cycle 1","treatmentStartDate":"2026-10-01",
+                               "specialResources":["pharmacy","day unit"],"clinicalAuthorised":true,
+                               "authorisingClinician":"Dr Chen"}
+    N_TB_VerifyAuthorisation  {}
+    N_F_DetermineFunding      {"fundingRoute":"patient","fundingApprovalRequired":false,
+                               "paymentRequiredFromPatient":true}
+    N_F_CalculateCharge       {"chargeAmount":250,"fundingRoute":"patient",
+                               "paymentReference":"PAY-E2E-0001"}
+    N_TB_ConfirmAppointment   {"recipients":["patient"],"documentType":"appointment_letter"}
+    N_OC_PreCycleReview       {"fitToContinue":false}
+    N_CL_ModifyTreatment      {"affectsCharge":true}
+    N_F_ReviewFinancialImpact {}
+  path: N_CL_PatientAttends -> N_CL_AssessPatient -> N_CL_ConsentDecision -> N_CL_AuthoriseTreatment ->
+        N_TB_VerifyAuthorisation -> N_TB_CheckAvailability -> N_TB_AvailabilityDecision ->
+        N_F_DetermineFunding -> N_F_FundingApprovalRequired -> N_F_PaymentRequired ->
+        N_F_CalculateCharge -> N_F_ProcessPayment -> N_F_PaymentStatus -> N_TB_ConfirmAppointment ->
+        N_TB_NotifyPatient -> N_OC_PreCycleReview -> N_OC_FitToContinue -> N_CL_ModifyTreatment ->
+        N_F_ReviewFinancialImpact -> N_F_ImpactReviewed
+  note: `N_TB_VerifyAuthorisation` is completed with no variables, which is the point of that form -
+        the administrative check deliberately does **not** write `clinicalAuthorised`, because that
+        variable belongs to the clinician and an administrative task able to set it would defeat the
+        check it exists to make (see `../../forms/README.md`).
+
+Scenario 3 - core-3, clinic letter prepared, approved and distributed
+  instance 2251799813722602   final state COMPLETED
+  user tasks completed and the variables supplied:
+    N_C_PrepareLetter         {"consultationId":"CONS-E2E-0001","recipients":["patient","GP"],
+                               "documentType":"new_patient_clinic_letter"}
+    N_C_ApproveLetter         {}
+    N_MS_ProcessLetter        {"suspectedClinicalError":false}
+    N_MS_ConfirmRecipients    {}
+  path: N_C_ConsultationDone -> N_C_PrepareLetter -> N_C_ApproveLetter -> N_MS_ProcessLetter ->
+        N_MS_ErrorDecision -> N_MS_ConfirmRecipients -> N_MS_SendLetter -> N_MS_LetterDistributed
+  note: the letter is approved inside the seven-day window, so the `P7D` boundary event on
+        `N_C_ApproveLetter` does not fire and the delayed path is not exercised (`TC-16`).
+
+Scenario 4 - core-4, follow-up requested and booked
+  instance 2251799813722651   final state COMPLETED
+  user tasks completed and the variables supplied:
+    N_OB_ArrangeFollowUp   {"speciality":"Oncology","priority":"routine","requestedWindow":21,
+                            "recipients":["patient"],"documentType":"follow_up_clinic_letter"}
+    N_OB_ConfirmFollowUp   {}
+  path: N_OB_FollowUpRequested -> N_OB_ArrangeFollowUp -> N_OB_CheckAvailability ->
+        N_OB_WithinPeriod -> N_OB_ConfirmFollowUp -> N_OB_SendFollowUpLetter -> N_OB_FollowUpBooked
+  note: this path is started by sending the real follow-up message, not from the Processes page.
+
+Scenario 5 - core-4, paid appointment cancelled and refunded
+  instance 2251799813722698   final state COMPLETED
+  user tasks completed and the variables supplied:
+    N_OB_RecordCancellation  {"paidAppointment":true,"offerAnotherAppointment":false,
+                              "pathwayReviewRequired":false}
+    N_F_RetentionDecision    {"refundDecision":"full","paymentReference":"PAY-E2E-0001",
+                              "refundReason":"cancelled"}
+  path: N_OB_CancellationReceived -> N_OB_RecordCancellation -> N_OB_AnotherAppointment ->
+        N_F_PaidAffected -> N_F_RetentionDecision -> N_F_RefundDecision -> N_F_ProcessRefund ->
+        N_F_RefundRecorded
+  note: the refund is recorded by the provider against `PAY-E2E-0001`, the reference scenario 2
+        settled with the provider in this same run. Scenario 5 runs after scenario 2 by design:
+        without that ordering there is no settled payment for the refund worker to find, and a refund
+        against an unknown reference is refused. The decision is taken in the Finance Team lane,
+        which is what `FR-034` asks for.
+
+Scenario 6 - core-4, an urgent clinical enquiry routed to the clinical team
+  instance 2251799813722742   final state COMPLETED
+  user tasks completed and the variables supplied:
+    N_CH_ClassifyEnquiry   {"enquiryReference":"ENQ-E2E-0001","receivedBy":"Call Handling Team",
+                            "enquirySummary":"New symptom reported after the first treatment cycle",
+                            "enquiryType":"clinical","enquiryPriority":"urgent",
+                            "handledBy":"Call Handling Team",
+                            "responsibleTeam":"Clinical Nurse Specialist Team"}
+    N_CNS_ClinicalAdvice   {"adviceGiven":"Passed to the treating consultant the same day",
+                            "urgentClinicalConcern":true,"advisedBy":"Clinical Nurse Specialist"}
+    N_CNS_HighlightUrgent  {"escalationReason":"New symptom reported between treatment cycles",
+                            "escalatedTo":"Treating consultant","patientContacted":true,
+                            "escalatedBy":"Clinical Nurse Specialist"}
+  path: N_CH_ContactReceived -> N_CH_ClassifyEnquiry -> N_CH_EnquiryType -> N_CNS_ClinicalAdvice ->
+        N_CNS_Urgency -> N_CNS_HighlightUrgent -> N_CNS_EnquiryResolved
+  note: the enquiry is started by sending the real patient-enquiry message. It is classified
+        `clinical`, so `N_CH_EnquiryType` routes it to the clinical lane and it is **not** answered
+        from Call Handling, which is what `FR-042` requires. `urgentClinicalConcern` is true, so
+        `N_CNS_Urgency` takes the highlight branch rather than its default.
+
+Scenario 7 - core-1, the two decisions that end a referral before an appointment
+  instance 2251799813722787   decision "rejected"     final state COMPLETED
+  instance 2251799813722819   decision "redirected"   final state COMPLETED
+  path, rejected:   N_MS_ReferralReceived -> N_MS_CheckReferral -> N_MS_ValidateReferral ->
+                    N_MS_DocumentsComplete -> N_C_ClinicalReview -> N_C_ReferralDecision -> N_C_Rejected
+  path, redirected: N_MS_ReferralReceived -> N_MS_CheckReferral -> N_MS_ValidateReferral ->
+                    N_MS_DocumentsComplete -> N_C_ClinicalReview -> N_C_ReferralDecision -> N_C_Redirected
+  note: neither path reaches `N_OB_PrepareRequest`, the booking step. That is the check `FR-006` asks
+        for - that no New Patient Appointment is arranged until an authorised Consultant has accepted
+        the referral - and it is now driven rather than only read from the conditions.
+
+Scenario 8 - core-1, an urgent referral with no suitable slot is escalated
+  instance 2251799813722855   final state COMPLETED
+  user tasks completed and the variables supplied:
+    N_MS_CheckReferral     {"documentsComplete":true,"referringOrganisation":"St Mary GP Surgery"}
+    N_C_ClinicalReview     {"decision":"accepted"}
+    N_OB_PrepareRequest    {"speciality":"Oncology","priority":"urgent","requestedWindow":14,
+                            "schedulingOutcome":"none","recipients":["patient","GP"],
+                            "documentType":"new_patient_clinic_letter"}
+    N_OB_RecordNoSlot      {"referralId":"REF-E2E-0002","patientId":"PAT-E2E-0002",
+                            "noSlotOutcome":"none","actionTaken":"highlighted_for_pathway_team",
+                            "recordedBy":"Outpatient Bookings Team"}
+    N_PC_EscalateUrgent    {"referralId":"REF-E2E-0002","patientId":"PAT-E2E-0002",
+                            "escalationRoute":"expedited_slot",
+                            "escalatedBy":"Patient Pathway Coordinator"}
+  path: N_MS_ReferralReceived -> N_MS_CheckReferral -> N_MS_ValidateReferral ->
+        N_MS_DocumentsComplete -> N_C_ClinicalReview -> N_C_ReferralDecision -> N_OB_PrepareRequest ->
+        N_OB_CheckAvailability -> N_OB_SlotAvailable -> N_OB_RecordNoSlot -> N_OB_UrgentReferral ->
+        N_PC_EscalateUrgent -> N_PC_UrgentEscalated
+  note: `DEF-11` was that this branch sent the token back to `N_OB_CheckAvailability` for ever, and
+        the scheduling service answers the same request with the same answer, so it could never
+        leave. `N_OB_CheckAvailability` appears **exactly once** in the path above and the instance
+        reaches an end event, which is the evidence that the loop is gone. The routing task
+        `N_PC_ReviewDelay`, which the routine branch takes, is not in this path, so the urgent case
+        does not fall into the routine delay review.
+
+FIXTURE SCENARIOS - SmokeTest
+-----------------------------
+
+Deployed `worker-smoke-test` version 1 (process definition key 2251799813722938); six workers
+registered and polling.
+
+Scenario 1 - normal path
+  path: StartEvent_Smoke -> Task_ValidateReferral -> Task_AppointmentAvailability ->
+        Task_TreatmentAvailability -> Task_ProcessPayment -> Task_SendCorrespondence ->
+        EndEvent_Completed
+  variables returned by the workers, read back from the engine:
+    alternativeDate = null                 appointmentDate = "2026-10-08"
+    appointmentReference = "TRT-2251799813722939:treatment-appointment"
+    appointmentWithinTwoWeeks = true       bookingStatus = "confirmed"
+    chargeAmount = 250                     clinicalAuthorised = true
+    confirmationReceived = true            dispatchChannel = "post"
+    dispatchDate = "2026-09-28"            dispatchReference = "COR-1790557764591-1"
+    documentType = "new_patient_clinic_letter"
+    documentsComplete = true               duplicateAttempt = false
+    externalServiceAvailable = true        fundingRoute = "patient"
+    paidAmount = 250                       paymentDate = "2026-09-28"
+    paymentReference = "PAY-SMOKE-001"     paymentStatus = "completed"
+    priority = "routine"                   proposedTreatment = "FOLFOX cycle 1"
+    recipients = ["patient","GP"]          referringOrganisation = "St Mary GP Surgery"
+    requestedItems = []                    requestedWindow = 14
+    requiresInvestigation = false          schedulingServiceOutcome = "available"
+    slotAvailable = true                   specialResources = ["pharmacy","day unit"]
+    speciality = "Oncology"                transactionReference = "PSP-20260928-0001"
+    treatmentAppointmentDate = "2026-09-28"  treatmentRetryCount = 1
+    treatmentSlotAvailable = true          treatmentStartDate = "2026-10-01"
+    validationResult = "complete"          withinRequestedWindow = true
+  note: `appointmentWithinTwoWeeks` is true and both `appointmentDate` and `treatmentAppointmentDate`
+        fall inside fourteen days of the run date, which is the worker recomputing the flag from the
+        slot it actually found rather than trusting the caller (`FR-014`). No card field appears
+        anywhere in the variables listed, which is the data-minimisation half of `FR-028`/`NFR-007`.
+
+Scenario 2 - booking without clinical authorisation
+  path: StartEvent_Smoke -> Task_ValidateReferral -> Task_AppointmentAvailability ->
+        Task_TreatmentAvailability -> Boundary_NotAuthorised -> EndEvent_NotAuthorised
+  the worker log for the run carries:
+    {"worker":"treatment-availability","taskType":"check-treatment-availability",
+     "elementId":"Task_TreatmentAvailability","outcome":"businessError",
+     "errorCode":"UNAUTHORISED_BOOKING_REQUEST", ...}
+  note: the BPMN error was caught by the boundary event rather than becoming an incident, no
+        appointment reference was returned, and no payment followed.
+
+REPRODUCING THIS RECORD
+-----------------------
+
+  # engine up and answering
+  curl -s http://localhost:8080/v2/topology
+  cd workers
+  cp .env.example .env          # once
+  mvn test -Pengine             # expect Tests run: 10, Failures: 0, Errors: 0, Skipped: 0
+
+The engine tests skip themselves rather than failing when the engine is not answering, so a run that
+reports skipped has produced no evidence. Check the summary line, not the exit code alone.
+
+WHAT THIS RUN DOES NOT CHANGE
+-----------------------------
+
+  - `DEF-07` (no authentication, no enforced role separation) is untouched. Every task here was
+    completed by the test's API client, not by a user.
+  - `DEF-08` (no form submitted by a signed-in user) is untouched.
+  - `DEF-10` (the simulated services' ledgers are in memory, so a duplicate result holds only within
+    one worker process) applies to the duplicate guards exercised here.
+  - `DEF-14` (a condition on an activity's only outgoing flow is never evaluated) is untouched, and
+    nothing in this run would fail if `N_CL_ModifyTreatment`'s condition were false.

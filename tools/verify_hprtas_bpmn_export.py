@@ -83,11 +83,11 @@ def main():
         ok = coverage >= MIN_COVERAGE
         if not ok:
             failures += 1
-        print("%-52s 词覆盖 %.0f%% (%d/%d)%s"
+        print("%-52s word coverage %.0f%% (%d/%d)%s"
               % (name, 100 * coverage, len(expected) - len(missing), len(expected),
-                 "" if ok else "  <-- 未达 %.0f%%" % (100 * MIN_COVERAGE)))
+                 "" if ok else "  <-- below %.0f%%" % (100 * MIN_COVERAGE)))
         if missing:
-            print("      未读回: %s" % ", ".join(missing[:14]))
+            print("      not read back: %s" % ", ".join(missing[:14]))
     print()
     print("VERIFICATION %s" % ("PASSED" if not failures else
                                "FAILED on %d diagram(s)" % failures))

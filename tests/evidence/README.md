@@ -26,11 +26,12 @@ Files are kept small: text logs are preferred over recordings or screenshots.
 
 ## The runs recorded here
 
-**The message exchange and the drawing repairs, at `2c3c2eb`.** This is the current worker-level and
-model-level evidence. It adds the fifth model and the worker that publishes a message, so the engine
-run is 11 tests rather than 7 (2 the smoke fixture, 9 the operational models) and the unit suite is
-42 rather than 38. It replaces the `76a7fdc` record as the current one, which is kept below as the
-record of what the implementation did before the exchange existed.
+**The message exchange and the drawing repairs, at `2c3c2eb`.** The current worker-level and
+model-level evidence, one commit past `57b3c1d`. It adds the fifth model and the worker that
+publishes a message, so the engine run is 11 tests rather than 10 (2 the smoke fixture, 9 the
+operational models) and the unit suite is 42 rather than 38. It supersedes the `57b3c1d` records as
+the current ones, which are kept below as the record of what the tree did before the exchange
+existed.
 
 - `core-5-message-exchange-and-layout-tidy_2c3c2eb_2026-09-28.txt` — pass at every level: 42 of 42
   unit tests, the three static checks, and 11 of 11 engine tests. It states what the run does not
@@ -39,11 +40,26 @@ record of what the implementation did before the exchange existed.
   laid out again, so the other six committed diagrams still carry the message-flow routing this
   version repairs.
 
-**The Java implementation, at `76a7fdc`.** The workers were rewritten in Java, and this is the first
-record made against that implementation. It covers all three levels at one version — the
-configuration check, the unit suite with no engine, and both engine runs. It was the current
-worker-level and model-level evidence until `2c3c2eb`, and it replaced the `c8556ba` unit record and
-the `a7f0dd6` engine record as the current ones; both are kept below as the record of what the
+**The tree at `57b3c1d`.** The tip of `main` when these two records were made, one commit past
+`release-1.0`. Two records were made at this version on 2026-09-28: the three test levels, and the
+four checks that are about the artefacts rather than about the workers. Between them they were the
+current evidence, and they superseded the `76a7fdc` record — the tree has moved since, through
+`a62e783` (every user task bound to a form), `9138bcc` (`DEF-12` closed) and `57b3c1d` (`DEF-11`
+closed, and every model re-laid out).
+
+- `workers_java-all-three-levels_57b3c1d_2026-09-28.txt` — pass at all three levels: 38 of 38 unit
+  tests, the configuration check, 2 of 2 smoke scenarios and 8 of 8 operational-model scenarios. It
+  is the first record that drives the escalation `DEF-11` was raised for, in scenario 8 of
+  `OperationalModelsTest`, and the refund `DEF-12` was raised for, in scenario 5.
+- `checks-static-deployment-and-engine-forms_57b3c1d_2026-09-28.txt` — the bindings, layout and
+  export checks all pass, all four models and all 41 forms are accepted by the engine, and every
+  model reaches a user task that binds a deployed form. It also records the refusal of the
+  strategic model, which is the expected result rather than a failure.
+
+**The Java implementation, at `76a7fdc`.** The first record made against the Java implementation,
+and the current one until `57b3c1d`. It covers all three levels at one version — the configuration
+check, the unit suite with no engine, and both engine runs. It replaced the `c8556ba` unit record
+and the `a7f0dd6` engine record as the current ones; both are kept below as the record of what the
 Node.js implementation did.
 
 - `workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt` — pass at all three levels: 38 of 38
@@ -105,15 +121,19 @@ operational models of the first edition, which the four `core-N` models have sin
 - **The forms and role-based access.** No scenario has been completed by a signed-in user through
   Tasklist, so every user task variable in every run above was supplied with the completion call.
   The form contract is proved by the variables the model expects, not by a person filling a form in
-  (`DEF-08`). The runs above also predate the forms: 36 of the 55 user tasks had no form at all when
-  they were made, so for those tasks there was no form to prove (`DEF-13`, closed at `a62e783`;
-  `../forms/README.md` records what the forms now cover). Role-based access cannot be exercised at
-  all (`DEF-07`).
-- **The exception paths that no engine run has driven.** The between-cycle review's refusals, the
-  suspected-clinical-error return in `core-3`, the another-appointment and pathway-review branches
-  of the cancellation, and the no-slot-in-period case at model level. The unit suite covers the
-  worker side of several of them, which is not the same as covering the model's branch. The
-  `76a7fdc` record lists them.
+  (`DEF-08`). The `57b3c1d` run is the first made after the forms were completed, so a form now
+  exists for every user task - 41 forms for 56 user tasks at `57b3c1d` (`DEF-13`, closed at
+  `a62e783` and extended by that commit); the bindings are proved
+  on the engine by `../tools/verify_hprtas_engine_forms.py`, which is recorded in the second
+  `57b3c1d` file. What is still not proved is a person using one. Role-based access cannot be
+  exercised at all (`DEF-07`).
+- **The exception paths that no engine run has driven.** The between-cycle review's refusals and the
+  suspected-clinical-error return in `core-3`. The unit suite covers the worker side of both, which
+  is not the same as covering the model's branch. The no-slot-in-period case, which used to belong
+  on this list at model level, is now driven: scenario 8 of `OperationalModelsTest` takes the urgent
+  variant of it to the escalation `DEF-11` was raised for, and the instance completes. The
+  another-appointment and pathway-review branches of the cancellation are driven in scenarios 5
+  and 6 of the same run.
 - **The job-failure path and the shutdown path are unproven end to end.** No run has driven a job
   failure through the engine, so the retry behaviour the Java client had to express explicitly is
   only covered at handler level, and no run has sent the workers a Ctrl-C.

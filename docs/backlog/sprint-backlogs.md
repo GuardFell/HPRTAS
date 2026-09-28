@@ -94,7 +94,12 @@ comes from rather than a task ID. Every row is one of the gaps recorded in
 
 **Landed so far, mid-sprint.** The `PB-006` row is done at `a62e783`: 40 forms now cover all 55
 user tasks, so `TC-13` and `TC-20` no longer wait on the `PB-006` row - only on the signed-in user
-that `DEF-07` and `DEF-08` need. The `DEF-12` row is done at `9138bcc`; the `DEF-11` row is still open.
+that `DEF-07` and `DEF-08` need. The `DEF-12` row is done at `9138bcc`, and the `DEF-11` row is done
+at `57b3c1d`, which re-targets the urgent branch onto a new escalation task and binds it to a new
+form; that commit also re-laid out every model, so the tree now carries 56 user tasks and 41 forms.
+Both rows' re-runs were made at `57b3c1d` and are recorded in `../../tests/evidence/`, which closes
+the re-run half of each row. The `PB-007` row is not closed: `TC-02` and `TC-16` still have no
+result, and `TC-13` and `TC-20` still need a signed-in user.
 
 ## Sprint 4 - Validation, evaluation and demonstration
 

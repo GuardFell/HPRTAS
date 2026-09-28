@@ -98,7 +98,7 @@ value the process acts on is produced by the component that can actually know it
 **Every exclusive gateway declares a default flow, and the default is the branch that keeps a human
 in the loop.** Camunda does not treat a conditionless sequence flow as a fallback: a gateway falls
 back only to the flow named in its `default` attribute, and raises an incident when no condition
-matches. All 22 exclusive gateways in the four processes therefore declare one, and the flow each
+matches. All 23 exclusive gateways in the four processes therefore declare one, and the flow each
 names carries no condition of its own.
 
 Which branch is the default is a deliberate choice, and it is always the conservative one: an

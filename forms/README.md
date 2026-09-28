@@ -1,7 +1,7 @@
 # Camunda Forms
 
 The Camunda Forms the staff fill in, one `.form` file per form, and the user tasks in the
-operational models they are bound to. Every one of the 59 user tasks in the five operational models
+operational models they are bound to. Every one of the 58 user tasks in the five operational models
 binds a form.
 
 ## How a form is bound to a task
@@ -136,6 +136,12 @@ happens when the appointment the clinician asked for cannot be found: the schedu
 action taken are recorded, the pathway team reviews the case, and the referring organisation is
 told.
 
+`urgent-referral-escalation` covers the urgent half of that: the escalation route taken when an
+urgent referral cannot be booked inside the period the clinician asked for, who escalated it, and
+the reason. It was added with the fix for `DEF-11`, where that branch used to send the token back
+into the availability check and could never leave it; the escalation now ends the booking process
+instead.
+
 `dispatch-failure` is bound to all four tasks that handle a correspondence failure — one in each of
 `core-1` to `core-4`. It records the corrected recipients and document type, so the dispatch that is
 retried succeeds, with the reason for the failure and the alternative channel the patient was
@@ -258,6 +264,7 @@ contract for each of them. Every user task in the five operational models appear
 | `unbooked-case-review.form` | `N_PC_ReviewUnbooked` |
 | `urgent-authorisation.form` | `N_CL_UrgentAuthorise` |
 | `urgent-escalation.form` | `N_CNS_HighlightUrgent` |
+| `urgent-referral-escalation.form` | `N_PC_EscalateUrgent` |
 
 ## How the forms are built
 

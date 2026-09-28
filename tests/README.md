@@ -16,15 +16,18 @@ plan.
 
 ## Where it stands
 
-The first release is tagged `release-1.0`. The runs recorded here were produced before that tag was
-made, so **each result names the commit it was produced at**. `test-plan.md` opens with the version
-the plan is written against; every evidence file names its own.
+The first release is tagged `release-1.0`. The runs first recorded here were produced before that tag
+was made, so **each result names the commit it was produced at**. `test-plan.md` opens with the
+version the plan is written against; every evidence file names its own. The three levels and the
+artefact checks were run again at `57b3c1d`, the current tip of `main`, on 2026-09-28; those two
+records are the current evidence (see `evidence/README.md`).
 
-At `c8556ba`, seven of the ten acceptance criteria are met, three are not, and thirteen defects and
-limitations are recorded. The evaluation of what that means for the project - which requirements are
-supported, which are not, and where the plan and the delivery diverged - is in
-`../docs/planning/plan-evaluation.md`, which is the companion to this plan rather than a summary of
-it.
+At `c8556ba`, seven of the ten acceptance criteria were met, three were not, and thirteen defects
+and limitations were recorded; the table now has fourteen, `DEF-14` having been added with the
+condition on an activity's only outgoing flow, and `DEF-09` and `DEF-13` have closed since. The
+evaluation of what that means for the project - which requirements are supported, which are not, and
+where the plan and the delivery diverged - is in `../docs/planning/plan-evaluation.md`, which is the
+companion to this plan rather than a summary of it.
 
 ## What the testing covers
 

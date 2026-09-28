@@ -1,0 +1,115 @@
+The workers on the Java implementation at all three levels, re-run at the current HEAD
+=====================================================================================
+
+Version under test
+------------------
+57b3c1d7aaf52ca1a4601ebf112e9084fea6e455 ("Close DEF-11, publish the messages, and check the
+models against the drawing rules"), the tip of `main` and one commit past `release-1.0`.
+
+Date: 2026-09-28.  Tester: M5, automated.
+
+What this replaces
+------------------
+`workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt` is the previous record at all three
+levels. This run repeats the same three levels against the current tree, which has moved since
+`76a7fdc`: `4eb3fee` rewrote the workers in Java, `a62e783` bound every user task to a form,
+`9138bcc` closed DEF-12, and `57b3c1d` closed DEF-11 and re-laid out every model. Where the two
+records disagree, this one describes the tree that is on `main` now; `76a7fdc` stays in the
+directory as the record of the version it names.
+
+Method, and what was actually run
+---------------------------------
+The engine was started with `D:\camunda\camunda-start.bat` and answered
+`GET /v2/topology` with `200` before the engine-level runs. `workers/.env` was copied from
+`workers/.env.example`; Maven is not on `PATH` on this machine (3.9.10 at
+`D:\apache-maven-3.9.10-bin\apache-maven-3.9.10\bin`).
+
+    cd workers
+    mvn -B test                                          # unit suite, no engine
+    mvn -B compile exec:java -Dexec.args="--check"        # configuration and wiring, no engine
+    mvn -B test -Pengine -Dtest=SmokeTest                 # workers through the engine, fixture
+    mvn -B test -Pengine -Dtest=OperationalModelsTest     # the delivered models and forms
+
+Results
+-------
+    mvn test
+      Tests run: 38, Failures: 0, Errors: 0, Skipped: 0 - BUILD SUCCESS
+      The whole worker unit suite. Twelve of the twenty-one scenarios are covered at this level.
+
+    mvn compile exec:java -Dexec.args="--check"
+      "Configuration and wiring are valid."
+      .env present; Zeebe gRPC address grpc://localhost:26500; authentication NONE; log level info.
+      Six workers would be registered, each on the job type the models name:
+        referral-validation      validate-referral              concurrency 8, timeout 15000 ms
+        appointment-availability check-appointment-availability concurrency 8, timeout 15000 ms
+        treatment-availability   check-treatment-availability   concurrency 8, timeout 15000 ms
+        payment-processing       process-payment                concurrency 4, timeout 20000 ms
+        correspondence-dispatch  send-correspondence            concurrency 8, timeout 15000 ms
+        refund-processing        process-refund                 concurrency 4, timeout 20000 ms
+
+    mvn test -Pengine -Dtest=SmokeTest
+      Tests run: 2, Failures: 0, Errors: 0, Skipped: 0 - BUILD SUCCESS
+      Scenario 1, normal path: the instance walked
+        StartEvent_Smoke -> Task_ValidateReferral -> Task_AppointmentAvailability ->
+        Task_TreatmentAvailability -> Task_ProcessPayment -> Task_SendCorrespondence ->
+        EndEvent_Completed
+      Scenario 2, booking without clinical authorisation: the worker raised
+        UNAUTHORISED_BOOKING_REQUEST, the boundary event caught it and the instance ended at
+        EndEvent_NotAuthorised with no appointment and no payment.
+
+    mvn test -Pengine -Dtest=OperationalModelsTest
+      Tests run: 8, Failures: 0, Errors: 0, Skipped: 0 - BUILD SUCCESS
+      Scenario 1 - core-1, normal referral and new patient appointment
+      Scenario 2 - core-2, treatment authorisation, funding, payment and review
+      Scenario 3 - core-3, clinic letter prepared, approved and distributed
+      Scenario 4 - core-4, follow-up requested and booked
+      Scenario 5 - core-4, paid appointment cancelled and refunded
+      Scenario 6 - core-4, an urgent clinical enquiry routed to the clinical team
+      Scenario 7 - core-1, the referral is rejected, and again redirected
+      Scenario 8 - core-1, an urgent referral with no suitable slot is escalated
+      Scenario 8 is the branch DEF-11 was about. It completes, and the availability check is
+      reached once:
+        N_MS_ReferralReceived -> N_MS_CheckReferral -> N_MS_ValidateReferral ->
+        N_MS_DocumentsComplete -> N_C_ClinicalReview -> N_C_ReferralDecision ->
+        N_OB_PrepareRequest -> N_OB_CheckAvailability -> N_OB_SlotAvailable ->
+        N_OB_RecordNoSlot -> N_OB_UrgentReferral -> N_PC_EscalateUrgent -> N_PC_UrgentEscalated
+        final state: COMPLETED
+      Both message start events core-4 waits for were sent: the cancellation in scenario 5 and
+      the enquiry in scenario 6. Every service task in the four models was reached and every
+      gateway routed on what a worker returned.
+
+Environment recorded with the run
+---------------------------------
+    Engine     Camunda 8 Run 8.10.0-alpha5, on the bundled Temurin JRE 25.0.4.1
+    Workers    compiled and run on Java 21.0.3 (Oracle jdk-21), maven.compiler.release=21
+    Maven      Apache Maven 3.9.10
+    Host       Windows, user 98419; ordinary git clone of the repository, not a shallow one
+
+What this run does not cover
+----------------------------
+* Four scenarios have still never been run: TC-02, TC-13, TC-16 and TC-20. TC-13 and TC-20 need
+  a signed-in user completing user tasks through Tasklist; TC-16 needs a letter left outstanding
+  past seven days so the timer boundary event fires.
+* Every user-task variable in these runs was supplied with the task completion call
+  (`POST /v2/user-tasks/<key>/completion`), not by a person filling in a rendered form, so task
+  claiming, form validation and the candidate-group restriction are not exercised (`DEF-08`).
+  The form bindings themselves are proved by `verify_hprtas_engine_forms.py` instead.
+* No user is authenticated and candidate groups are not enforced (`DEF-07`), so separation of
+  duties rests on the lane structure alone.
+* The simulated services keep their ledgers in memory, per worker process (`DEF-10`), so every
+  duplicate-prevention result here holds only within one worker process.
+* `DEF-12` is not closed entirely by the fix it records: the incident is gone, but no form has a
+  field for the offending variable, so a Tasklist user cannot clear card details that have
+  reached the process.
+* `DEF-14` still has one condition on the only outgoing flow of an activity:
+  `N_CL_ModifyTreatment` (`= affectsCharge = true`) is corrected text but still not a guard.
+  Nothing in these runs would fail if that condition were false.
+* The engine is 8.10.0-alpha5 here. `DEF-14`'s measurement was made on 8.9.19, so the "a
+  condition on a single outgoing flow is never evaluated" behaviour is not re-measured by this
+  record on this version.
+
+How to repeat it
+----------------
+Start the engine, copy `workers/.env.example` to `workers/.env`, then run the four commands above
+from `workers/`. The engine-level tests deploy models and forms into the running engine and add
+process instances to it; they are excluded from the default build for that reason.

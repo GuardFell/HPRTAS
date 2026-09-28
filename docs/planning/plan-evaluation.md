@@ -20,12 +20,20 @@
 `c8556ba`, when the workers were still in Node.js and 36 of the 55 user tasks bound no form; the
 artefacts have changed since, so every verdict below was re-checked against the current tree rather
 than carried over. Where a verdict moved because of that, the row says so and names the commit that
-moved it. The evidence is the half that has not kept up: every run in `tests/evidence/` except one
-was recorded before the workers were rewritten in Java (`4eb3fee`), so those records describe the
-Node.js implementation and no longer describe the current code. They are kept because a result is a
-record of what was run at a named version, not a claim about today's tree. The exception is
-`workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt`, the one run made against the Java
-workers, and it is the current worker-level and model-level evidence.
+moved it. **The counts in this evaluation are the counts at `69e01a1`** - 55 user tasks and 40 forms
+- and are left as they stand, because that is the version being evaluated; `main` has since moved to
+`57b3c1d`, which re-laid out every model and added a 56th user task and a 41st form (`DEF-11`'s
+escalation and the form bound to it), so a count read here is a count at the tag and not at `main`.
+The evidence was the half that had not kept up, and it has now been re-run twice: once at `76a7fdc`
+after the Java rewrite, and again at `57b3c1d` on 2026-09-28, where all three levels and the
+bindings, layout, export and engine-form checks pass. Those two records are
+`tests/evidence/workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt`,
+`tests/evidence/workers_java-all-three-levels_57b3c1d_2026-09-28.txt` and
+`tests/evidence/checks-static-deployment-and-engine-forms_57b3c1d_2026-09-28.txt`. Every run in
+`tests/evidence/` still kept beside them was recorded before the workers were rewritten in Java
+(`4eb3fee`), so those records describe the Node.js implementation and no longer describe the current
+code; they are kept because a result is a record of what was run at a named version, not a claim
+about today's tree.
 
 ## 2. Evaluation criteria
 
@@ -132,13 +140,15 @@ rather than repeated.
   diagrams were laid out again (`91ee6d4`, `69e01a1`). `git diff --stat c8556ba HEAD -- models
   workers forms` is what that looks like: 118 files. Everything in sections 3 and 4 above was
   re-read against the current tree for that reason.
-- **The evidence has not changed with the artefacts, and cannot be made to.** Every run in
-  `tests/evidence/` was recorded against the Node.js workers or against the models as they stood on
-  21 September. Re-running them needs an engine, which is why they are kept as the record of what
-  was run at a named version rather than presented as results for `release-1.0`. The Java-era run
-  that does exist - `workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt`, the unit suite, the
-  smoke fixture and the operational models after the rewrite - is cited in
-  `../../tests/test-plan.md` section 5 beside the Node-era results it supersedes.
+- **The evidence has now been re-run rather than carried over, which was not true when this section
+  was first written.** Every run kept beside the current ones was recorded against the Node.js
+  workers or against the models as they stood on 21 September, and re-running them needs an engine,
+  which is why they are kept as the record of what was run at a named version rather than presented
+  as results for `release-1.0`. Two records now do describe the current implementation:
+  `workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt` (the unit suite, the smoke fixture and
+  the operational models after the Java rewrite) and the pair made at `57b3c1d` on 2026-09-28 - all
+  three levels passing, and the bindings, layout, export and engine-form checks with them. Both are
+  cited in `../../tests/test-plan.md` section 5 beside the Node-era results they supersede.
 - **Added after this evaluation - and it changes the answer on the forms.** `DEF-13` is closed at
   `a62e783`: 40 forms now cover all 55 user tasks. Writing the missing ones showed that the eight
   the first edition counted as delivered had never rendered a field - a group's children belong

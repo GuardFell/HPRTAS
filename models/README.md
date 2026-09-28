@@ -32,7 +32,7 @@ in each model is what it draws from, so a model whose diagram was redrawn has to
 - Write gateway conditions in **FEEL** (`= accepted`), not in the Camunda 7 style (`${...}`), which
   Camunda 8 does not evaluate.
 - One process per file, and the file name matches the process.
-- A release is tagged before it is submitted, for example `release-1.0` for the first release and `submission-2026-09-29` for the tree the project is submitted at.
+- A release is tagged before it is submitted: `release-1.0` for the first release and `release-2.0` for the second, with `submission-2026-09-29` on the tree the project is submitted at.
 
 ## Deploying a model
 

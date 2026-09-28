@@ -17,7 +17,7 @@ implemented is listed there, and it is part of the demonstration rather than an 
 |---|---|
 | Repository | `https://github.com/GuardFell/HPRTAS` |
 | Commit to demonstrate | the commit this file is committed in; `git rev-parse --short HEAD` names it |
-| Release tag | `submission-2026-09-29`, the tag on the commit this file is committed in. `release-1.0` names the earlier first release |
+| Release tag | `release-2.0` and `submission-2026-09-29`, the tags on the commit this file is committed in. `release-1.0` names the earlier first release |
 | Recorded run in this shape of the tree | `../../tests/evidence/core-5-message-exchange-and-layout-tidy_2c3c2eb_2026-09-28.txt` (the current one: five models, nine scenarios, seven workers, 42 unit and 11 engine tests) and `../../tests/evidence/operational-models-and-forms_end-to-end_57b3c1d_2026-09-28.txt` (the same engine run written out per task, before `core-5` existed) |
 | Defects open at this version | `DEF-07` (no authentication, no enforced role separation), `DEF-08` (no form submitted by a signed-in user), `DEF-10` (simulated ledgers are per worker process), `DEF-14` (a condition on an activity's only outgoing flow is not evaluated) - `../../tests/test-plan.md` section 6 |
 

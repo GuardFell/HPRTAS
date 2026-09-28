@@ -286,5 +286,6 @@ blocked can be called demonstrated, because both were found by checking rather t
    `bdcc0e1` so that it covered the Java workers, and re-pointed a third time onto `69e01a1` so that
    it covers the completed form set and the refund fix. `DEF-12`, `DEF-13` and `DEF-14` are all
    inside it, and `git log release-1.0..HEAD` is empty. `DEF-11` was the one defect still open at the
-   tag; it is fixed at `57b3c1d`, and the tree carrying that fix is tagged `submission-2026-09-29`, so
-   the tag and the fix have been brought together without moving `release-1.0`.
+   tag; it is fixed at `57b3c1d`, and the tree carrying that fix is tagged `release-2.0` and
+   `submission-2026-09-29`, so the tag and the fix have been brought together without moving
+   `release-1.0`.

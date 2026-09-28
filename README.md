@@ -12,8 +12,9 @@ test evidence for that system.
 
 ## The version this describes
 
-The submitted version is tagged **`submission-2026-09-29`**, and that tag names the commit this file
-is committed in: `git rev-parse --short submission-2026-09-29` prints it. `release-1.0` names the
+The submitted version is tagged twice on one commit, and this file is committed in it:
+**`submission-2026-09-29`**, for the submission, and **`release-2.0`**, for the second release.
+`git rev-parse --short submission-2026-09-29` prints the commit. `release-1.0` names the
 first release, which is an earlier version - it resolves to `69e01a1`, four models and 40 forms - and
 it is left where it is, because the results recorded against it are only readable there. Every result
 in `tests/evidence/` names the commit it was produced at, so a claim can be traced to the version it

@@ -21,7 +21,7 @@ apology for it.
 |---|---|
 | Repository | `https://github.com/GuardFell/HPRTAS` |
 | Commit to demonstrate | the commit this file is committed in; `git rev-parse --short HEAD` names it |
-| Release tag | `submission-2026-09-29`, the tag on the commit this file is committed in. `release-1.0` names the earlier first release |
+| Release tag | `release-2.0` and `submission-2026-09-29`, the tags on the commit this file is committed in. `release-1.0` names the earlier first release |
 | Recorded run at this shape of the tree | `../../tests/evidence/core-5-message-exchange-and-layout-tidy_2c3c2eb_2026-09-28.txt`, scenario 9 |
 | The test case this scenario answers | `TC-03`, which passes at `2c3c2eb` - `../../tests/test-plan.md` section 4 |
 | Defects open at this version | `DEF-07`, `DEF-08`, `DEF-10`, `DEF-14` - `../../tests/test-plan.md` section 6 |

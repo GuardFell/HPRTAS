@@ -6,11 +6,12 @@
 
 ## Version under test
 
-Two tags name versions, and they are different versions. `release-1.0` names the first release and
-resolves to `69e01a1`; it stays where it is, because the records made at that version - the
-completed form set, the refund catch event - are only readable against it. The tree this file is
-committed in is tagged **`submission-2026-09-29`**, and that is the version the project is submitted
-at. An earlier edition of this section recorded that the first-release tag no longer named the tree
+Three tags name versions. Two of them sit together on the commit this file is committed in:
+**`release-2.0`**, which marks that tree as the second release, and **`submission-2026-09-29`**, which
+names it as the submission. The third, `release-1.0`, names the first release and resolves to
+`69e01a1`; it stays where it is, because the records made at that version - the completed form set,
+the refund catch event - are only readable against it. An earlier edition of this section recorded
+that the first-release tag no longer named the tree
 these records describe, and that either the tag had to move forward or the records had to be read as
 describing `main` after it; tagging the submitted tree settles that without re-pointing a tag that
 results already cite. No hash is written for the submission, because a hash written here is stale
@@ -44,7 +45,7 @@ result names the commit it was produced at**; the three levels were run again at
 
 | What | Value |
 |---|---|
-| Release under test | `submission-2026-09-29`, the tag on the commit this file is committed in: five `core-N` models, 58 `userTask` elements over 56 ids, 41 Camunda Forms covering all of them, workers in Java |
+| Release under test | `submission-2026-09-29` and `release-2.0`, the tags on the commit this file is committed in: five `core-N` models, 58 `userTask` elements over 56 ids, 41 Camunda Forms covering all of them, workers in Java |
 | First release | `release-1.0`, which resolves to `69e01a1`: four `core-N` models, 40 Camunda Forms covering the 55 user tasks that existed then, workers in Java |
 | Current tree | five `core-N` models, 58 `userTask` elements over 56 ids, 41 Camunda Forms, seven workers, and the message exchange `core-5` waits on. `57b3c1d` was one commit past the first-release tag and held 56 elements and six workers |
 | Earlier tag targets | `9ef26df` (Node.js workers, superseded), then `bdcc0e1` (Java workers, before the forms were completed) |

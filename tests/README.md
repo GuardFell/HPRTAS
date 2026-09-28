@@ -16,9 +16,10 @@ plan.
 
 ## Where it stands
 
-The first release is tagged `release-1.0`, and the tree the project is submitted at is tagged
-`submission-2026-09-29`; `release-1.0` stays where it is, because the records made against it are
-only readable there. The runs first recorded here were produced before either tag was made, so **each result names the commit it was produced at**. `test-plan.md` opens with the
+The first release is tagged `release-1.0` and the second `release-2.0`, which is also the tree the
+project is submitted at and carries `submission-2026-09-29`; `release-1.0` stays where it is, because
+the records made against it are only readable there. The runs first recorded here were produced before
+those tags were made, so **each result names the commit it was produced at**. `test-plan.md` opens with the
 version the plan is written against; every evidence file names its own. The three levels and the
 artefact checks were run again at `57b3c1d` on 2026-09-28, and once more at `2c3c2eb` with the message
 exchange; the `2c3c2eb` record is the current evidence (see `evidence/README.md`).

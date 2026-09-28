@@ -31,12 +31,12 @@ import org.junit.jupiter.api.TestMethodOrder;
 import uk.ac.uwe.hprtas.workers.services.Services;
 
 /**
- * End-to-end run of the four operational models against the real engine.
+ * End-to-end run of the five operational models against the real engine.
  *
  * Run with {@code mvn test -Pengine -Dtest=OperationalModelsTest} while the engine is running.
  * {@link SmokeTest} proves the workers against a purpose-built linear fixture; this proves them
  * against the delivered models: the jobs come from the service tasks of
- * {@code models/operational/core-1..4}, the gateways read what the workers return, the user tasks are
+ * {@code models/operational/core-1..5}, the gateways read what the workers return, the user tasks are
  * completed the way a Tasklist user completes them, and the path is read back from the Orchestration
  * Cluster API.
  *
@@ -97,7 +97,7 @@ class OperationalModelsTest {
     services = Services.create(config);
     System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "error");
 
-    report("External workers against the four operational models");
+    report("External workers against the five operational models");
     report("=".repeat(74));
     report(
         "Camunda 8 Run via %s, gRPC %s",

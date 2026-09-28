@@ -10,6 +10,15 @@ that talk to systems outside the hospital.
 The repository holds the models, the forms the staff use, the workers, the documentation and the
 test evidence for that system.
 
+## The version this describes
+
+The submitted version is tagged **`submission-2026-09-29`**, and that tag names the commit this file
+is committed in: `git rev-parse --short submission-2026-09-29` prints it. `release-1.0` names the
+first release, which is an earlier version - it resolves to `69e01a1`, four models and 40 forms - and
+it is left where it is, because the results recorded against it are only readable there. Every result
+in `tests/evidence/` names the commit it was produced at, so a claim can be traced to the version it
+belongs to rather than to the tree as it stands.
+
 ## What is in the repository
 
 `models/` holds the BPMN. `models/strategic/` contains the high-level view of the wider process,
@@ -108,6 +117,37 @@ it is. `workers/README.md` under *Publishing a message* has the two kinds of mes
 
 The strategic model is a non-executable view of the process. Do not deploy it: Camunda rejects a
 deployment that contains no executable process.
+
+## Deployment configuration
+
+Everything the engine runs is deployed from this repository: the five models in
+`models/operational/`, each with the forms its user tasks resolve. Nothing is configured inside the
+engine itself, so the configuration is the files below and the commands above. The strategic model
+and the socio-technical views are not deployed, for the reason just given.
+
+| What | Value | Where it is set |
+|---|---|---|
+| Engine | Camunda 8 Run 8.9.19 | the bundled runtime, `camunda-runtime\c8run-8.9.19\` |
+| Orchestration Cluster API | `http://localhost:8080/v2/`, every call a `POST` with a JSON body | the engine's own ports; nothing here sets them |
+| Zeebe gRPC gateway | `grpc://localhost:26500` | `workers/.env`, `ZEEBE_GRPC_ADDRESS` |
+| Authentication | none sent: the bundled install disables authentication for API access | `workers/.env`, `CAMUNDA_AUTH_STRATEGY=NONE` |
+| Worker wiring: the job type each worker serves, how many jobs it activates, its job timeout | one entry per worker | `workers/config/workers.default.json`, key `workers` |
+| Simulated external services: outcome, latency and thresholds | one entry per service | `workers/config/workers.default.json`, key `simulatedServices` |
+| Business calendar: clinic-letter, pathway-monitoring and escalation periods | one table | `workers/config/workers.default.json`, key `businessCalendar` |
+| Forcing one outcome for every job of a worker, which is how a demonstration drives an exception path without editing code | `HPRTAS_SIM_*` | `workers/.env` or the shell |
+
+The worker settings are read in three layers, each overriding the one before it:
+`workers/config/workers.default.json` (committed, the agreed defaults), then
+`workers/config/workers.local.json` (optional, never committed, for one machine), then environment
+variables from `workers/.env` or the shell. `workers/.env` is what `workers/.env.example` is copied
+to and is ignored by git, so a machine configures its own connection without changing the committed
+defaults. `workers/README.md` describes every setting and what each simulated service can be told to
+do.
+
+Deployment is also done programmatically by `python tools/verify_hprtas_engine_forms.py`, which
+deploys each model with its forms and then proves it by starting the model and checking that the user
+task it reaches resolves a form that was deployed. `models/README.md` under *Deploying a model* gives
+the single-model command and the rules a model has to follow to be deployable at all.
 
 ## Testing it
 

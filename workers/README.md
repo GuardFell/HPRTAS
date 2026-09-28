@@ -87,7 +87,10 @@ mvn compile exec:java -Dexec.args="--publish-message patient-enquiry --variables
 The name is the `name` of the `bpmn:message` the model declares, and the variables are its payload.
 No correlation key is sent, and none can be: a message start event holds no subscription, so there is
 nothing to correlate against. A correlation key belongs to the intermediate catch events a
-long-running instance waits on, which these models do not use.
+long-running instance waits on, and that is the other half of messaging in this project: `core-4`
+starts processes by message, and `core-5` is the one model that waits for one, at
+`N_MS_DocumentsSupplied`, correlated by the referral reference. The two are set side by side under
+*Publishing a message* below.
 
 The engine recording the publication is not proof that an instance received it. A name no deployed
 model declares, or a model that is not deployed, is accepted and correlated with nothing, and the

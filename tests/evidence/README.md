@@ -114,14 +114,15 @@ describes the Node.js implementation rather than the one under test.
 - `operational-models_end-to-end_a7f0dd6_2026-09-21.txt` — pass.
 
 **Superseded, kept as the record of what was run at those commits.** These two were run against the
-operational models of the first edition, which the four `core-N` models have since replaced.
+operational models of the first edition, which the `core-N` models have since replaced.
 
 - `referral-to-appointment_normal-path_1b42bff_2026-09-21.txt` — the normal path with the models and
   the workers together. Pass, with one uncaught-error incident recorded inside the file.
 - `error-paths-and-urgent-path_e852224_2026-09-21.txt` — six scenarios covering four worker error
   paths, the urgent no-slot path, the normal path to completion and one declared-default branch. No
-  incident. **The urgent no-slot path it covers is now the one that loops for ever in `core-1`; the
-  fix it describes was in the models that were replaced, not in the ones delivered.**
+  incident. **The urgent no-slot path it covers is the one that later looped for ever in `core-1`
+  (`DEF-11`, fixed at `57b3c1d`); the fix it describes was in the models that were replaced, not in
+  the ones delivered.**
 
 ## What is still open
 

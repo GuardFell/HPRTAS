@@ -21,9 +21,9 @@
 artefacts have changed since, so every verdict below was re-checked against the current tree rather
 than carried over. Where a verdict moved because of that, the row says so and names the commit that
 moved it. **The counts in this evaluation are the counts at `69e01a1`** - 55 user tasks and 40 forms
-- and are left as they stand, because that is the version being evaluated; `main` has since moved to
-`57b3c1d`, which re-laid out every model and added a 56th user task and a 41st form (`DEF-11`'s
-escalation and the form bound to it), so a count read here is a count at the tag and not at `main`.
+- and are left as they stand, because that is the version being evaluated; `main` has since moved
+further, to five operational models, 58 user task elements and 41 forms with seven workers, so a
+count read here is a count at the tag and not at `main`.
 The evidence was the half that had not kept up, and it has now been re-run twice: once at `76a7fdc`
 after the Java rewrite, and again at `57b3c1d` on 2026-09-28, where all three levels and the
 bindings, layout, export and engine-form checks pass. Those two records are
@@ -130,7 +130,8 @@ rather than repeated.
   `retryPayment`, now decides at a gateway and both answers have been driven; the other,
   `affectsCharge`, is corrected but still not enforced. The conditions out of gateways - which is
   every decision this evaluation checked - are unaffected.
-- **An urgent referral with no slot loops for ever in `core-1`** (`DEF-11`). It was found by reading
+- **An urgent referral with no slot loops for ever in `core-1` at this version** (`DEF-11`; the loop
+  is fixed at `57b3c1d`). It was found by reading
   the two gateway conditions against the scheduling service's determinism, and running the current
   scenarios would not have found it, because they all use `priority = "routine"`.
 - **The artefacts have changed since this evaluation was first made, and it has been re-checked.**
@@ -284,5 +285,6 @@ blocked can be called demonstrated, because both were found by checking rather t
    **Done:** `release-1.0` tags the first release. It was made at `9ef26df`, re-pointed to
    `bdcc0e1` so that it covered the Java workers, and re-pointed a third time onto `69e01a1` so that
    it covers the completed form set and the refund fix. `DEF-12`, `DEF-13` and `DEF-14` are all
-   inside it, and `git log release-1.0..HEAD` is empty. `DEF-11` is the one defect still open at the
-   tag, so the tag and that fix have to be brought together before the release is accepted.
+   inside it, and `git log release-1.0..HEAD` is empty. `DEF-11` was the one defect still open at the
+   tag; it is fixed at `57b3c1d`, and the tree carrying that fix is tagged `submission-2026-09-29`, so
+   the tag and the fix have been brought together without moving `release-1.0`.

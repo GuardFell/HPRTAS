@@ -57,7 +57,7 @@ failure path, with test evidence against an identified version.
 | 2 | TB-012 | Complete the case study summary. | M2 | M5 | 8 | Every stated rule and exception captured. | `../case-study-summary.md` | Done |
 | 2 | TB-013 | Record the requirements and the traceability table. | M2 | M5 | 8 | Every requirement traceable to a source. | `../requirements/requirements.md` | Done |
 | 2 | TB-014 | Complete the test plan: the acceptance criteria and the scenarios. | M5 | M3 | 5 | Criteria measurable and linked to a requirement and a business rule. | `../../tests/test-plan.md` sections 3 and 4 | Done |
-| 2 | TB-015 | Run the scenarios and record the evidence. | M5 | M3 | 5 | Normal, alternative and failure paths evidenced. | `../../tests/evidence/` | In progress - 17 of the 21 scenarios have a recorded result (11 pass, 6 pass in part); `TC-02`, `TC-13`, `TC-16` and `TC-20` are recorded as `Not run` |
+| 2 | TB-015 | Run the scenarios and record the evidence. | M5 | M3 | 5 | Normal, alternative and failure paths evidenced. | `../../tests/evidence/` | In progress - 19 of the 21 scenarios have a recorded result (12 pass, 7 pass in part); `TC-13` and `TC-16` are recorded as `Not run` |
 
 **How the sprint went.** The integrated increment was delivered ahead of the sprint end and ahead of
 its planned breadth: all four models, all eight forms and all six workers, with five scenarios each
@@ -85,7 +85,7 @@ comes from rather than a task ID. Every row is one of the gaps recorded in
 | Backlog item | Work selected | First Owner | Second Owner | Estimate | Acceptance Conditions | Evidence to produce |
 |---|---|---|---|---|---|---|
 | PB-009 | The i\* SD and SR models in `../../models/socio-technical/`, checked against each other: every dependency in the SD model has a rationale in the SR model, and every actor appears in both with the same goals. The strategic BPMN half of PB-009 is already delivered in `../../models/strategic/`. | M2 | M1 | 13 | Roles and external interactions shown; SD and SR consistent; the abstraction level explained. | `../../models/socio-technical/`; the traceability extended in `../requirements/requirements.md` |
-| PB-008 | `DEF-11`: the urgent referral with no slot in the requested period loops for ever in `core-1`. Re-target the flow so it cannot cycle, then re-run the scenarios that reach it (`TC-05`, `TC-18`). | M1 | M3 | to be estimated | The instance leaves the branch for both a routine and an urgent referral; the re-run reaches an end event with no incident. | A corrected `core-1` and a re-run in `../../tests/evidence/` |
+| PB-008 | `DEF-11`: the urgent referral with no slot in the requested period loops for ever in `core-1`. Re-target the flow so it cannot cycle, then re-run the scenarios that reach it (`TC-05`, `TC-18`). | M1 | M3 | to be estimated | The instance leaves the branch for both a routine and an urgent referral; the re-run reaches an end event with no incident. | A corrected `core-1` and a re-run in `../../tests/evidence/`. Done at `57b3c1d`: the urgent no-slot flow escalates instead of cycling, and it is driven in scenario 8 of `OperationalModelsTest` |
 | PB-008 | `DEF-12`: `N_F_ProcessRefund` cannot catch the `PROHIBITED_FINANCIAL_DATA` its worker raises. Add the missing boundary event and re-run `TC-21`. | M3 | M1 | to be estimated | A refund carrying card details follows the error path instead of becoming an incident; `TC-21` still passes. | Done at `9138bcc`: `core-4` corrected, the error path driven on the engine, and `TC-21` re-run green |
 | PB-006 | `DEF-13`: 36 of the 55 user tasks bound no form. Either the forms are built for those tasks, or the limitation is accepted for the second release and stated in the demonstration and in the evaluation. This was the largest open item in the project. | M4 | M2 | to be estimated | Every task the case requires a record from has a form whose fields are the variables the model reads, or a recorded decision that it does not and why. | `../../forms/`; `../planning/plan-evaluation.md` section 6 |
 | PB-007 | Run the four scenarios that have no result. `TC-02` and `TC-16` need no new capability; `TC-13` and `TC-20` need the forms from the row above and a signed-in user first. | M5 | M3 | to be estimated | Each scenario has a result or a recorded reason it still cannot be run. | `../../tests/test-plan.md` section 5; `../../tests/evidence/` |
@@ -98,8 +98,8 @@ that `DEF-07` and `DEF-08` need. The `DEF-12` row is done at `9138bcc`, and the 
 at `57b3c1d`, which re-targets the urgent branch onto a new escalation task and binds it to a new
 form; that commit also re-laid out every model, so the tree now carries 56 user tasks and 41 forms.
 Both rows' re-runs were made at `57b3c1d` and are recorded in `../../tests/evidence/`, which closes
-the re-run half of each row. The `PB-007` row is not closed: `TC-02` and `TC-16` still have no
-result, and `TC-13` and `TC-20` still need a signed-in user.
+the re-run half of each row. The `PB-007` row is not closed: `TC-13` and `TC-16` still have no
+result, and the reason each cannot be run is recorded in `../../tests/test-plan.md` section 5.
 
 ## Sprint 4 - Validation, evaluation and demonstration
 
@@ -132,7 +132,7 @@ two is a considered entry and the other is not obviously a correction of it.
 
 | Row | In the plan document | In this repository | Why they are left as they are |
 |---|---|---|---|
-| TB-015 status | Done | In progress - the run and the recording are complete for every scenario that can be run today (17 of 21), and the four that cannot be run are named in `../../tests/test-plan.md` section 5 | The task's acceptance conditions are met, so it can be read as done; the four unrun scenarios are why the row still reads in progress here. Someone has to decide which of the two the sprint review records. |
+| TB-015 status | Done | In progress - the run and the recording are complete for every scenario that can be run today (19 of 21), and the two that cannot be run are named in `../../tests/test-plan.md` section 5 | The task's acceptance conditions are met, so it can be read as done; the two unrun scenarios are why the row still reads in progress here. Someone has to decide which of the two the sprint review records. |
 | TB-012 estimate | 5 | 8 | Both estimates are on the agreed scale and neither was re-estimated after the fact; the difference is a disagreement about size, not a correction. |
 | TB-013 estimate | 5 | 8 | Same as TB-012. |
 | PB-007 estimate | 13 | 8 | The plan document sizes the whole test effort as an integrated increment; `../backlog/product-backlog.md` records it as an 8, the size of an artefact with its bindings. |

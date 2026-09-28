@@ -222,6 +222,10 @@ result, and `fitToContinue`, which is the clinical decision the model branches o
 A form shared by several tasks is listed once per task, because the same form is the variable
 contract for each of them. Every user task in the five operational models appears exactly once.
 
+`by-core.md` arranges the same bindings by the model that uses them, with the lane and the candidate
+group of each task and the set of forms a model needs deployed with it, which is the arrangement a
+demonstration works from.
+
 | Form | Tasks bound to it |
 |---|---|
 | `appointment-confirmation.form` | `N_TB_ConfirmAppointment`, `N_OB_ConfirmFollowUp` |
@@ -313,7 +317,7 @@ What has been checked about the forms themselves:
 - The form bound to `N_MS_CheckReferral` renders in Tasklist with all ten of its fields, becomes
   editable once the task is assigned, and enables `Complete Task` only when the required fields are
   filled.
-- `mvn test -Pengine -Dtest=OperationalModelsTest` runs all four models with these bindings in
+- `mvn test -Pengine -Dtest=OperationalModelsTest` runs all five models with these bindings in
   place.
 
 Not checked: a task completed from a form by a signed-in user, end to end. The variables a form

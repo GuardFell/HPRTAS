@@ -94,7 +94,7 @@
 ## 5. Key business rules
 
 > **Note on IDs.** These `BR-###` IDs are the ones the models and the workers cite: the element
-> documentation inside the four `core-N` models in `models/operational/` names the rules, exceptions
+> documentation inside the five `core-N` models in `models/operational/` names the rules, exceptions
 > and requirements each element implements, using this list's numbering. The only place that still
 > uses the earlier, coarser allocation is the test evidence recorded at commit `813fea6` (for
 > example `BR-03` for the two-week telephone rule there, which is BR-07 here). The mapping is in the
@@ -189,7 +189,7 @@
 | External treatment, laboratory, imaging and scheduling services | Provide availability for treatment appointments and the assessments (including blood tests) needed between chemotherapy cycles. | Simulated: `workers/src/main/java/uk/ac/uwe/hprtas/workers/services/TreatmentService.java`, called by `workers/src/main/java/uk/ac/uwe/hprtas/workers/workers/TreatmentAvailability.java`; can return `unavailable`. |
 | Referring organisation - General Practitioner or another hospital | Sends the referral and supporting documentation; may be asked for missing information. | Modelled as its own black-box pool (`Participant_Referring`) in the strategic all-entities model and in core-1, core-3 and core-4; the referral arrives as a message flow. |
 | Letter recipients - patient's GP, other hospitals, healthcare providers and other professionals | Receive clinic letters after they are approved and distributed. | Modelled as recipients on the letter tasks in core-3 and reached through the correspondence pool; distribution simulated by the correspondence service. |
-| The patient | Attends appointments, consents to treatment, pays chargeable amounts, raises enquiries, and may cancel or fail to attend. | Modelled as its own black-box pool (`Participant_Patient`, named "Patient or authorised representative") in the strategic all-entities model and in all four core models; the patient's steps are outside the hospital's control, so they are messages rather than lanes. |
+| The patient | Attends appointments, consents to treatment, pays chargeable amounts, raises enquiries, and may cancel or fail to attend. | Modelled as its own black-box pool (`Participant_Patient`, named "Patient or authorised representative") in the strategic all-entities model and in core-1 to core-4; the patient's steps are outside the hospital's control, so they are messages rather than lanes. |
 | Existing hospital systems and manually maintained records | Current sources and destinations of information that the HPAS is intended to replace or coordinate with. | Out of scope for the prototype; recorded as an assumption about the current state (AS-12). |
 
 ## 8. Information captured, stored, transferred or validated
@@ -284,7 +284,7 @@
 | AS-11 | The Consultant's approval of a clinic letter covers distribution to the recipients the Consultant identified. | The case makes the Consultant responsible for clinical content and recipients. | Additional consent steps would be needed if sharing requires separate patient consent. |
 | AS-12 | Integration with existing hospital systems is limited to the interfaces needed for the pathway (patient identification, charging, correspondence); the prototype simulates all external services. | The case does not define the integration scope, and the module uses simulated services. | Underestimated integration effort in later deliverables. |
 | AS-13 | The seven-day letter target and the escalation thresholds (one month, three months) are calendar periods measured from the appointment date. | The case states the periods without defining how they are counted. | Monitoring and reminder dates could be wrong by a day or more. |
-| AS-14 | The first release covers the pathway through the four `core-N` operational models (referral to appointment, treatment authorisation, funding and payment, clinic letters and escalation, follow-up, enquiry and refund). | The four core models were built and deployed for the initial release, replacing the first edition's three models. | If a requirement is demonstrated outside these four models, state where it is demonstrated instead. |
+| AS-14 | The first release covers the pathway through the four `core-N` operational models (referral to appointment, treatment authorisation, funding and payment, clinic letters and escalation, follow-up, enquiry and refund). | The four core models were built and deployed for the initial release, replacing the first edition's three models; `core-5` was added afterwards, so the delivered set is five. | If a requirement is demonstrated outside these four models, state where it is demonstrated instead. |
 
 ## Change log
 

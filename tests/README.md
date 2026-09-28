@@ -19,8 +19,8 @@ plan.
 The first release is tagged `release-1.0`. The runs first recorded here were produced before that tag
 was made, so **each result names the commit it was produced at**. `test-plan.md` opens with the
 version the plan is written against; every evidence file names its own. The three levels and the
-artefact checks were run again at `57b3c1d`, the current tip of `main`, on 2026-09-28; those two
-records are the current evidence (see `evidence/README.md`).
+artefact checks were run again at `57b3c1d` on 2026-09-28, and once more at `2c3c2eb` with the message
+exchange; the `2c3c2eb` record is the current evidence (see `evidence/README.md`).
 
 At `c8556ba`, seven of the ten acceptance criteria were met, three were not, and thirteen defects
 and limitations were recorded; the table now has fourteen, `DEF-14` having been added with the

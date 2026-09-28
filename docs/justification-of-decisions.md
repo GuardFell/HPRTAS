@@ -5,23 +5,27 @@ presentation asks for: the process structure, the participant boundaries, how ta
 how the gateways are arranged, how the process meets the outside world, how failure is handled, the
 assumptions the models rest on, the alternatives that were rejected and the trade-offs accepted.
 
-It is written against the four operational models in `../models/operational/`, the strategic models
+It is written against the five operational models in `../models/operational/`, the strategic models
 in `../models/strategic/`, and the evidence in `../tests/evidence/`. Readable PDF exports of every
 model are in `../models/exports/`. Where a decision has a cost, the cost is stated here rather than
 left out: a justification that claims no downside is not a justification.
 
 ## 1. Process structure
 
-**Four processes, not one.** The pathway was modelled as four executable processes rather than one
+**Five processes, not one.** The pathway was modelled as five executable processes rather than one
 large one, because the case describes four points at which the work is picked up and handed on, and
 those hand-offs are where the interesting rules live. `core-1` ends when the first appointment is
 arranged, `core-2` when a treatment cycle has been reviewed, `core-3` when a letter is distributed
-or delayed, `core-4` when a follow-up is booked or an episode closed. Each has a start an actor can
-identify with, and each can be deployed, run and demonstrated on its own.
+or delayed, `core-4` when a follow-up is booked or an episode closed, and `core-5` when the
+referring organisation has supplied the documentation it was asked for. `core-5` is not a further
+stage of the case but the missing-information exchange modelled as it really is: a request and a
+reply crossing the referring organisation's pool as messages, where `core-1` records the same step
+inside one process. Each has a start an actor can identify with, and each can be deployed, run and
+demonstrated on its own.
 
-The cost is real: a patient's journey crosses process boundaries, so the four processes share a
+The cost is real: a patient's journey crosses process boundaries, so the five processes share a
 patient and appointment identity rather than a single token, and nothing in the models stops a
-second process from being started for the same patient. The alternative - one process with four
+second process from being started for the same patient. The alternative - one process with five
 start events - would have kept a single instance but produced a diagram no one could read, and the
 case's own stages are what the boundaries follow.
 
@@ -67,7 +71,7 @@ a lane. Two do not, and both are deliberate:
 
 - The **Clinical Nurse Specialist Administrative Support Team** owns a lane in
   `patient-pathway-all-entities.bpmn` but no lane in any operational process, because no activity in
-  the four processes is exclusively its own.
+  the five processes is exclusively its own.
 - The **patient's GP and other letter recipients** are not a pool. They are recorded as the
   `recipients` a letter is dispatched to, reached through the correspondence service pool. Making
   them a pool would add a pool with no activity in it.
@@ -98,7 +102,7 @@ value the process acts on is produced by the component that can actually know it
 **Every exclusive gateway declares a default flow, and the default is the branch that keeps a human
 in the loop.** Camunda does not treat a conditionless sequence flow as a fallback: a gateway falls
 back only to the flow named in its `default` attribute, and raises an incident when no condition
-matches. All 23 exclusive gateways in the four processes therefore declare one, and the flow each
+matches. All 24 exclusive gateways in the five processes therefore declare one, and the flow each
 names carries no condition of its own.
 
 Which branch is the default is a deliberate choice, and it is always the conservative one: an
@@ -125,7 +129,7 @@ capacity, no real diary, no card processing or settlement, no printing or delive
 Three keep a ledger keyed by the booking or payment reference, which is what makes "no duplicate
 appointment", "no second charge" and "no second refund" testable rather than asserted.
 
-**Message flows carry what crosses a boundary.** Twenty message flows across the four operational
+**Message flows carry what crosses a boundary.** Twenty-two message flows across the five operational
 processes, each naming what is exchanged ("availability request", "appointment letter", "approved
 refund request"). No sequence flow crosses a pool boundary, which is what keeps the participant
 boundaries meaningful rather than decorative.
@@ -141,7 +145,7 @@ the same appointment twice.
 ## 6. Exception handling
 
 **A business rule that stops the work is thrown as a BPMN error, and every service task that can
-raise one catches it.** Fourteen boundary error events across the four processes, one per error code
+raise one catches it.** Fifteen boundary error events across the five processes, one per error code
 per activity. Each error path returns the token to the task that owns the request, so the request is
 corrected and the step retried rather than the process being abandoned: the referral exceptions
 return to the Medical Secretaries, the booking and dispatch failures to the Outpatient Bookings
@@ -185,8 +189,8 @@ yet.
 
 ## 8. Alternatives considered
 
-**One process instead of four.** Rejected. It would have kept one instance per patient but produced a
-diagram with four start events and no readable shape, and the case's stages are what the boundaries
+**One process instead of five.** Rejected. It would have kept one instance per patient but produced a
+diagram with five start events and no readable shape, and the case's stages are what the boundaries
 follow.
 
 **Keeping the first edition's three models and extending them.** Rejected, and this is the decision
@@ -217,12 +221,13 @@ and the course requires Camunda 8. The first edition accidentally used Camunda 7
 These are the costs of the choices above, recorded rather than hidden. The defects are numbered in
 `../tests/test-plan.md` section 6.
 
-**Known structural gaps.** An urgent referral with no slot in the requested period loops in
-`core-1` instead of ending (`DEF-11`), which is still open. The refund service task caught
-`INVALID_VARIABLE` but not `PROHIBITED_FINANCIAL_DATA`, which the refund worker can also raise;
-that is fixed at `9138bcc`, and fixing it turned up a fault of the same family - a condition on the
-only outgoing flow of an activity is never evaluated (`DEF-14`), so two conditions in `core-2`
-read as guards and were not. None of this is hidden: all three are in the defect table.
+**Known structural gaps.** An urgent referral with no slot in the requested period used to loop in
+`core-1` instead of ending (`DEF-11`); that is fixed at `57b3c1d`, where the escalation ends the
+booking process instead of returning the token to the availability check. The refund service task
+caught `INVALID_VARIABLE` but not `PROHIBITED_FINANCIAL_DATA`, which the refund worker can also
+raise; that is fixed at `9138bcc`, and fixing it turned up a fault of the same family - a condition
+on the only outgoing flow of an activity is never evaluated (`DEF-14`), so two conditions in
+`core-2` read as guards and were not. None of this is hidden: all three are in the defect table.
 
 **Every user task now binds a form** (`DEF-13`, closed at `a62e783`). This was the largest gap in
 the first edition. Thirty-six of the fifty-five tasks had no form at all, so their variable contract

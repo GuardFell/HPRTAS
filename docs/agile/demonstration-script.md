@@ -3,8 +3,8 @@
 The demonstration `PB-008` asks for. It is written to be run against the repository at an identified
 commit, in front of an audience, without editing anything while it runs.
 
-**What it demonstrates:** the delivered system at an identified version - the four operational models,
-the 41 Camunda Forms bound to their user tasks, and the six external workers - with the normal path,
+**What it demonstrates:** the delivered system at an identified version - the five operational models,
+the 41 Camunda Forms bound to their user tasks, and the seven external workers - with the normal path,
 a decision that ends a referral, and one exception path that a defect used to block.
 
 **Read `## What this does not demonstrate` before giving it.** Everything simulated or not
@@ -16,8 +16,8 @@ implemented is listed there, and it is part of the demonstration rather than an 
 |---|---|
 | Repository | `https://github.com/GuardFell/HPRTAS` |
 | Commit to demonstrate | the commit this file is committed in; `git rev-parse --short HEAD` names it |
-| Release tag | `release-1.0` |
-| Recorded run at that shape of the tree | `../../tests/evidence/operational-models-and-forms_end-to-end_57b3c1d_2026-09-28.txt` |
+| Release tag | `submission-2026-09-29`, the tag on the commit this file is committed in. `release-1.0` names the earlier first release |
+| Recorded run at that shape of the tree | `../../tests/evidence/core-5-message-exchange-and-layout-tidy_2c3c2eb_2026-09-28.txt` - all three levels and the checks, at the version that added `core-5`; the per-scenario paths are in `../../tests/evidence/operational-models-and-forms_end-to-end_57b3c1d_2026-09-28.txt` |
 | Defects open at this version | `DEF-07` (no authentication, no enforced role separation), `DEF-08` (no form submitted by a signed-in user), `DEF-10` (simulated ledgers are per worker process), `DEF-14` (a condition on an activity's only outgoing flow is not evaluated) - `../../tests/test-plan.md` section 6 |
 
 Say the commit out loud at the start. The test plan's rule is that a claim belongs to one version, and
@@ -66,11 +66,12 @@ cp .env.example .env          # once
 mvn compile exec:java
 ```
 
-Wait for the line that names all six:
+Wait for the line that names all seven:
 
 ```
-HPRTAS external workers are running (6 workers). Press Ctrl-C to stop.
+HPRTAS external workers are running (7 workers). Press Ctrl-C to stop.
   validate-referral
+  request-referral-documents
   check-appointment-availability
   check-treatment-availability
   process-payment
@@ -89,7 +90,7 @@ being carried out.
 ```bash
 cd workers
 mvn -q compile exec:java -Dexec.args="--check"      # the configuration and the wiring, no engine
-python ../../tools/verify_hprtas_bpmn_bindings.py   # the models, the forms and the workers agree
+python ../tools/verify_hprtas_bpmn_bindings.py      # the models, the forms and the workers agree
 ```
 
 Both should pass. The bindings check prints `PASS: the models, the forms and the workers agree`.
@@ -185,7 +186,7 @@ path and ends at `N_PC_Referred` instead. Both endings are correct; only one is 
 
 ---
 
-### Optional: the other three models, if there is time
+### Optional: the other four models, if there is time
 
 Each is a separate process and is started separately.
 
@@ -194,6 +195,7 @@ Each is a separate process and is started separately.
 | Funding, payment and the between-cycle review | `core-2` | Funding route `patient`, a charge, then payment through the provider; then a pre-cycle review and a treatment modification that affects the charge | scenario 2 of the `57b3c1d` run |
 | The clinic letter and its escalation | `core-3` | Letter prepared and approved, then an administrative check that can return it to the Consultant | scenario 3 |
 | Follow-up, cancellation, enquiry and refund | `core-4` | A paid cancellation reaching the Finance Team, and an enquiry classified `clinical` so it is **not** answered from Call Handling | scenarios 4, 5 and 6 |
+| The missing-information exchange, and the process that waits | `core-5` | The request the worker publishes as a message, and the instance sitting on the catch event until the reply arrives **correlated by the referral reference** | scenario 9 |
 
 `core-4` has two **message** start events, for a cancellation arriving and for a patient enquiry
 arriving. Neither is requested by the hospital, so neither can be an ordinary start event. Send them
@@ -208,6 +210,23 @@ mvn compile exec:java -Dexec.args="--publish-message patient-enquiry"
 The engine accepting the message is not proof that an instance appeared - check **Operate** for the
 new instance. If the message name matches nothing deployed, the publication is still accepted and
 correlates with nothing.
+
+`core-5` is the other way round: it starts from the Processes page like any other model, and then
+**waits**. Start it with a referral reference on the instance, complete *Record the missing
+information*, and watch the instance stop at *Missing information received* - the service task before
+it has published the request, and the process is now doing nothing but waiting for the answer. Release
+it by publishing the reply with the same referral reference:
+
+```bash
+cd workers
+mvn compile exec:java -Dexec.args="--publish-message missing-information-supplied --correlation-key REF-2026-0001"
+```
+
+Two things are worth pointing at. The first is that a publication whose correlation key no
+subscription is waiting on is **accepted by the engine and correlated with nothing** - so the
+observable proof is the instance moving in Operate, never the publisher's exit code. The second is
+that this is what the `core-1` step does not do: `core-1` records the same request with a user task
+standing in for the answer, and only `core-5` models the wait.
 
 ## What this does not demonstrate
 
@@ -249,6 +268,7 @@ section 6. Quote the count from there rather than from memory.
 | The instance sits on a service task | Same as the first row | Same |
 | A condition seems ignored | It is on an activity's only outgoing flow (`DEF-14`) | Expect it, and say so. Conditions are enforced on gateways |
 | Too many instances in Tasklist | Previous runs | Filter by process, or work in **Operate** where the diagram shows which instance is which |
+| The Processes page offers a process of nearly the right name that this script never mentions | The engine keeps every definition ever deployed to it, and the models the `core-N` set replaced are still there - `referral-to-appointment`, `treatment-authorisation-and-booking` and `clinic-letter-and-pathway-monitoring` sit beside `core-1`, `core-2` and `core-3` | Start the one whose name begins **`Core 1`** ... **`Core 5`**. Those five are the delivered models; everything else on that page is an earlier edition or another exercise, and none of it is demonstrated here |
 
 ## Resetting between rehearsals
 
@@ -265,9 +285,9 @@ is that `http://localhost:8080/v2/topology` stops answering.
 
 ## The thirty-second version, if asked to summarise
 
-> Four executable processes on Camunda 8, forty-one forms bound to their user tasks, and six Java
+> Five executable processes on Camunda 8, forty-one forms bound to their user tasks, and seven Java
 > workers behind the service tasks. It runs the pathway from a referral arriving to the refund after a
-> cancelled appointment. Nineteen of the twenty-one recorded test scenarios have a result - thirteen
-> pass, six pass in part - and the two that do not are blocked on a signed-in user and on the
+> cancelled appointment. Nineteen of the twenty-one recorded test scenarios have a result - twelve
+> pass, seven pass in part - and the two that do not are blocked on a signed-in user and on the
 > seven-day letter timer. What is not there is authentication and the audit trail, and no form has
 > been submitted by a signed-in user; both are recorded as open defects rather than left out.

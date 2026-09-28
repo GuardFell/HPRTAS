@@ -6,47 +6,50 @@
 
 ## Version under test
 
-The release is tagged `release-1.0`. Measured on 2026-09-28, the tag resolves to `69e01a1`, and
-`main` has since moved one commit past it, to `57b3c1d`. That commit changed these version records
-themselves (90 lines of this file, and `exports/test-plan.docx`), re-laid out all six models,
-regenerated every export, and added a user task and the form that covers it. **So the tag does not
-currently name the tree these records describe**: either the tag is moved forward onto `57b3c1d`,
-or the release is read as `69e01a1` and this plan's records are read as describing `main` after it.
-The hash is written here rather than left to `git rev-parse` because the record has to be readable
-at more than one commit.
+Two tags name versions, and they are different versions. `release-1.0` names the first release and
+resolves to `69e01a1`; it stays where it is, because the records made at that version - the
+completed form set, the refund catch event - are only readable against it. The tree this file is
+committed in is tagged **`submission-2026-09-29`**, and that is the version the project is submitted
+at. An earlier edition of this section recorded that the first-release tag no longer named the tree
+these records describe, and that either the tag had to move forward or the records had to be read as
+describing `main` after it; tagging the submitted tree settles that without re-pointing a tag that
+results already cite. No hash is written for the submission, because a hash written here is stale
+one commit later: the tag is what identifies it, and `git rev-parse --short submission-2026-09-29`
+names the commit.
 
-The tag has been re-pointed twice. It was made at `9ef26df` against the Node.js version, then moved
-to `bdcc0e1` after the workers were rewritten in `4eb3fee`, and then moved forward so that the
-release would cover the completed form set. `DEF-13` was closed at `a62e783`: 40 forms came to
-cover all 55 user tasks that existed then, and the 8 that existed earlier had in fact never rendered
-a field. `57b3c1d` then added a 56th user task (`N_PC_EscalateUrgent`, the escalation `DEF-11`'s fix
-introduces) and its form. `2c3c2eb` then added the fifth model, `core-5`, and the worker that
-publishes a message: the current tree has **five `core-N` models, 58 user tasks, 41 forms and
-seven workers, with no user task left without one**. The results recorded in this plan's execution
-table were produced against the Node.js version and **each result names the commit it was produced
-at**; the three levels were run again at `57b3c1d` (section 5), and again at `2c3c2eb` with the
-exchange, which is the current evidence.
+The first-release tag has been re-pointed twice. It was made at `9ef26df` against the Node.js
+version, then moved to `bdcc0e1` after the workers were rewritten in `4eb3fee`, and then moved
+forward so that the release would cover the completed form set. `DEF-13` was closed at `a62e783`:
+40 forms came to cover all 55 user tasks that existed then, and the 8 that existed earlier had in
+fact never rendered a field. `57b3c1d` then added a 56th user task (`N_PC_EscalateUrgent`, the
+escalation `DEF-11`'s fix introduces) and its form. `2c3c2eb` then added the fifth model, `core-5`,
+and the worker that publishes a message: the current tree has **five `core-N` models, 58 `userTask`
+elements over 56 distinct ids, 41 forms and seven workers, with no user task left without one**. The
+results recorded in this plan's execution table were produced against the Node.js version and **each
+result names the commit it was produced at**; the three levels were run again at `57b3c1d`
+(section 5), and again at `2c3c2eb` with the exchange, which is the current evidence.
 
-> **Element count and id count are not the same number, and both are now stated.** Counting the four
-> models gives **56 `userTask` elements over 54 distinct ids** at `57b3c1d` and later, and gave
-> **55 over 53** at `release-1.0` and `69e01a1`. The gap is the same two ids in both cases:
-> `N_OB_CorrectRequest` and `N_OB_RecordDispatchFailure` are each used once in `core-1` and once in
-> `core-4`, and both uses bind the same form. So the "55" in the earlier records was the right
-> *element* count for the snapshot it described - it was not a wrong number, it was an unlabelled
-> one, and `57b3c1d` legitimately took it to 56. What no record stated is the id count, which is what
-> `definitions` requires to be unique and which is 54 now rather than 56. Counts here now say which
-> of the two they mean. A count keyed on the task id alone silently drops one of each reused pair and
-> reports 54 where the element count is 56, which is how the distinction gets lost.
-> `docs/agile/form-field-burden.md` records the same measurement and the field counts that came with
-> it.
+> **Element count and id count are not the same number, and both are now stated.** Counting the
+> models gives **58 `userTask` elements over 56 distinct ids** in the current tree, **56 over 54** at
+> `57b3c1d`, and gave **55 over 53** at `release-1.0` and `69e01a1`. The gap is the same two ids in
+> every case: `N_OB_CorrectRequest` and `N_OB_RecordDispatchFailure` are each used once in `core-1`
+> and once in `core-4`, and both uses bind the same form. So the "55" in the earlier records was the
+> right *element* count for the snapshot it described - it was not a wrong number, it was an
+> unlabelled one, and `57b3c1d` legitimately took it to 56 and `core-5` to 58. What no record stated
+> is the id count, which is what `definitions` requires to be unique and which is 56 now rather than
+> 58. Counts here now say which of the two they mean. A count keyed on the task id alone silently
+> drops one of each reused pair and reports 56 where the element count is 58, which is how the
+> distinction gets lost. `docs/agile/form-field-burden.md` records the same measurement at
+> `57b3c1d`, and the field counts that came with it.
 
 | What | Value |
 |---|---|
-| Release under test | `release-1.0`, which resolves to `69e01a1`: four `core-N` models, 40 Camunda Forms covering the 55 user tasks that existed then, workers in Java |
-| Current `main` | `2c3c2eb`: five `core-N` models, 58 user tasks, 41 Camunda Forms, seven workers, and the message exchange `core-5` waits on. `57b3c1d` is one commit past the tag and has 56 user tasks and six workers |
+| Release under test | `submission-2026-09-29`, the tag on the commit this file is committed in: five `core-N` models, 58 `userTask` elements over 56 ids, 41 Camunda Forms covering all of them, workers in Java |
+| First release | `release-1.0`, which resolves to `69e01a1`: four `core-N` models, 40 Camunda Forms covering the 55 user tasks that existed then, workers in Java |
+| Current tree | five `core-N` models, 58 `userTask` elements over 56 ids, 41 Camunda Forms, seven workers, and the message exchange `core-5` waits on. `57b3c1d` was one commit past the first-release tag and held 56 elements and six workers |
 | Earlier tag targets | `9ef26df` (Node.js workers, superseded), then `bdcc0e1` (Java workers, before the forms were completed) |
 | Commit each result was produced at | `c8556ba` at worker level (Node.js), `a7f0dd6` at model level, `76a7fdc` at all three levels (Java), `57b3c1d` at all three levels and in the artefact checks, `2c3c2eb` at all levels with the message exchange (current) |
-| Artefact versions | the four `core-N` models; 41 Camunda Forms covering all 56 user tasks (`a62e783`, extended at `57b3c1d`); workers in Java (`4eb3fee`) |
+| Artefact versions | the five `core-N` models; 41 Camunda Forms covering all 58 `userTask` elements (`a62e783` brought the set to 40, `57b3c1d` and `2c3c2eb` extended it); workers in Java (`4eb3fee`) |
 | Requirement basis for the criteria | `../docs/requirements/requirements.md` (FR-001 - FR-052, NFR-001 - NFR-013) |
 | Rule and exception basis | `../docs/case-study-summary.md` section 5 (BR-01 - BR-47) and section 6 (EX-01 - EX-23) |
 
@@ -57,13 +60,13 @@ worker source cite, so `TC-06` in a test name and `TC-06` here are the same scen
 
 | Item | Detail |
 |---|---|
-| Solution under test | The four executable processes in `models/operational/` (`core-1` to `core-4`), the 41 Camunda Forms in `forms/`, and the six external workers in `workers/` with their simulated external services. |
+| Solution under test | The five executable processes in `models/operational/` (`core-1` to `core-5`), the 41 Camunda Forms in `forms/`, and the seven external workers in `workers/` with their simulated external services. |
 | Levels of testing | Worker level (`mvn test`, no engine); worker through the engine (`mvn test -Pengine -Dtest=SmokeTest`, a purpose-built fixture); solution level (`mvn test -Pengine -Dtest=OperationalModelsTest`, the delivered models and forms with the real workers). |
 | Main workflow | The referral being received and checked, the Consultant's decision, the new patient appointment being found and confirmed, the patient being informed, consent and clinical authorisation, the funding route, payment, the treatment booking, the clinic letter, the follow-up, the cancellation and the refund. |
 | Alternative paths | Rejected, queried and redirected referrals; a slot outside the requested period; a funded or exempt patient who is not asked to pay; a declined payment that may be retried; a patient contacted by telephone with an outcome other than a successful call; a treatment modification; an enquiry that is administrative, financial or clinical; a letter returned for suspected clinical error. |
 | Exception paths | `EX-01` - `EX-23` of the case study summary, and in particular missing supporting information, no suitable appointment, an unavailable external service, a declined payment, a payment taken without a returned confirmation, a suspected clinical error, a delayed letter and a cancellation or non-attendance. |
 | Non-functional expectations | Data minimisation, that complete card details never reach the provider and are never stored (NFR-007); reliable exchange with the external services and a defined behaviour when one fails (NFR-008); configurability of the rules that are not yet fixed (NFR-012); the recording burden placed on clinical staff, reviewed against the forms (NFR-009). |
-| Delivery gate | Every service task in the four models must be reached by at least one scenario, and every gateway must route on what a worker or a form actually returned, with no incident left open. |
+| Delivery gate | Every service task in the five models must be reached by at least one scenario, and every gateway must route on what a worker or a form actually returned, with no incident left open. |
 | Evidence | `evidence/`, named `TC-<id>_<description>_<version>_<yyyy-mm-dd>.<ext>`, or, for a run that spans several test cases, `<description>_<version>_<yyyy-mm-dd>.<ext>` with the coverage stated in its header. |
 
 ## 2. Out of scope
@@ -189,20 +192,19 @@ the record of the Node.js implementation.
 The two records the table does not cite, because they describe models that no longer exist, are also
 in that directory and are accounted for there: `referral-to-appointment_normal-path_1b42bff_...` and
 `error-paths-and-urgent-path_e852224_...` were run against the first edition of the operational
-models, which the four `core-N` models replaced.
+models, which the `core-N` models replaced.
 
 Summary at `c8556ba`, re-run at `76a7fdc`, and re-run again at `57b3c1d`: **19 of the 21 scenarios
-have a recorded result - 13 pass, 6 pass only in part. Two have not been run at all: `TC-13` and
+have a recorded result - 12 pass, 7 pass only in part. Two have not been run at all: `TC-13` and
 `TC-16`.** `TC-02` and `TC-20` were on that list until the `57b3c1d` run: `TC-02` gained two of its
 three decisions and `TC-20` gained its routing and its urgent branch, each as a partial result rather
-than a pass, for the reason stated in its row. Seven of the ten acceptance criteria have a fully
-passing result: AC-01, AC-02, AC-03, AC-04, AC-08, AC-09 and AC-10.
+than a pass, for the reason stated in its row. Eight of the ten acceptance criteria have a fully
+passing result: AC-01, AC-02, AC-03, AC-04, AC-05, AC-08, AC-09 and AC-10.
 
-Of the other three, **AC-05** was the one that could not be accepted: it passes at worker level but
-the urgent half of it looped for ever in `core-1` (`DEF-11`) and had no evidence in the current
-models at all. Both halves now stand: the urgent branch escalates out of the booking process instead
-of re-checking, and it is driven in scenario 8 of `OperationalModelsTest`, where the instance
-completes. **AC-06** and **AC-07** are partial: each still has an unrun branch, and the
+**AC-05** moved when `DEF-11` was fixed: it passes at worker level, and the urgent half that used to
+loop for ever in `core-1` now escalates out of the booking process instead of re-checking, driven in
+scenario 8 of `OperationalModelsTest`, where the instance completes. **AC-06** and **AC-07** are the
+two that remain partial: each still has an unrun branch, and the
 parts of AC-01 and AC-07 that need a signed-in user cannot be met until role-based
 access exists (`DEF-07`, `DEF-08`) - `TC-13` for AC-01, and for AC-07 the form capture that `TC-20`
 now demonstrates the routing of but not the recording of. Two criteria moved after this table was
@@ -247,8 +249,8 @@ when this table was last written. The re-run above covers the refund that `DEF-1
 enquiry and cancellation paths that the forms unblocked, and the rows in section 6 name the version
 each is now proved at.
 
-What the re-run still does not cover is unchanged: `TC-02`, `TC-13`, `TC-16` and `TC-20` have still
-never been run, the user-task variables are still supplied with the completion call rather than by a
+What the re-run still does not cover is unchanged: `TC-13` and `TC-16` have still never been run,
+the user-task variables are still supplied with the completion call rather than by a
 signed-in user (`DEF-08`), role-based access cannot be exercised at all (`DEF-07`), and the one
 condition `DEF-14` leaves on an activity's only outgoing flow is still documentation of intent
 rather than a guard.
@@ -279,7 +281,7 @@ It covers three things no earlier record does:
 - **The fifth model deployed and driven**, which is what `core-5` reaching `N_MS_ReadyForReview`
   records.
 
-What the re-run still does not cover is the four scenarios that have never been run and the two
+What the re-run still does not cover is the two scenarios that have never been run and the two
 defects no test can close (`DEF-07`, `DEF-08`), as above, and two things of its own: the reply is
 published by the scenario rather than by a worker, because `missing-information-supplied` belongs to
 the referring organisation, and only `core-5` was laid out again, so the other six committed diagrams
@@ -289,7 +291,7 @@ still carry the message-flow routing this version repairs.
 
 | ID | Description | Severity | Status | Workaround | Backlog item raised |
 |---|---|---|---|---|---|
-| DEF-01 | 21 exclusive gateways declared no `default` flow. Camunda does not treat a conditionless sequence flow as a fallback, so their otherwise-branches were unreachable and any non-matching condition raised the incident "Expected at least one condition to evaluate to true, or to have a default flow". Reproduced at `e852224` before the fix, stopping at `Gateway_SlotWithinWindow`. | High | Fixed at `e852224`; every gateway in the four `core-N` models now declares one | - | PB-004 / TB-006 |
+| DEF-01 | 21 exclusive gateways declared no `default` flow. Camunda does not treat a conditionless sequence flow as a fallback, so their otherwise-branches were unreachable and any non-matching condition raised the incident "Expected at least one condition to evaluate to true, or to have a default flow". Reproduced at `e852224` before the fix, stopping at `Gateway_SlotWithinWindow`. | High | Fixed at `e852224`; every gateway in the `core-N` models now declares one | - | PB-004 / TB-006 |
 | DEF-02 | Four service tasks could raise `INVALID_VARIABLE` with no error catch event, so a worker's business error became an `UNHANDLED_ERROR_EVENT` incident and the process stopped instead of following an error path. Instance 2251799813718510, element `ServiceTask_SendAppointmentNotification`, recorded at `1b42bff`. | High | Fixed at `e852224` and carried into the `core-N` models; every service task that can raise a business error now has a catch event | - | PB-004 / TB-006 |
 | DEF-03 | The variables attached to a BPMN error are written to the scope of the activity that raised it and are not visible in the process scope once a boundary event catches the error. An assertion written against the error's variables therefore fails even when the path is correct, and a model has to distinguish the reason for a failure by which catch event was taken. | Medium | Documented, not a code defect; found while testing TC-06 | Assert on the element path instead of on the error's variables | Recorded in `../workers/README.md` |
 | DEF-04 | The evidence recorded at `813fea6` cites the first, coarser allocation of rule, exception and requirement IDs (for example `BR-03` there for the two-week rule, which is BR-07 now). | Low | Documented, not corrected - the files are a record of what was run at that commit | Reconciliation table at the top of `../docs/requirements/requirements.md` | - |
@@ -302,7 +304,7 @@ still carry the message-flow routing this version repairs.
 | DEF-11 | An urgent referral with no slot in the requested period looped for ever in `core-1`. `N_OB_SlotAvailable` took its default flow to `N_OB_RecordNoSlot`, whose only successor `N_OB_UrgentReferral` sent `priority = "urgent"` back to `N_OB_CheckAvailability`. The scheduling service answers the same request with the same result - it is asked once per booking and remembers the answer - so re-checking could never produce a slot, and there was no attempt counter, no timer and no escalation on that branch, so the instance could not leave it. A routine referral on the same branch terminates correctly at `N_PC_Referred`, which is why the fault was confined to the urgent case. | High | Fixed - the urgent branch escalates out of the booking process instead of re-checking. `N_OB_UrgentReferral` now takes `= priority = "urgent"` to `N_PC_EscalateUrgent`, a new task in the Patient Pathway Coordinators lane bound to `urgent-referral-escalation`, which ends at `N_PC_UrgentEscalated`; the routine branch is unchanged. Driven on the engine, the path is `N_OB_SlotAvailable -> N_OB_RecordNoSlot -> N_OB_UrgentReferral -> N_PC_EscalateUrgent -> N_PC_UrgentEscalated`, the availability check is reached once, and the instance completes. Committed at `57b3c1d`, and driven there in scenario 8 of `OperationalModelsTest` (`evidence/workers_java-all-three-levels_57b3c1d_2026-09-28.txt`). | None needed | - |
 | DEF-12 | `N_F_ProcessRefund` in `core-4` catches only `Error_INVALID_VARIABLE`, but `refund-processing` also raises `PROHIBITED_FINANCIAL_DATA` when card or security details are supplied. A refund request carrying card details therefore becomes an `UNHANDLED_ERROR_EVENT` incident and stops the process, which is the same fault as `DEF-02` on a task that did not exist when that was fixed. The worker test for it passes, so the worker level gives no warning. | High | Fixed at `9138bcc`: the error is defined, the catch event added and the flow routed to `N_F_CorrectRefundRequest`. Driven on the engine, the path is now `N_F_ProcessRefund -> B_F_ProhibitedData -> N_F_CorrectRefundRequest` with no incident. **Not closed entirely:** no form has a field for the offending variable, so a Tasklist user cannot clear card details that have reached the process, and the refusal repeats until they are cleared some other way. Re-run at `57b3c1d`: scenario 5 of `OperationalModelsTest` drives a paid cancellation to a refund recorded against the payment scenario 2 settled, with no incident (`evidence/workers_java-all-three-levels_57b3c1d_2026-09-28.txt`). | None needed for the incident; read the limitation beside the status | - |
 | DEF-14 | A condition on the only outgoing sequence flow of an activity is never evaluated: Camunda takes that flow however the condition reads, so the condition is documentation of intent and not a guard. Measured on Camunda 8.9.19 with a probe whose single outgoing flow carried a condition that was certainly false - the flow was taken. Two conditions in the executable models are in that state, and the strategic view has a third (`N_C_ModifyTreatment`). | Medium | `N_F_NotifyPatient` (`= retryPayment = true`) fixed at `9138bcc`: the decision is made at `N_F_RetryDecision`, which declares a default, and both answers were driven on the engine. `N_CL_ModifyTreatment` (`= affectsCharge = true`) is corrected text but still on a single flow, so still not enforced; enforcing it needs a gateway on that path too. | Until a condition sits on a gateway, read it as intent rather than as a guard | - |
-| DEF-13 | 36 of the 55 userTask elements the four models held at that time bound no form: 7 in `core-1`, 12 in `core-2`, 7 in `core-3` and 10 in `core-4` (recounted at `a62e783^`, which is the version this row describes: 55 elements, 19 bound, 36 unbound). A task with no form has no defined variable contract, so the variables it must write are recorded nowhere and a downstream gateway that reads them can only be satisfied by injecting the variables with the completion call. The tasks affected include the ones the case requires a record from: the missing-information request, the funding approval details (`N_F_RecordApproval`, FR-026), the payment investigation, the clinic-letter processing and clinical-error review, the reminder and both escalations, and the whole enquiry path (`N_CH_ClassifyEnquiry`, `N_CH_AnswerAdmin`, FR-041). | High | Fixed at `a62e783`, where 40 forms covered all 55 elements that existed then; at `57b3c1d` the tree holds 56 elements and 41 forms, so no user task is left without one. Writing them also showed that the eight forms that existed had never rendered a field, for the four reasons in `../forms/README.md` | None needed | PB-006 |
+| DEF-13 | 36 of the 55 userTask elements the four models held at that time bound no form: 7 in `core-1`, 12 in `core-2`, 7 in `core-3` and 10 in `core-4` (recounted at `a62e783^`, which is the version this row describes: 55 elements, 19 bound, 36 unbound). A task with no form has no defined variable contract, so the variables it must write are recorded nowhere and a downstream gateway that reads them can only be satisfied by injecting the variables with the completion call. The tasks affected include the ones the case requires a record from: the missing-information request, the funding approval details (`N_F_RecordApproval`, FR-026), the payment investigation, the clinic-letter processing and clinical-error review, the reminder and both escalations, and the whole enquiry path (`N_CH_ClassifyEnquiry`, `N_CH_AnswerAdmin`, FR-041). | High | Fixed at `a62e783`, where 40 forms covered all 55 elements that existed then; at `57b3c1d` the tree held 56 elements and 41 forms and `2c3c2eb` took it to 58 over 56 ids, so no user task is left without one. Writing them also showed that the eight forms that existed had never rendered a field, for the four reasons in `../forms/README.md` | None needed | PB-006 |
 
 ## 7. Simulated components
 

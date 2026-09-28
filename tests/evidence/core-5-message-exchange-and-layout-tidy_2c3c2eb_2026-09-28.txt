@@ -157,6 +157,24 @@ WHAT THIS RUN DOES NOT COVER
   written per release; this record names its own version, and the plan needs its release row
   brought up to date when the next tag is cut.
 
+RE-RUN AFTER THE MERGE
+----------------------
+`313dcf9` merges `origin/main` into this work. The three commits it brings are a normalisation of
+`models/strategic/patient-pathway-all-entities.bpmn` (`ce95ad9`), an ASCII rewrite of the export
+check's output so it prints on any console (`f6ffa44`), and the records made at `57b3c1d` together
+with the counts and the plan rows that go with them (`020a36a`).
+
+Both of the first two are about how an artefact is written rather than what it says, but the tree is
+not the one the runs above were made on, so the whole set was run again at the merge and reports the
+same results: 42 of 42 unit tests, the three static checks pass, and 11 of 11 engine tests. The
+export check now prints `word coverage` rather than the Chinese it used to, and the numbers are
+unchanged - `core-5` still reads back at 92%. Scenario 9 still publishes a reply for another referral
+and still finds the instance where it was.
+
+The plan rows for the tree were brought up to date with the merge: `tests/test-plan.md` now names
+`2c3c2eb` as what `main` holds, counts five models and 58 user tasks, and carries a section 5
+subsection for this re-run.
+
 REPRODUCE WITH
 --------------
     # engine running: D:\BPM\camunda-runtime\start-camunda.bat

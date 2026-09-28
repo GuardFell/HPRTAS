@@ -40,7 +40,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Less Than One Month",
               "value": "less_than_one_month"

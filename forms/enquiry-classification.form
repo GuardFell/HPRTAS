@@ -47,7 +47,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Administrative",
               "value": "administrative"
@@ -69,7 +69,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Routine",
               "value": "routine"

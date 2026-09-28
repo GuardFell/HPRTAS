@@ -26,7 +26,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Payment Taken Without Confirmation",
               "value": "confirmation_not_returned"

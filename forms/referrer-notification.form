@@ -36,7 +36,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Letter",
               "value": "letter"

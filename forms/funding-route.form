@@ -20,7 +20,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             { "label": "Hospital Funded", "value": "hospital" },
             { "label": "Approved Insurer", "value": "insurer" },
             { "label": "Patient Payment", "value": "patient" },

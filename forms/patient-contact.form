@@ -20,7 +20,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             { "label": "Telephone", "value": "telephone" },
             { "label": "Letter", "value": "letter" },
             { "label": "Email", "value": "email" }
@@ -33,7 +33,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             { "label": "Contacted", "value": "contacted" },
             { "label": "Unanswered", "value": "unanswered" },
             { "label": "Wrong Number", "value": "wrong_number" },

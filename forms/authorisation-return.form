@@ -20,7 +20,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "No Clinical Authorisation on the Request",
               "value": "unauthorised_booking_request"

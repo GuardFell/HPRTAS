@@ -21,7 +21,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Continue Treatment",
               "value": "continue_treatment"

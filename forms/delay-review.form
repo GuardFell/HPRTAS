@@ -28,7 +28,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Kept Under Monitoring",
               "value": "monitoring"

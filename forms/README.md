@@ -31,10 +31,10 @@ corrected form does not reach a task that is already open; the task has to be cr
 Assigning the task to yourself is a separate step: an unassigned task renders its form read-only and
 `Complete Task` stays disabled.
 
-## The four schema rules that are easy to get wrong
+## The five schema rules that are easy to get wrong
 
-These are not style preferences. Each one was got wrong in the first edition of these forms, and
-each one fails silently — the form still deploys and the task still resolves its key.
+These are not style preferences. Each one has been got wrong in these forms at some point, and each
+one fails silently — the form still deploys and the task still resolves its key.
 
 **A field's `key` is the process variable.** There is no separate mapping. A field named
 `documentsComplete` writes the variable `documentsComplete`, which is the variable the model's
@@ -64,6 +64,24 @@ form in the first edition render as a set of empty headings.
 
 `"type": "date"` names a field type that is not registered, and the importer rejects the **whole
 form**, not just that field — one wrong date field leaves a task with no form at all.
+
+**A `select` holds its choices in `values`, not `options`.** `Select` reads `values` for the choices
+written into the form, and `valuesKey` or `valuesExpression` for choices that come from a variable or
+an expression:
+
+```json
+{ "type": "select", "key": "confirmationBasis", "label": "Basis for Confirming",
+  "values": [ { "label": "Payment Settled", "value": "payment_settled" } ] }
+```
+
+`options` is not a property of the component. A field that carries its choices under that key imports
+as a `select` with **nothing in it**: the labels are in the file, the form deploys, the task resolves
+its key, and the screen shows an empty picker. All 26 forms that carry a `select` in this repository
+were written that way, and no run could catch it — every engine run supplies the variables with the
+completion call rather than through a form (`DEF-08`). The entry is `{ "label": …, "value": … }`, and
+the two have different jobs: the `value` is what the model's gateway and the workers read, so it must
+not be touched, while the `label` is free to be reworded. A picker that shows "Payment Settled" and
+writes `payment_settled` is working as intended.
 
 ### `required` on a checkbox means "must be ticked"
 

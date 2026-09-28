@@ -67,7 +67,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "New Patient Clinic Letter",
               "value": "new_patient_clinic_letter"
@@ -94,7 +94,7 @@
           "type": "select",
           "key": "channelPreference",
           "label": "Channel Preference",
-          "options": [
+          "values": [
             {
               "label": "Post",
               "value": "post"

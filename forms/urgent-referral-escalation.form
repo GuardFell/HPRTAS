@@ -29,7 +29,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Expedited Slot with the Scheduling Service",
               "value": "expedited_slot"

@@ -28,7 +28,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             { "label": "Oncology", "value": "oncology" },
             { "label": "Chemotherapy", "value": "chemotherapy" },
             { "label": "General", "value": "general" }
@@ -41,7 +41,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             { "label": "Urgent", "value": "urgent" },
             { "label": "Routine", "value": "routine" }
           ]
@@ -77,7 +77,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "New Patient Clinic Letter",
               "value": "new_patient_clinic_letter"
@@ -104,7 +104,7 @@
           "type": "select",
           "key": "channelPreference",
           "label": "Channel Preference",
-          "options": [
+          "values": [
             {
               "label": "Post",
               "value": "post"

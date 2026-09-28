@@ -22,7 +22,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Full Refund",
               "value": "full"
@@ -54,7 +54,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Appointment Cancelled",
               "value": "cancelled"

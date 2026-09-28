@@ -55,7 +55,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Yes",
               "value": "yes"

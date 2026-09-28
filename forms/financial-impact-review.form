@@ -20,7 +20,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "No Financial Effect",
               "value": "none"

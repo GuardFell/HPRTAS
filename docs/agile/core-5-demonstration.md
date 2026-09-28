@@ -125,6 +125,16 @@ Each response names the version it was deployed as, and the number will be a hig
 has been deployed to many times. It means nothing to the audience; what matters is that the response
 names the process and both forms rather than an error.
 
+**If you are in PowerShell rather than Git Bash or cmd**, four things differ, and they are the whole
+list. Each was checked on PowerShell 5.1:
+
+| In Git Bash / cmd | In PowerShell |
+|---|---|
+| `cd /d/BPM/HPRTAS` | `cd D:\BPM\HPRTAS` |
+| `curl` | `curl.exe` - in PowerShell `curl` is an alias for `Invoke-WebRequest`, which has no `-F` |
+| `curl -d '{"json":…}'` | `Invoke-RestMethod -Method Post -Uri … -ContentType "application/json" -Body '{"json":…}'` - PowerShell passes a quoted JSON body to a native command mangled, and the engine answers `400 Failed to read request` |
+| `mvn -Dexec.args="a b"` | `mvn "-Dexec.args=a b"` - quoting only the value makes PowerShell split the argument and Maven reports `Unknown lifecycle phase ".args=…"`. **Quote the whole `-D…` argument**, as written below |
+
 ### 3. The workers - **leave this terminal visible**
 
 ```bash
@@ -154,7 +164,7 @@ broken model rather than a stopped worker.
 
 ```bash
 cd workers
-mvn -q compile exec:java -Dexec.args="--check"
+mvn -q compile exec:java "-Dexec.args=--check"
 cd ..
 python tools/verify_hprtas_bpmn_bindings.py
 ```
@@ -234,7 +244,7 @@ holding the first one. (Compiling again while they run is fine; the two do not d
 
 ```bash
 cd workers
-mvn compile exec:java -Dexec.args="--publish-message missing-information-supplied --correlation-key REF-DEMO-0002"
+mvn compile exec:java "-Dexec.args=--publish-message missing-information-supplied --correlation-key REF-DEMO-0002"
 ```
 
 The command reports that the message was published, and prints its own warning:
@@ -254,11 +264,11 @@ proof is always the instance moving, never the publisher's exit code.
 
 ### Step 5 - the reply for this referral
 
-In that same second terminal:
+In that same second terminal - and from the `workers` directory, because that is where the POM is:
 
 ```bash
 cd workers
-mvn compile exec:java -Dexec.args="--publish-message missing-information-supplied --correlation-key REF-DEMO-0001"
+mvn compile exec:java "-Dexec.args=--publish-message missing-information-supplied --correlation-key REF-DEMO-0001"
 ```
 
 The instance leaves `Missing information received` and `Check the supplied documents` appears in
@@ -408,6 +418,9 @@ Say these out loud. They are the difference between a demonstration and a claim.
 | An incident on the catch event instead of a wait | The correlation key could not be read - in practice, no `referralId` on the instance | Check the form's `Referral ID`; `verify_hprtas_bpmn_bindings.py` is the static version of this check |
 | The Processes page offers a process of nearly the right name | The engine keeps every definition ever deployed, and earlier editions are still there | Start the one whose name begins **`Core 5`** |
 | A Tasklist or Operate view looks a step behind | The read queries report shortly after the write | Read again; do not conclude the instance is stuck |
+| `Unknown lifecycle phase ".args=…"` | The shell split the `-Dexec.args=…` argument - PowerShell does this when only the value is quoted | Quote the whole argument: `mvn compile exec:java "-Dexec.args=--publish-message …"`, or publish over REST |
+| `There is no POM in this directory` | Maven was run from the repository root; the POM is in `workers/` | `cd workers` first. Running from the root with `-f workers\pom.xml` needs `HPRTAS_WORKERS_DIR` set to `workers` as well, because the configuration is read from the **working directory** rather than the POM's |
+| One publication released two instances | Both were started with the same referral reference | Intended: the correlation key is not a unique instance identifier. Give each rehearsal its own reference |
 
 ## Resetting between rehearsals
 
@@ -416,6 +429,9 @@ Cancel the rehearsal instances and start again - `Cancel` in Operate, or:
 ```bash
 curl -sS -X POST http://localhost:8080/v2/process-instances/<instance key>/cancellation
 ```
+
+Give each rehearsal its own referral reference. Two instances waiting on the same one are both
+released by a single publication, which is correct behaviour and confusing to watch.
 
 Restarting the workers is not needed for this model: it uses no simulated service, so there is no
 ledger to clear. Restart the engine only as a last resort, and with

@@ -29,7 +29,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Slot Outside the Requested Period",
               "value": "outside_window"
@@ -47,7 +47,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Highlighted for the Pathway Team",
               "value": "highlighted_for_pathway_team"

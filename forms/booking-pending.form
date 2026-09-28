@@ -20,7 +20,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Treatment Service Unavailable",
               "value": "service_unavailable"

@@ -2,7 +2,7 @@
 
 Every user task in `../models/operational/` binds a Camunda Form, and each of the 41 `.form` files
 in this directory is one a model points at. `README.md` is the reference for the set: how a form is
-bound to a task, the four schema rules that fail silently, and every binding as a single list. This
+bound to a task, the five schema rules that fail silently, and every binding as a single list. This
 file is the same set of bindings **arranged by the model that uses them**, which is the arrangement
 a demonstration needs - deploy a model, and the forms it resolves are the ones listed under it.
 

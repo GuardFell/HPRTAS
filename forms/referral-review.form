@@ -50,7 +50,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             { "label": "Accept Referral", "value": "accepted" },
             { "label": "Reject Referral", "value": "rejected" },
             { "label": "Request Further Information", "value": "further_information" },
@@ -78,7 +78,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             { "label": "Oncology", "value": "oncology" },
             { "label": "Chemotherapy", "value": "chemotherapy" },
             { "label": "General", "value": "general" }
@@ -91,7 +91,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             { "label": "Urgent", "value": "urgent" },
             { "label": "Routine", "value": "routine" }
           ]

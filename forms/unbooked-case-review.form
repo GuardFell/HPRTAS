@@ -29,7 +29,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Awaiting the Pathway Team",
               "value": "awaiting_pathway_decision"

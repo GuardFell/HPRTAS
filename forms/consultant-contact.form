@@ -30,7 +30,7 @@
           "validate": {
             "required": true
           },
-          "options": [
+          "values": [
             {
               "label": "Consultant Responded",
               "value": "responded"

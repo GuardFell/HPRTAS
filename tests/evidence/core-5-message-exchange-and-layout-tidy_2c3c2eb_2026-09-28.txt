@@ -1,0 +1,177 @@
+External workers and the operational models - the message exchange core-5 waits on, and the repairs to the drawing tools
+==========================================================================================
+Version under test : 2c3c2eb ("Publish the request core-5 waits an answer to, and repair
+                     four faults in the drawing tools"). The runs below were made on the
+                     working tree that this commit holds, before it was committed; the
+                     tree was not changed between the last run and the commit.
+Component          : workers/ (the seven workers, the four simulated external services,
+                     the message publisher and the job handler contract), models/operational/
+                     (five executable processes), forms/ (41 Camunda Forms) and tools/
+                     (the layout, export and verification scripts)
+Date               : 2026-09-28
+Tester             : automated, `cd workers && mvn test && mvn test -Pengine` with
+                     `python tools/verify_hprtas_bpmn_bindings.py`,
+                     `python tools/verify_hprtas_bpmn_layout.py` and
+                     `python tools/verify_hprtas_bpmn_export.py`
+Linked test case   : TC-03 (the missing-information exchange); the other cases the
+                     engine run drives are TC-01, TC-04, TC-05, TC-06, TC-07, TC-08,
+                     TC-09, TC-14, TC-15, TC-17, TC-18, TC-19, TC-20, TC-21
+Linked AC          : AC-01 - AC-10 (../test-plan.md section 3)
+Linked rule        : FR-003 with BR-01, BR-02 and EX-01 (the request and the reply);
+                     FR-007, FR-016, FR-019 - FR-025, FR-033, FR-037, NFR-004,
+                     NFR-007, NFR-008 for the steps the other cases reach
+Environment        : Java 21.0.12.1 LTS (Temurin), Apache Maven 3.9.10,
+                     io.camunda:camunda-client-java 8.9.19, Camunda 8 Run 8.9.19 with
+                     the Zeebe gateway on grpc://localhost:26500 and REST /v2/ on
+                     http://localhost:8080, Windows 11
+
+WHAT THIS RUN ADDS
+------------------
+**The message a process waits for.** Nothing in the repository published a message with a
+correlation key before this: the two messages `core-4` is started by are published without one,
+because a message start event holds no subscription, and no model had an intermediate catch event
+to wait at. `core-5-missing-information-message-exchange` adds the waiting side, the
+`referral-document-request` worker adds the publishing side, and scenario 9 drives both.
+
+Scenario 9 drives the negative half as well, which is the part that makes it evidence: a reply
+correlated by a *different* referral is published first and the instance is asserted not to have
+moved. The engine accepts a publication whose key no subscription is waiting on and correlates it
+with nothing, so a scenario that published only the right key would pass whether or not the
+correlation key did anything.
+
+**Four repairs in the drawing tools.** Each one is visible in the exported diagrams: an
+intermediate catch event had no shape at all (the kind was not named, so the waiting step - the
+point of the model - was the one element missing from the picture, and the three flows through it
+had no route); message flows are routed by a router of their own that knew about the shapes and
+nothing else, so a dashed line ran through the words under an activity and along the top of a
+sequence flow going the same way; crossing a label cost less than crossing a line, so the router
+preferred to strike through a word; and an edge's middle was the only port offered, so a line
+arriving from below was drawn straight through the activity's name.
+
+The effect on `core-5`: no line crosses any label, no two lines run on top of each other, no message
+flow passes through a shape, and the exported diagram reads back at 92% of its words by OCR rather
+than 73%.
+
+METHOD
+------
+1. `cd workers && mvn test` - the unit suite, no engine. It calls the same handlers the workers
+   call, with the simulated services running for real.
+2. `python tools/verify_hprtas_bpmn_bindings.py` - the contract between the models, the forms and
+   the workers. It now also checks that the variable a message subscription is correlated by is
+   written by a form or a worker in the same model.
+3. `python tools/verify_hprtas_bpmn_layout.py` - the layout and BPMN rules, from the diagram
+   interchange.
+4. `python tools/verify_hprtas_bpmn_export.py` - renders each model and reads the words back with
+   Windows OCR, which is the check that a label is actually legible in the export.
+5. `cd workers && mvn test -Pengine` - the smoke fixture and the five delivered models, engine
+   running. This deploys the models and the forms, so it changes what is in the engine.
+
+RESULTS
+-------
+Unit suite, no engine (`mvn test`):
+
+    Tests run: 42, Failures: 0, Errors: 0, Skipped: 0
+
+Four of the 42 are new, for the worker that publishes: the message name, the correlation key and
+the payload it sends; that the publication id is stable for a job so a retry sends one message and
+a new job sends another; that a request naming no missing item is refused *and nothing is
+published*; and that a publication which cannot be made fails the job rather than returning a
+business error.
+
+Static checks:
+
+    verify_hprtas_bpmn_bindings.py   5 operational models, 41 forms, 7 workers
+                                     PASS: the models, the forms and the workers agree
+    verify_hprtas_bpmn_layout.py     PASS: 7 models follow the layout and BPMN rules checked here
+                                     111 crossings remain, where the process leaves no other way round
+    verify_hprtas_bpmn_export.py     VERIFICATION PASSED
+                                     core-1 64%, core-2 85%, core-3 88%, core-4 80%,
+                                     core-5 92%, patient-pathway-all-entities 78%,
+                                     referral-to-treatment-pathway 80%
+
+Engine (`mvn test -Pengine`), `Tests run: 11, Failures: 0, Errors: 0, Skipped: 0`, BUILD SUCCESS:
+
+    deployed core-1 version 20, core-2 version 19, core-3 version 19, core-4 version 19,
+             core-5 version 6, and 41 forms
+    registered 7 workers: referral-validation, referral-document-request,
+             appointment-availability, treatment-availability, payment-processing,
+             correspondence-dispatch, refund-processing
+
+Nine scenarios, every one reaching `final state: COMPLETED`:
+
+    1  core-1  normal referral and new patient appointment
+    2  core-2  treatment authorisation, funding, payment and review
+    3  core-3  clinic letter prepared, approved and distributed
+    4  core-4  follow-up requested and booked
+    5  core-4  paid appointment cancelled and refunded
+    6  core-4  an urgent clinical enquiry routed to the clinical team
+    7  core-1  the referral is rejected, and the referral is redirected (two instances)
+    8  core-1  an urgent referral with no suitable slot is escalated
+    9  core-5  the missing information requested and supplied
+
+Scenario 9, as reported by the run:
+
+    instance 2251799813767324, referral REF-CORE5-1790560105440
+      N_MS_RecordMissingItems        completed with {referralId, requestedFrom, requestedItems}
+      the request was published and the instance is waiting on N_MS_DocumentsSupplied
+      published missing-information-supplied correlated by REF-NOT-THIS-REFERRAL
+      published missing-information-supplied correlated by REF-CORE5-1790560105440
+      the reply for this referral was correlated and the instance carried on
+      N_MS_CheckSuppliedDocuments    completed with {documentsComplete: true, ...}
+      path: N_MS_ReferralReceived -> N_MS_RecordMissingItems -> N_MS_RequestDocuments
+            -> N_MS_DocumentsSupplied -> N_MS_CheckSuppliedDocuments -> N_MS_DocumentsComplete
+            -> N_MS_ReadyForReview
+
+The two smoke scenarios passed as well:
+
+    path: StartEvent_Smoke -> Task_RequestDocuments -> Task_ValidateReferral
+          -> Task_AppointmentAvailability -> Task_TreatmentAvailability -> Task_ProcessPayment
+          -> Task_SendCorrespondence -> EndEvent_Completed
+    path: StartEvent_Smoke -> Task_RequestDocuments -> Task_ValidateReferral
+          -> Task_AppointmentAvailability -> Task_TreatmentAvailability
+          -> Boundary_NotAuthorised -> EndEvent_NotAuthorised
+    Scenario 2 passed: the BPMN error was caught by the boundary event, no appointment and no
+    payment.
+
+The fixture calls each of the seven workers once, and the messaging worker runs first in it on
+purpose: `referral-validation` writes `requestedItems`, and it writes an empty list when it reports
+a referral as complete, so a request step placed after it would be asked to chase nothing and would
+refuse to publish. In the models the request step is fed by its own form.
+
+WHAT THIS RUN DOES NOT COVER
+----------------------------
+- **No signed-in user submitted a form.** The user tasks were completed through the API, as the
+  earlier records do. `DEF-08` in ../test-plan.md section 6 stands.
+- **Authentication, role-based access and the audit trail are not implemented**, so nothing here
+  exercises them. `DEF-07` stands.
+- **The reply is published by the scenario, not by a worker.** `missing-information-supplied`
+  belongs to the referring organisation, so no worker here sends it on the hospital's behalf; the
+  scenario stands in for the participant that owns it.
+- **The ledger duplicate guards are per worker process.** The simulated services keep their ledgers
+  in memory, which is `DEF-10`.
+- **The other six models were not laid out again.** The four repairs to the drawing tools take
+  effect the next time a model is laid out, and only `core-5` was laid out for this change, so the
+  committed exports of the other six diagrams are unchanged and still carry the message-flow
+  routing this version fixes.
+- **`tests/test-plan.md` still describes release-1.0.** Its counts and its section 4 rows are
+  written per release; this record names its own version, and the plan needs its release row
+  brought up to date when the next tag is cut.
+
+REPRODUCE WITH
+--------------
+    # engine running: D:\BPM\camunda-runtime\start-camunda.bat
+    cd /d/BPM/HPRTAS
+    python tools/verify_hprtas_bpmn_bindings.py
+    python tools/verify_hprtas_bpmn_layout.py
+    python tools/verify_hprtas_bpmn_export.py          # needs Windows OCR
+    cd workers
+    mvn test                                            # no engine
+    mvn test -Pengine                                   # deploys the models and the forms
+
+The publication can also be made by hand, which is how a reader can watch the correlation key
+matter:
+
+    mvn compile exec:java -Dexec.args="--publish-message missing-information-supplied --correlation-key REF-2026-0001"
+
+A name no deployed model declares, or a key no instance is waiting on, is accepted by the engine and
+correlated with nothing, so the instance stays where it is and Operate is where to confirm it.

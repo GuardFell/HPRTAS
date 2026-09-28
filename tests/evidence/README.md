@@ -26,12 +26,25 @@ Files are kept small: text logs are preferred over recordings or screenshots.
 
 ## The runs recorded here
 
+**The message exchange and the drawing repairs, at `2c3c2eb`.** This is the current worker-level and
+model-level evidence. It adds the fifth model and the worker that publishes a message, so the engine
+run is 11 tests rather than 7 (2 the smoke fixture, 9 the operational models) and the unit suite is
+42 rather than 38. It replaces the `76a7fdc` record as the current one, which is kept below as the
+record of what the implementation did before the exchange existed.
+
+- `core-5-message-exchange-and-layout-tidy_2c3c2eb_2026-09-28.txt` — pass at every level: 42 of 42
+  unit tests, the three static checks, and 11 of 11 engine tests. It states what the run does not
+  cover, which includes the two defects no test can close (`DEF-07`, `DEF-08`), the fact that the
+  reply is published by the scenario rather than by a worker, and the fact that only `core-5` was
+  laid out again, so the other six committed diagrams still carry the message-flow routing this
+  version repairs.
+
 **The Java implementation, at `76a7fdc`.** The workers were rewritten in Java, and this is the first
 record made against that implementation. It covers all three levels at one version — the
-configuration check, the unit suite with no engine, and both engine runs — and it is the current
-worker-level and model-level evidence. It replaces the `c8556ba` unit record and the `a7f0dd6`
-engine record as the current ones; both are kept below as the record of what the Node.js
-implementation did.
+configuration check, the unit suite with no engine, and both engine runs. It was the current
+worker-level and model-level evidence until `2c3c2eb`, and it replaced the `c8556ba` unit record and
+the `a7f0dd6` engine record as the current ones; both are kept below as the record of what the
+Node.js implementation did.
 
 - `workers_java-unit-smoke-and-models_76a7fdc_2026-09-22.txt` — pass at all three levels: 38 of 38
   unit tests, and 7 of 7 engine tests (2 the smoke fixture, 5 the operational models). The file

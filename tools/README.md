@@ -23,6 +23,7 @@ uses the Windows OCR engine through PowerShell, and the engine check needs the e
 | `verify_hprtas_bpmn_layout.py` | The layout checks: no element or label overlaps another, nothing is drawn outside its lane or the canvas, and the BPMN rules the lectures set out hold. Reports the crossings that the routing could not avoid. | Pillow |
 | `verify_hprtas_bpmn_export.py` | Reads the exported PNGs back with Windows OCR and measures how much of the text in the model comes back, which is how a label drawn too small or on top of another is caught. The 0.6 threshold is the one the W02 checker uses. | Pillow, Windows OCR, `ocr_diagram_text.ps1` |
 | `verify_hprtas_engine_forms.py` | The same binding claim, proved by running rather than by reading: deploys each model with its forms, starts it, and checks that the user task it reaches resolves a form that was deployed. | The engine |
+| `bundle_forms_by_core.py` | The check for `forms/form/`, the copies of the forms bundled one folder per `core-N` model, which is the arrangement a demonstration deploys from: re-reads the five models and reports a form missing from a folder, a form in one the model does not bind, a copy that has drifted from its original, or a stray file. | - |
 | `ocr_diagram_text.ps1` | The Windows OCR helper `verify_hprtas_bpmn_export.py` calls, one tile of a diagram at a time. Not run on its own. | - |
 
 ## What is checked, and where

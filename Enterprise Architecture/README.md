@@ -7,8 +7,9 @@ support it.
 portfolio and the part its information systems play in running its operations, in roughly 150 to
 300 words.
 
-The Zachman Framework of Information Systems Architecture is kept here as well, once it is
-produced.
+The Zachman Framework of Information Systems Architecture is kept here as well, in
+`Zachman-Framework.md`: the framework's two axes, the cells selected for the trust, and the
+artefacts that answer them.
 
 The folder holds the enterprise-level description and the framework view. Neither is needed to run
 the processes in `../models/`; they describe the organisation those processes sit inside.

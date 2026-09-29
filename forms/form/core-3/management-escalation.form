@@ -1,0 +1,67 @@
+{
+  "id": "management-escalation",
+  "components": [
+    {
+      "type": "group",
+      "label": "Escalation",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "escalatedTo",
+          "label": "Escalated To",
+          "description": "The higher management team the delay is escalated to. The case does not name one, so the team chosen is recorded here.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "escalationDate",
+          "label": "Escalation Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "escalationReason",
+          "label": "Reason for the Escalation",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "escalatedBy",
+          "label": "Escalated By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "escalationNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

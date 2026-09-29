@@ -1,0 +1,88 @@
+{
+  "id": "letter-processing",
+  "components": [
+    {
+      "type": "group",
+      "label": "Administrative Check",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "consultationId",
+          "label": "Consultation ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "suspectedClinicalError",
+          "label": "Suspected Clinical Error",
+          "description": "Where this is ticked the letter is returned to the Consultant. Administrative staff do not change clinical meaning."
+        },
+        {
+          "type": "textarea",
+          "key": "clinicalErrorDetail",
+          "label": "What Is Suspected to Be Wrong",
+          "description": "Recorded where a clinical error is suspected."
+        },
+        {
+          "type": "textfield",
+          "key": "processedBy",
+          "label": "Processed By",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Correspondence Timeline",
+      "components": [
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "appointmentDate",
+          "label": "Appointment Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "approvalDate",
+          "label": "Letter Approval Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "processingDate",
+          "label": "Processing Date",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "processingNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

@@ -1,0 +1,99 @@
+{
+  "id": "referral-check",
+  "components": [
+    {
+      "type": "group",
+      "label": "Referral",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral ID",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "description": "The identifier the patient is known by on the hospital system.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientName",
+          "label": "Patient Name",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "referringOrganisation",
+          "label": "Referring Organisation",
+          "description": "Who the referral came from. Recorded by the validation step as the organisation to request missing information from.",
+          "validate": {
+            "required": true
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": "Documentation and Identification",
+      "components": [
+        {
+          "type": "textarea",
+          "key": "supportingDocuments",
+          "label": "Supporting Information Received",
+          "description": "The documents and information that arrived with the referral."
+        },
+        {
+          "type": "checkbox",
+          "key": "documentsComplete",
+          "label": "Referral Documents Complete",
+          "description": "Tick only when nothing is outstanding; leave it unticked and list the missing items where something is. A referral ticked as complete must not also list missing items, otherwise the check cannot be decided."
+        },
+        {
+          "type": "textarea",
+          "key": "missingItems",
+          "label": "Missing Items",
+          "description": "One item per line. Leave empty when the documentation is complete."
+        },
+        {
+          "type": "checkbox",
+          "key": "patientIdentificationConfirmed",
+          "label": "Patient Identification Confirmed",
+          "description": "The patient was identified and checked against existing records before the referral is processed.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "checkedBy",
+          "label": "Checked By",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "checkNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

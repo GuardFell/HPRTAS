@@ -1,0 +1,92 @@
+{
+  "id": "refund",
+  "components": [
+    {
+      "type": "group",
+      "label": "Refund Details",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "paymentReference",
+          "label": "Payment Reference",
+          "description": "The reference of the payment that is to be refunded.",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "refundDecision",
+          "label": "Decision",
+          "description": "What the Finance Team decided. Retaining or transferring the payment records no refund.",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            {
+              "label": "Full Refund",
+              "value": "full"
+            },
+            {
+              "label": "Partial Refund",
+              "value": "partial"
+            },
+            {
+              "label": "Retain or Transfer",
+              "value": "none"
+            }
+          ]
+        },
+        {
+          "type": "number",
+          "key": "refundAmount",
+          "label": "Refund Amount (£)",
+          "description": "Required for a partial refund. A full refund returns the amount the provider actually took.",
+          "validate": {
+            "min": 0.01,
+            "max": 100000
+          }
+        },
+        {
+          "type": "select",
+          "key": "refundReason",
+          "label": "Reason for Refund",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            {
+              "label": "Appointment Cancelled",
+              "value": "cancelled"
+            },
+            {
+              "label": "Appointment Rescheduled",
+              "value": "rescheduled"
+            },
+            {
+              "label": "Treatment Changed",
+              "value": "treatment_changed"
+            },
+            {
+              "label": "Other",
+              "value": "other"
+            }
+          ]
+        },
+        {
+          "type": "textarea",
+          "key": "refundNotes",
+          "label": "Notes"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

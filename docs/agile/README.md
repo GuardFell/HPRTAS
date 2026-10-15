@@ -8,5 +8,11 @@ checklist that applies to every task regardless of what it produces.
 `contribution-matrix.md` records, sprint by sprint, the evidence behind each task: the backlog item
 it belongs to and a path, commit or artefact in this repository that demonstrates it.
 
+`demonstration-script.md` is the demonstration of the delivered system: what it shows, the commit it
+shows it at, and what it does not demonstrate. `response-to-feedback.md` answers the first review's
+feedback point by point: the decision, the action, the evidence and the outcome for each, and the
+points that are outstanding with the reason they are. `form-field-burden.md` is the review of what
+the forms ask a clinician to record.
+
 The contribution record is written as the project runs. It cannot be reconstructed afterwards,
 which is why it is updated at the end of each sprint rather than at the end of the project.

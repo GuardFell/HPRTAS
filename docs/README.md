@@ -22,8 +22,10 @@ work, the risks, the timeline and the comparison of what was planned against wha
 happened; and the evaluation made against it, which also judges each requirement the models carry
 and the alignment between the models, the forms and the workers.
 
-`agile/` holds the working agreements: what has to be true before work counts as done, and the
-record of the contribution behind each task.
+`agile/` holds the working agreements: what has to be true before work counts as done, the
+record of the contribution behind each task, and the response to the first review's feedback
+(`agile/response-to-feedback.md`), which connects each point raised to the decision, the action,
+the evidence and the outcome.
 
 The documents are written in English and kept current as the project runs, because they are the
 record of what was done rather than a plan written up at the end. The one thing they are not is

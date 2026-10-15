@@ -1,0 +1,286 @@
+{
+ "actors": [
+  {
+   "id": "patient",
+   "text": "Patient",
+   "type": "istar.Agent",
+   "x": 693.76,
+   "y": 791.81,
+   "nodes": [],
+   "customProperties": {
+    "Evidence": "",
+    "Note": "The person the pathway exists for. Every dependency the workshop model states runs from this actor and none runs back to it: the patient cannot be made to attend, pay or supply anything, so what the hospital needs from the patient can only be asked for."
+   }
+  },
+  {
+   "id": "receptionist",
+   "text": "Receptionst",
+   "type": "istar.Agent",
+   "x": 693.76,
+   "y": 60.0,
+   "nodes": [],
+   "customProperties": {
+    "Evidence": "",
+    "Note": "The front desk: registration, appointments and payment. Named as the workshop model spells it."
+   }
+  },
+  {
+   "id": "doctor",
+   "text": "Doctor",
+   "type": "istar.Role",
+   "x": 1327.52,
+   "y": 1157.71,
+   "nodes": [],
+   "customProperties": {
+    "Evidence": "",
+    "Note": "The clinician who holds the diagnostic work: reviewing the patient's history, appraising the case clinically, assessing whether admission is needed, diagnosing the patient, and determining the cancer type and site. Consults the specialist for the review of test results."
+   }
+  },
+  {
+   "id": "specialist",
+   "text": "Specialist",
+   "type": "istar.Role",
+   "x": 60.0,
+   "y": 1157.71,
+   "nodes": [],
+   "customProperties": {
+    "Evidence": "",
+    "Note": "The expert the doctor consults for the review of test results that the doctor does not settle alone."
+   }
+  }
+ ],
+ "orphans": [],
+ "dependencies": [
+  {
+   "id": "SD-01",
+   "text": "registration",
+   "type": "istar.Goal",
+   "x": 488.83,
+   "y": 457.91,
+   "source": "patient",
+   "target": "receptionist",
+   "customProperties": {
+    "Evidence": "",
+    "Note": "The patient needs to be registered before anything else in the pathway can happen, and cannot register themselves."
+   }
+  },
+  {
+   "id": "SD-02",
+   "text": "appointment booking",
+   "type": "istar.Task",
+   "x": 611.9,
+   "y": 411.76,
+   "source": "patient",
+   "target": "receptionist",
+   "customProperties": {
+    "Evidence": "",
+    "Note": "Booking the appointment is work the reception desk carries out for the patient."
+   }
+  },
+  {
+   "id": "SD-03",
+   "text": "quick booking",
+   "type": "istar.Quality",
+   "x": 717.28,
+   "y": 492.46,
+   "source": "patient",
+   "target": "receptionist",
+   "customProperties": {
+    "Evidence": "",
+    "Note": "Drawn as a soft goal in the workshop model: how quickly the desk answers is a quality of the booking service, met to a degree rather than met or not met."
+   }
+  },
+  {
+   "id": "SD-04",
+   "text": "payment",
+   "type": "istar.Resource",
+   "x": 842.76,
+   "y": 424.02,
+   "source": "patient",
+   "target": "receptionist",
+   "customProperties": {
+    "Evidence": "",
+    "Note": "The payment the desk takes, and the receipt it gives, are what the patient receives in return for the fee."
+   }
+  },
+  {
+   "id": "SD-05",
+   "text": "diagnosis",
+   "type": "istar.Goal",
+   "x": 979.14,
+   "y": 1054.39,
+   "source": "patient",
+   "target": "doctor",
+   "customProperties": {
+    "Evidence": "",
+    "Note": "The diagnosis is the doctor's to reach; the patient depends on the doctor for it."
+   }
+  },
+  {
+   "id": "SD-06",
+   "text": "determine the cancer type and site",
+   "type": "istar.Goal",
+   "x": 1034.14,
+   "y": 943.13,
+   "source": "patient",
+   "target": "doctor",
+   "customProperties": {
+    "Evidence": "",
+    "Note": "Named as the goal behind the diagnosis in the workshop model; the patient depends on the doctor for it."
+   }
+  },
+  {
+   "id": "SD-07",
+   "text": "review the test results",
+   "type": "istar.Task",
+   "x": 679.76,
+   "y": 1177.71,
+   "source": "doctor",
+   "target": "specialist",
+   "customProperties": {
+    "Evidence": "",
+    "Note": "The doctor requests the specialist's review of the test results and receives it back; drawn as a task because the review is work the specialist performs."
+   }
+  }
+ ],
+ "links": [
+  {
+   "id": "SD-01-depender",
+   "type": "istar.DependencyLink",
+   "source": "patient",
+   "target": "SD-01"
+  },
+  {
+   "id": "SD-01-dependee",
+   "type": "istar.DependencyLink",
+   "source": "SD-01",
+   "target": "receptionist"
+  },
+  {
+   "id": "SD-02-depender",
+   "type": "istar.DependencyLink",
+   "source": "patient",
+   "target": "SD-02"
+  },
+  {
+   "id": "SD-02-dependee",
+   "type": "istar.DependencyLink",
+   "source": "SD-02",
+   "target": "receptionist"
+  },
+  {
+   "id": "SD-03-depender",
+   "type": "istar.DependencyLink",
+   "source": "patient",
+   "target": "SD-03"
+  },
+  {
+   "id": "SD-03-dependee",
+   "type": "istar.DependencyLink",
+   "source": "SD-03",
+   "target": "receptionist"
+  },
+  {
+   "id": "SD-04-depender",
+   "type": "istar.DependencyLink",
+   "source": "patient",
+   "target": "SD-04"
+  },
+  {
+   "id": "SD-04-dependee",
+   "type": "istar.DependencyLink",
+   "source": "SD-04",
+   "target": "receptionist"
+  },
+  {
+   "id": "SD-05-depender",
+   "type": "istar.DependencyLink",
+   "source": "patient",
+   "target": "SD-05"
+  },
+  {
+   "id": "SD-05-dependee",
+   "type": "istar.DependencyLink",
+   "source": "SD-05",
+   "target": "doctor"
+  },
+  {
+   "id": "SD-06-depender",
+   "type": "istar.DependencyLink",
+   "source": "patient",
+   "target": "SD-06"
+  },
+  {
+   "id": "SD-06-dependee",
+   "type": "istar.DependencyLink",
+   "source": "SD-06",
+   "target": "doctor"
+  },
+  {
+   "id": "SD-07-depender",
+   "type": "istar.DependencyLink",
+   "source": "doctor",
+   "target": "SD-07"
+  },
+  {
+   "id": "SD-07-dependee",
+   "type": "istar.DependencyLink",
+   "source": "SD-07",
+   "target": "specialist"
+  }
+ ],
+ "display": {
+  "patient": {
+   "collapsed": true
+  },
+  "receptionist": {
+   "collapsed": true
+  },
+  "doctor": {
+   "collapsed": true
+  },
+  "specialist": {
+   "collapsed": true
+  },
+  "SD-01": {
+   "width": 120.0,
+   "height": 48.0
+  },
+  "SD-02": {
+   "width": 140.0,
+   "height": 72.0
+  },
+  "SD-03": {
+   "width": 130.0,
+   "height": 72.0
+  },
+  "SD-04": {
+   "width": 120.0,
+   "height": 48.0
+  },
+  "SD-05": {
+   "width": 120.0,
+   "height": 48.0
+  },
+  "SD-06": {
+   "width": 120.0,
+   "height": 80.0
+  },
+  "SD-07": {
+   "width": 140.0,
+   "height": 72.0
+  }
+ },
+ "tool": "pistar.2.1.0",
+ "istar": "2.0",
+ "saveDate": "Tue, 13 Oct 2026 03:10:25 GMT",
+ "diagram": {
+  "width": 1499.52,
+  "height": 1329.71,
+  "name": "HPRTAS SD - the referral pathway",
+  "customProperties": {
+   "Source": "HPRTAS/models/socio-technical/sd-hprtas.json",
+   "Note": "The whole SD model on one canvas: four actors and the six dependencies between them."
+  }
+ }
+}

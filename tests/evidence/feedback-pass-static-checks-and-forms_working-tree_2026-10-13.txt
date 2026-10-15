@@ -1,0 +1,135 @@
+The static checks, the form validation and the exported diagrams, after the feedback pass
+=========================================================================================
+
+Version under test
+------------------
+The working tree on top of `aba6b29`, uncommitted at the time of the run: the feedback pass that
+adds the record store, the input-validation policy, the appointment-confirmation outcomes, the
+merging gateways and the end-to-end process. `git rev-parse --short HEAD` names the commit the
+changes sit on, and `git status` says which files differ from it - no hash is written here, because
+the tree this describes is not a commit yet.
+
+Date: 2026-10-13.  Tester: automated.
+
+Why these are recorded separately
+---------------------------------
+`workers-and-models_working-tree_2026-10-13.txt` records what the workers and the models do when
+they run. These checks are about the artefacts instead: that the models, the forms and the workers
+agree with each other, that the diagrams follow the layout and BPMN rules, that the form validation
+is the policy the repository documents, that every form still imports in the library Tasklist renders
+it with, and that the exported diagrams are legible. Only the last needs anything outside Python and
+Node.
+
+Method, and what was actually run
+---------------------------------
+Run from `HPRTAS/`. The engine was up but none of these needs it.
+
+    python tools/verify_hprtas_bpmn_bindings.py
+    python tools/verify_hprtas_bpmn_layout.py
+    python tools/bundle_forms_by_core.py
+    python tools/apply_form_validation.py
+    python tools/export_hprtas_bpmn_pdf.py
+    python tools/verify_hprtas_bpmn_export.py
+    NODE_PATH=<scratch>/node_modules node tools/check_forms_formjs.mjs
+
+The workers, the forms and the models agree
+-------------------------------------------
+    $ python tools/verify_hprtas_bpmn_bindings.py
+    6 operational models, 43 forms, 8 workers
+
+    PASS: the models, the forms and the workers agree
+
+The check grew four rules with this pass, and each was made to fail before it was trusted: a call
+activity has to name a process in `models/operational/`, what that process returns counts as
+produced in the model that calls it, every user task has to carry a candidate group, and every
+reference, NHS number and person's name has to carry the input-validation pattern. Removing one
+candidate group from `core-5` and one pattern from `referral-check.form` reported exactly those two
+problems; both were restored by re-running `apply_form_validation.py`.
+
+The diagrams follow the layout and BPMN rules
+---------------------------------------------
+    $ python tools/verify_hprtas_bpmn_layout.py
+    core-0-patient-pathway-end-to-end.bpmn                     0 problems, 1 crossings
+    core-1-referral-and-new-patient-appointment.bpmn           0 problems, 24 crossings
+    core-2-treatment-authorisation-funding-and-payment.bpmn    0 problems, 35 crossings
+    core-3-clinic-letter-and-pathway-escalation.bpmn           0 problems, 4 crossings
+    core-4-follow-up-cancellation-enquiry-and-refund.bpmn      0 problems, 32 crossings
+    core-5-missing-information-message-exchange.bpmn           0 problems, 4 crossings
+    patient-pathway-all-entities.bpmn                          ok
+    referral-to-treatment-pathway.bpmn                         ok
+
+    PASS: 8 models follow the layout and BPMN rules checked here
+          100 crossings remain, where the process leaves no other way round
+
+The models were redrawn with `relayout_hprtas_bpmn.py`, which now prefers the layout that keeps the
+lines off the activity boxes where one exists: it counts the flows that would cross a box under the
+same rule the check applies, and picks the ordering that has none before it picks the one with the
+fewest crossings. Two flows in `core-2` crossed a box at first; both are gone. One convergence in
+`core-2` - the two payment-error repair paths into `N_F_CorrectPaymentRequest` - keeps its merge at
+the task rather than in a gateway, because no ordering routed a boundary event's return across the
+payment task's column without the line crossing it. That exception is recorded in the model itself,
+in the task's documentation.
+
+The forms are the validation policy, and they all still import
+-------------------------------------------------------------
+    $ python tools/apply_form_validation.py
+    Every form already carries the validation policy.
+
+    $ NODE_PATH=<scratch>/node_modules node tools/check_forms_formjs.mjs
+    imported 43 of 43 forms
+    treatment-booking: future-dated start date is enforced by the picker
+    validation rules fire as intended
+    PASS: the forms import and validate
+
+`check_forms_formjs.mjs` is new: it imports every form into `@bpmn-io/form-js-viewer` - the library
+Tasklist renders forms with - and then runs each field through the same validator the renderer uses.
+It asserts that a complete `appointment-confirmation` submission reports nothing, that a reference in
+the wrong shape is refused with the message the form carries, that a name of digits alone is refused,
+and that an NHS number that is not ten digits is refused. It needs `jsdom` and
+`@bpmn-io/form-js-viewer` installed where Node can find them; it is not part of the Python checks
+because it is the only one that needs packages.
+
+The exported diagrams are legible
+---------------------------------
+    $ python tools/verify_hprtas_bpmn_export.py
+    core-0-patient-pathway-end-to-end                    word coverage 88% (38/43)
+    core-1-referral-and-new-patient-appointment          word coverage 82% (69/84)
+    core-2-treatment-authorisation-funding-and-payment   word coverage 89% (99/111)
+    core-3-clinic-letter-and-pathway-escalation          word coverage 93% (66/71)
+    core-4-follow-up-cancellation-enquiry-and-refund     word coverage 87% (98/113)
+    core-5-missing-information-message-exchange          word coverage 83% (24/29)
+    patient-pathway-all-entities                         word coverage 96% (43/45)
+    referral-to-treatment-pathway                        word coverage 95% (38/40)
+
+    VERIFICATION PASSED
+
+The exports are better read back than they were: 82-96% of the words come back, against 69-82% for
+the seven models before this pass. Three drawing faults were found and fixed while making that true,
+the first two in `bpmn_render.py` and the third in the exporter, which has its own drawing switch:
+
+- a boundary event was drawn as a rounded box rather than as the double ring the notation gives it;
+- a call activity was drawn as an ordinary task with no way to tell it invokes another process;
+- the exporter drew **nothing at all** for the kinds it did not know, so once the two glyphs above
+  existed the boundary events and the call activities disappeared from the exports - silently, since
+  the OCR check measures words and the words were still drawn. It now refuses to draw an unknown
+  kind rather than dropping it.
+
+The layout check also grew a rule while this was being looked at, because a picture caught what the
+numbers had not: a flow's label must not be set across an activity or a gateway. The first run of it
+failed on 20 labels across the six operational models - branch conditions written over the diamond
+of the gateway they belong to, so the glyph and the words obscured each other. The placer that
+chooses label positions now avoids the shapes (and has more positions to choose from), the diagrams
+were redrawn, and the rule passes on all eight models. `relayout_hprtas_bpmn.py` had the same
+information missing: it now prefers the ordering whose lines keep off the activity boxes, and its
+flow-label placer knows where the activities and gateways are.
+
+What these checks do not cover
+------------------------------
+- **No signed-in user and no enforced role.** Every user task carries a candidate group and the
+  bindings check requires it, but nothing authenticates a user or stops one claiming another role's
+  task on this installation; that is `DEF-07`.
+- **The forms are exercised through the library, not through Tasklist.** The validation rules fire in
+  the renderer's own validator; a person filling a form in through Tasklist is still not what was
+  run, which is `DEF-08`.
+- **The export check measures word coverage, not layout.** A diagram can read 90% and still be ugly;
+  the layout check is what measures overlap and containment, and it passes separately.

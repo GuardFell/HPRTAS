@@ -1,0 +1,154 @@
+{
+ "actors": [
+  {
+   "id": "receptionist",
+   "text": "Receptionst",
+   "type": "istar.Agent",
+   "x": 60.0,
+   "y": 60.0,
+   "nodes": [
+    {
+     "id": "receptionist-S1",
+     "text": "Every patient is served without friction",
+     "type": "istar.Quality",
+     "x": 318.5,
+     "y": 300.0,
+     "customProperties": {
+      "Evidence": ""
+     }
+    },
+    {
+     "id": "receptionist-G1",
+     "text": "The patient's details are recorded correctly",
+     "type": "istar.Goal",
+     "x": 228.0,
+     "y": 564.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-01"
+     }
+    },
+    {
+     "id": "receptionist-G2",
+     "text": "The registration and booking service is delivered",
+     "type": "istar.Goal",
+     "x": 424.0,
+     "y": 564.0,
+     "customProperties": {
+      "Evidence": ""
+     }
+    },
+    {
+     "id": "receptionist-T1",
+     "text": "Record the patient's details",
+     "type": "istar.Task",
+     "x": 100.0,
+     "y": 820.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-01"
+     }
+    },
+    {
+     "id": "receptionist-T2",
+     "text": "Arrange the appointment with the doctor",
+     "type": "istar.Task",
+     "x": 316.0,
+     "y": 820.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-02"
+     }
+    },
+    {
+     "id": "receptionist-T3",
+     "text": "Take the payment and issue the receipt",
+     "type": "istar.Task",
+     "x": 542.0,
+     "y": 820.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-04"
+     }
+    }
+   ],
+   "customProperties": {
+    "Intent": "Serve the patient at the front desk: register, book, and take the payment without keeping anyone waiting.",
+    "Evidence": ""
+   }
+  }
+ ],
+ "orphans": [],
+ "dependencies": [],
+ "links": [
+  {
+   "id": "receptionist-T1-G1",
+   "type": "istar.OrRefinementLink",
+   "source": "receptionist-T1",
+   "target": "receptionist-G1"
+  },
+  {
+   "id": "receptionist-T1-G2",
+   "type": "istar.OrRefinementLink",
+   "source": "receptionist-T1",
+   "target": "receptionist-G2"
+  },
+  {
+   "id": "receptionist-T2-G2",
+   "type": "istar.OrRefinementLink",
+   "source": "receptionist-T2",
+   "target": "receptionist-G2"
+  },
+  {
+   "id": "receptionist-T2-S1",
+   "type": "istar.ContributionLink",
+   "source": "receptionist-T2",
+   "target": "receptionist-S1",
+   "label": "help"
+  },
+  {
+   "id": "receptionist-T3-G2",
+   "type": "istar.OrRefinementLink",
+   "source": "receptionist-T3",
+   "target": "receptionist-G2"
+  }
+ ],
+ "display": {
+  "receptionist-S1": {
+   "width": 155.0,
+   "height": 104.0
+  },
+  "receptionist-G1": {
+   "width": 120,
+   "height": 96.0
+  },
+  "receptionist-G2": {
+   "width": 140.0,
+   "height": 96.0
+  },
+  "receptionist-T1": {
+   "width": 140,
+   "height": 72.0
+  },
+  "receptionist-T2": {
+   "width": 150.0,
+   "height": 88.0
+  },
+  "receptionist-T3": {
+   "width": 150.0,
+   "height": 88.0
+  }
+ },
+ "tool": "pistar.2.1.0",
+ "istar": "2.0",
+ "saveDate": "Tue, 13 Oct 2026 03:10:25 GMT",
+ "diagram": {
+  "width": 900.0,
+  "height": 968.0,
+  "name": "HPRTAS SR - Receptionst",
+  "customProperties": {
+   "Source": "HPRTAS/models/socio-technical/sr-hprtas.json",
+   "Note": "Serve the patient at the front desk: register, book, and take the payment without keeping anyone waiting."
+  }
+ }
+}

@@ -84,6 +84,70 @@ final class EngineTestSupport {
     }
   }
 
+  /**
+   * Every open user task in an instance and in the instances it called.
+   *
+   * A call activity runs another process instance, and that instance's user tasks belong to it
+   * rather than to the caller, so driving a process that calls others means walking the tree. The
+   * search is by parent instance key, which is what the call activity sets on the child.
+   */
+  static List<UserTask> openUserTasksInTree(long rootProcessInstanceKey) {
+    final List<UserTask> tasks = new ArrayList<>(openUserTasks(rootProcessInstanceKey));
+    for (long child : childInstanceKeys(rootProcessInstanceKey)) {
+      tasks.addAll(openUserTasksInTree(child));
+    }
+    return tasks;
+  }
+
+  /** The process instances an instance called, one level down. */
+  @SuppressWarnings("unchecked")
+  static List<Long> childInstanceKeys(long parentProcessInstanceKey) {
+    final Map<String, Object> body =
+        post(
+            "/v2/process-instances/search",
+            Map.of(
+                "filter",
+                Map.of("parentProcessInstanceKey", String.valueOf(parentProcessInstanceKey))));
+    final List<Long> keys = new ArrayList<>();
+    for (Object item : (List<Object>) body.getOrDefault("items", List.of())) {
+      final Map<String, Object> instance = (Map<String, Object>) item;
+      keys.add(Long.parseLong(String.valueOf(instance.get("processInstanceKey"))));
+    }
+    return keys;
+  }
+
+  /** The process definitions an instance ran, its own and everything it called, by id. */
+  static List<String> processIdsInTree(long rootProcessInstanceKey) {
+    final List<String> ids = new ArrayList<>();
+    for (long key : instanceTree(rootProcessInstanceKey)) {
+      ids.add(processDefinitionIdOf(key));
+    }
+    return ids;
+  }
+
+  /** Every instance in the tree under a root, the root included. */
+  static List<Long> instanceTree(long rootProcessInstanceKey) {
+    final List<Long> keys = new ArrayList<>();
+    keys.add(rootProcessInstanceKey);
+    for (long child : childInstanceKeys(rootProcessInstanceKey)) {
+      keys.addAll(instanceTree(child));
+    }
+    return keys;
+  }
+
+  /** The BPMN process id an instance is running. */
+  @SuppressWarnings("unchecked")
+  static String processDefinitionIdOf(long processInstanceKey) {
+    final Map<String, Object> body =
+        post(
+            "/v2/process-instances/search",
+            Map.of("filter", Map.of("processInstanceKey", String.valueOf(processInstanceKey))));
+    for (Object item : (List<Object>) body.getOrDefault("items", List.of())) {
+      return String.valueOf(((Map<String, Object>) item).get("processDefinitionId"));
+    }
+    return null;
+  }
+
   /** The elements a process instance visited, read back from the engine. */
   @SuppressWarnings("unchecked")
   static List<String> visitedElementIds(long processInstanceKey) {
@@ -100,6 +164,26 @@ final class EngineTestSupport {
       }
     }
     return ids;
+  }
+
+  /**
+   * How many times an instance visited one element.
+   *
+   * `visitedElementIds` answers with each id once, which is what a scenario asserting on the shape
+   * of a path wants; a scenario asserting that a step was *reached again* - a booking sought a
+   * second time after a reschedule - needs the number of element instances instead.
+   */
+  @SuppressWarnings("unchecked")
+  static long visitedElementInstanceCount(long processInstanceKey, String elementId) {
+    final Map<String, Object> body =
+        post(
+            "/v2/element-instances/search",
+            Map.of(
+                "filter",
+                Map.of(
+                    "processInstanceKey", String.valueOf(processInstanceKey),
+                    "elementId", elementId)));
+    return ((List<Object>) body.getOrDefault("items", List.of())).size();
   }
 
   /**

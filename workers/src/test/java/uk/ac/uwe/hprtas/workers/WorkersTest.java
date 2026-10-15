@@ -46,6 +46,14 @@ class WorkersTest {
   private static final CorrespondenceDispatch CORRESPONDENCE_DISPATCH = new CorrespondenceDispatch();
   private static final RefundProcessing REFUND_PROCESSING = new RefundProcessing();
 
+  /**
+   * What the referral-check form supplies, as the worker reads it. The identifiers are the ones
+   * the register is keyed by, so a test that drives the worker twice says the same patient.
+   */
+  private static final Map<String, Object> REFERRAL =
+      Vars.of("referralId", "REF-2026-0001", "patientId", "PAT-1001", "nhsNumber", "9434765919",
+          "patientName", "Ada Lovelace");
+
   /** Runs a handler and returns the outcome. */
   private static Outcome run(WorkerModule worker, Map<String, Object> variables) {
     return worker.handle(variables, TestSupport.buildContext(CONFIG));
@@ -82,7 +90,8 @@ class WorkersTest {
         completedVariables(
             run(
                 REFERRAL_VALIDATION,
-                Vars.of(
+                with(
+                    REFERRAL,
                     "documentsComplete", true,
                     "referringOrganisation", "St Mary GP Surgery")));
 
@@ -97,7 +106,8 @@ class WorkersTest {
         completedVariables(
             run(
                 REFERRAL_VALIDATION,
-                Vars.of(
+                with(
+                    REFERRAL,
                     "documentsComplete", false,
                     "missingItems", "previous clinic letter, diagnostic report",
                     "referringOrganisation", "Northside Hospital")));
@@ -114,7 +124,7 @@ class WorkersTest {
     final Outcome outcome =
         run(
             REFERRAL_VALIDATION,
-            Vars.of("documentsComplete", false, "referringOrganisation", "Northside Hospital"));
+            with(REFERRAL, "documentsComplete", false, "referringOrganisation", "Northside Hospital"));
 
     assertBusinessError(outcome, ErrorCode.MISSING_INFORMATION_NOT_SPECIFIED);
   }
@@ -127,7 +137,8 @@ class WorkersTest {
     assertBusinessError(
         run(
             REFERRAL_VALIDATION,
-            Vars.of(
+            with(
+                REFERRAL,
                 "documentsComplete", true,
                 "missingItems", List.of("diagnostic report"),
                 "referringOrganisation", "Northside Hospital")),
@@ -136,7 +147,7 @@ class WorkersTest {
     assertBusinessError(
         run(
             REFERRAL_VALIDATION,
-            Vars.of("documentsComplete", true, "referringOrganisation", "   ")),
+            with(REFERRAL, "documentsComplete", true, "referringOrganisation", "   ")),
         ErrorCode.INVALID_VARIABLE);
   }
 
@@ -147,7 +158,7 @@ class WorkersTest {
         completedVariables(
             run(
                 REFERRAL_VALIDATION,
-                Vars.of("documentsComplete", true, "referringOrganisation", "St Mary GP Surgery")));
+                with(REFERRAL, "documentsComplete", true, "referringOrganisation", "St Mary GP Surgery")));
 
     final List<String> clinicalWords =
         List.of("clinical", "suitab", "accept", "reject", "diagnos", "triage");
@@ -775,6 +786,31 @@ class WorkersTest {
   // ---------------------------------------------------------------------------
 
   @Test
+  @DisplayName("an optional list that is empty is a legitimate answer, a required one that is empty is not")
+  void anEmptyOptionalListIsNotAProblem() {
+    // The treatment worker returns specialResources, which the form may leave empty, and the
+    // process carries that empty list back into the activity when a booking is sought again for a
+    // rescheduled request. Treating an empty optional list as unusable would make the second
+    // attempt fail on what the first one wrote.
+    final Map<String, Object> withEmptyResources =
+        with(
+            AUTHORISED_REQUEST,
+            "specialResources", List.of(),
+            "patientId", "PAT-1001",
+            "treatmentOutcome", "available");
+    assertTrue(
+        "completed".equals(run(TREATMENT_AVAILABILITY, withEmptyResources).kind()),
+        "an empty specialResources list must be accepted when the booking is made again");
+
+    // The recipients of a letter are not optional, and a request that names none cannot be sent.
+    assertBusinessError(
+        run(
+            CORRESPONDENCE_DISPATCH,
+            Vars.of("recipients", List.of(), "documentType", "appointment_letter")),
+        ErrorCode.INVALID_VARIABLE);
+  }
+
+  @Test
   @DisplayName("the worker turns a completed outcome into a job completion")
   void aCompletedOutcomeCompletesTheJob() {
     final TestSupport.RecordingActions actions = new TestSupport.RecordingActions();
@@ -787,7 +823,7 @@ class WorkersTest {
         TestSupport.RecordingMessagePublisher.recording(),
         actions,
         TestSupport.buildJob(
-            Vars.of("documentsComplete", true, "referringOrganisation", "St Mary GP Surgery")));
+            with(REFERRAL, "documentsComplete", true, "referringOrganisation", "St Mary GP Surgery")));
 
     assertEquals("complete", actions.kind);
     assertEquals("complete", actions.variables.get("validationResult"));

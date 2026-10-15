@@ -2,11 +2,11 @@ package uk.ac.uwe.hprtas.workers.services;
 
 import uk.ac.uwe.hprtas.workers.Config;
 import uk.ac.uwe.hprtas.workers.Validate;
+import uk.ac.uwe.hprtas.workers.db.Database;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
 
 /**
  * Simulated external treatment, laboratory and imaging service.
@@ -22,8 +22,15 @@ import java.util.concurrent.ConcurrentHashMap;
  *       returns the appointment already made</li>
  * </ol>
  *
+ * The booking, and how many attempts have been made for it, are held in the hospital's record store
+ * rather than in this class, so they survive the worker process restarting. The booking key names the
+ * request: the appointment type and the start date that was asked for. A rescheduled request names a
+ * different start date, so it is a different booking - which is why the appointment it makes can be
+ * a different one while a retry of the original request still returns the original appointment.
+ *
  * Limitations are recorded in {@code workers/README.md}: no capacity data, no clinical constraints,
- * no real scheduling.
+ * no real scheduling. The appointment date is the start date the request asked for, or the day the
+ * request was made when it named none: there is no diary behind it either way.
  */
 public class TreatmentService extends SimulatedService {
 
@@ -32,17 +39,17 @@ public class TreatmentService extends SimulatedService {
 
   public static final List<String> OUTCOMES = List.of(AVAILABLE, UNAVAILABLE);
 
+  /** The appointment type recorded for the appointments this service books. */
+  public static final String TREATMENT_APPOINTMENT = "treatment-appointment";
+
   private final Config.TreatmentSettings config;
+  private final Database database;
 
-  // booking key -> the appointment made for it, and how many attempts have been made
-  private final Map<String, Booking> bookings = new ConcurrentHashMap<>();
-
-  public TreatmentService(Config.TreatmentSettings config) {
+  public TreatmentService(Config.TreatmentSettings config, Database database) {
     super(config.latencyMs());
     this.config = config;
+    this.database = database;
   }
-
-  private record Booking(String appointmentReference, String treatmentAppointmentDate, int attempts) {}
 
   /** What the service answered. */
   public record BookingResult(
@@ -52,60 +59,110 @@ public class TreatmentService extends SimulatedService {
       String treatmentAppointmentDate,
       String bookingStatus,
       int treatmentRetryCount,
-      boolean duplicateAttempt) {}
+      boolean duplicateAttempt,
+      boolean supersededAppointment) {}
 
   /**
    * @param bookingKey identifies the treatment appointment
    * @param requestedOutcome an explicit outcome from the scenario data, or null
+   * @param requestedStartDate the start date the request asked for, or null
+   * @param patientId the patient, or null when the process does not say
+   * @param referralId the referral the treatment belongs to, or null
    */
-  public BookingResult bookTreatment(String bookingKey, String requestedOutcome, Instant now) {
+  public BookingResult bookTreatment(
+      String bookingKey,
+      String requestedOutcome,
+      Instant now,
+      String requestedStartDate,
+      String patientId,
+      String referralId) {
+
     awaitLatency();
 
-    synchronized (bookings) {
+    synchronized (database) {
       final String outcome = firstSet(requestedOutcome, config.outcome(), AVAILABLE);
-      final Booking existing = bookings.get(bookingKey);
-      final int attempts = (existing == null ? 0 : existing.attempts()) + 1;
+      final Optional<Database.Appointment> stored = database.findAppointment(bookingKey);
+      final int attempts = (stored.map(Database.Appointment::attempts).orElse(0)) + 1;
+      final String existingReference = stored.map(Database.Appointment::appointmentReference).orElse(null);
+      final String existingDate = stored.map(Database.Appointment::appointmentDate).orElse(null);
 
       if (UNAVAILABLE.equals(outcome)) {
         // Nothing new is booked, but the attempt is recorded so the process can show that further
         // attempts were made and notify the responsible team. If an appointment was already made
         // for this booking key it still stands: a later outage cannot unbook it or create a second
         // one.
-        final String reference = existing == null ? null : existing.appointmentReference();
-        final String date = existing == null ? null : existing.treatmentAppointmentDate();
-        bookings.put(bookingKey, new Booking(reference, date, attempts));
+        final boolean alreadyBooked = existingReference != null;
+        database.saveAppointment(
+            new Database.Appointment(
+                bookingKey,
+                TREATMENT_APPOINTMENT,
+                patientId,
+                referralId,
+                existingDate,
+                null,
+                null,
+                existingReference,
+                alreadyBooked ? "confirmed" : "pending",
+                outcome,
+                attempts,
+                Validate.toIsoDate(now)));
 
-        final boolean alreadyBooked = reference != null;
         return new BookingResult(
-            false,
-            alreadyBooked,
-            reference,
-            date,
-            alreadyBooked ? "confirmed" : "pending",
-            attempts,
-            alreadyBooked);
+            false, alreadyBooked, existingReference, existingDate,
+            alreadyBooked ? "confirmed" : "pending", attempts, alreadyBooked, false);
       }
 
-      if (existing != null && existing.appointmentReference() != null) {
-        bookings.put(
-            bookingKey,
-            new Booking(existing.appointmentReference(), existing.treatmentAppointmentDate(), attempts));
+      if (existingReference != null) {
+        database.saveAppointment(
+            new Database.Appointment(
+                bookingKey,
+                TREATMENT_APPOINTMENT,
+                patientId,
+                referralId,
+                existingDate,
+                null,
+                null,
+                existingReference,
+                "confirmed",
+                outcome,
+                attempts,
+                Validate.toIsoDate(now)));
         return new BookingResult(
-            true,
-            true,
-            existing.appointmentReference(),
-            existing.treatmentAppointmentDate(),
-            "confirmed",
-            attempts,
-            true);
+            true, true, existingReference, existingDate, "confirmed", attempts, true, false);
       }
 
       final String appointmentReference = "TRT-" + bookingKey;
-      final String treatmentAppointmentDate = Validate.toIsoDate(now);
-      bookings.put(bookingKey, new Booking(appointmentReference, treatmentAppointmentDate, attempts));
+      final String treatmentAppointmentDate =
+          requestedStartDate == null || requestedStartDate.isEmpty()
+              ? Validate.toIsoDate(now)
+              : requestedStartDate;
+
+      database.saveAppointment(
+          new Database.Appointment(
+              bookingKey,
+              TREATMENT_APPOINTMENT,
+              patientId,
+              referralId,
+              treatmentAppointmentDate,
+              null,
+              null,
+              appointmentReference,
+              "confirmed",
+              outcome,
+              attempts,
+              Validate.toIsoDate(now)));
+
+      // This is a new booking for the patient, so any other live treatment appointment of theirs is
+      // the one it replaces: a rescheduled booking must not leave two treatment appointments on the
+      // register as though both were going to happen.
+      final boolean superseded =
+          database.supersedeActiveAppointments(
+                  patientId, null, TREATMENT_APPOINTMENT, bookingKey, now)
+              > 0;
 
       return new BookingResult(
-          true, true, appointmentReference, treatmentAppointmentDate, "confirmed", attempts, false);
+          true, true, appointmentReference, treatmentAppointmentDate, "confirmed", attempts, false,
+          superseded);
     }
   }
 }

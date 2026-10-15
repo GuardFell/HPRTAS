@@ -4,7 +4,9 @@ The executable BPMN processes: the models Camunda deploys and runs, and the ones
 workers are bound to.
 
 Each process covers one part of the patient pathway, and between them they carry the whole pathway
-from the referral arriving to the refund of a cancelled paid appointment.
+from the referral arriving to the refund of a cancelled paid appointment. `core-0` is the sixth:
+it holds no work of its own and invokes the other five as call activities, so the pathway can also be
+run, watched and demonstrated as one instance.
 
 `core-1-referral-and-new-patient-appointment.bpmn` covers the referral being received, the
 supporting documents being checked, the consultant's decision to accept, reject, query or redirect
@@ -31,6 +33,21 @@ follow-up appointment being requested and booked, the cancellation, decline or n
 appointment and the decision that follows it, the handling and routing of patient enquiries, and
 the financial decision on a paid appointment that has been cancelled or changed, ending in a refund
 where one is due.
+
+`core-0-patient-pathway-end-to-end.bpmn` is the integration of the five. It is started from its own
+start form with the referral it belongs to, and each stage is a call activity that names the process
+that runs it: the documentation exchange (`core-5`) when the supporting information did not arrive
+with the referral, then the referral, its decision and the first appointment (`core-1`), the treatment
+authorisation, funding, payment and cycle reviews (`core-2`), the clinic letter (`core-3`) and the
+follow-up with the cancellation, enquiry and refund work around it (`core-4`). The gateways between
+the stages read only what the process that just finished returned - `decision` and `slotAvailable`
+from `core-1`, `consentGiven` from `core-2` - so a referral that was rejected, redirected, queried or
+escalated, or a consultation the patient did not proceed from, ends the pathway at an end event that
+says why rather than carrying on. It holds no user task and no service task, and every check inside a
+stage stays with the teams, forms and workers that stage binds.
+
+Each stage process is deployed and runnable on its own as well: the call activity adds a way to run
+the pathway as one journey, it does not replace the stage models.
 
 `core-5-missing-information-message-exchange.bpmn` covers the referral that is missing
 documentation: the Medical Secretaries record what is missing, the request goes out to the referring

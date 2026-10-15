@@ -41,7 +41,25 @@ Configuration is layered over three levels, each overriding the one before it:
 3. Environment variables — from `.env` or the shell.
 
 A variable the environment already defines wins over the same variable in `.env`, so a committed file
-can never override a machine's own setting. The connection settings keep the names they had when the
+can never override a machine's own setting.
+
+## The record store
+
+The workers keep the hospital's own records in an embedded H2 database rather than in their own
+memory: the patient register and the referrals, the appointments, the payment and refund ledger, the
+dispatches and the outstanding information requests. `database.url` in `config/workers.default.json`
+names it - `jdbc:h2:file:./data/hprtas`, resolved from the workers directory, so the records live
+beside the configuration that names them - and `HPRTAS_DB_URL` overrides it, which is how the unit
+tests get a throwaway in-memory store each and how a demonstration can run against one that leaves
+nothing behind. The schema is created when the store is opened, so a fresh checkout needs nothing
+made by hand.
+
+What the store is for is what the process needs to know about the world outside itself. A patient the
+hospital already knows is matched by their NHS number rather than registered a second time, a letter
+is dispatched on the channel that patient's record holds, an appointment is superseded rather than
+left standing when the patient asks for another date, and a payment reference that has been settled is
+still a duplicate after the worker process has restarted. Deleting `workers/data/` empties the
+register again; `mvn compile exec:java -Dexec.args="--show-records"` prints what it holds. The connection settings keep the names they had when the
 project used the Node SDK — `ZEEBE_GRPC_ADDRESS` carries its protocol (`grpc://localhost:26500`) and
 `CAMUNDA_AUTH_STRATEGY` is `NONE`, because Camunda 8 Run is installed unsecured for API access, so no
 credentials are sent and no token is fetched. The client spells a plaintext connection `http://` and a
@@ -57,14 +75,15 @@ element id, the duration and the outcome, which is what makes the log usable as 
 
 ```bash
 cp .env.example .env
-mvn test                                          # unit tests, no engine required
+mvn test                                          # unit tests, no engine required (50)
+mvn compile exec:java -Dexec.args="--show-records"  # what the record store holds
 mvn compile exec:java -Dexec.args="--check"               # validate the configuration and the wiring
 mvn compile exec:java                                     # run the workers
 mvn compile exec:java -Dexec.args="--publish-message <name>"   # send a message a model waits for
 mvn compile exec:java -Dexec.args="--publish-message <name> --correlation-key <value>"   # the same, addressed to a subscription
 mvn test -Pengine                                 # the fixture and the models, engine running
 mvn test -Pengine -Dtest=SmokeTest                # the fixture only
-mvn test -Pengine -Dtest=OperationalModelsTest    # the five operational models only
+mvn test -Pengine -Dtest=OperationalModelsTest    # the operational models and the forms
 mvn package                                       # a self-contained jar
 ```
 
@@ -152,10 +171,19 @@ the duplicate the guide's step 6 warns about.
 ## The workers
 
 **`referral-validation`** (job type `validate-referral`) checks that a referral has the supporting
-information it needs. It reads `documentsComplete`, `missingItems` and `referringOrganisation`, and
-writes `validationResult`, `requestedItems`, `missingInformationRequestedFrom` and
-`missingInformationRequestedDate`. It calls no external service, and it deliberately records no
-clinical judgement: whether a referral should be accepted is not its business.
+information it needs, and identifies the patient against the register. It reads `documentsComplete`,
+`missingItems`, `referringOrganisation`, `referralId`, `patientId`, `nhsNumber` and `patientName`; it
+writes `validationResult`, `requestedItems`, `missingInformationRequestedFrom`,
+`missingInformationRequestedDate`, and what the register answered about the patient -
+`patientRecordFound`, `patientDetailsMatch`, `patientName`, `patientChannelPreference` and
+`patientPreviousReferrals`. It calls no external service, and it deliberately records no clinical
+judgement: whether a referral should be accepted is not its business.
+
+The identification rule is the case's (BR-46, NFR-004, FR-048): an NHS number has to be ten digits, a
+patient the register already holds is matched to it, and a name that disagrees with the register is
+reported as a disagreement rather than written over it - which of the two names is right is for a
+person to say. The referral itself is then recorded against the patient, which is what makes that
+patient's referral history readable by a later step.
 
 **`referral-document-request`** (job type `request-referral-documents`) is the one worker that does
 not call anything: it **publishes a message**. It reads `referralId`, `requestedFrom` and
@@ -165,17 +193,30 @@ not call anything: it **publishes a message**. It reads `referralId`, `requested
 below for what the correlation key does and why the publication carries an id.
 
 **`appointment-availability`** (job type `check-appointment-availability`) asks the simulated
-scheduling service for a new patient appointment. It reads `speciality`, `priority` and
-`requestedWindow`, and writes `slotAvailable`, `appointmentDate`, `alternativeDate`,
-`withinRequestedWindow`, `appointmentWithinTwoWeeks` and `schedulingServiceOutcome`. It serves the
-new patient appointment in `core-1` and the follow-up appointment in `core-4`.
+scheduling service for a new patient appointment. It reads `speciality`, `priority`, `requestedWindow`
+and the `patientId` and `referralId` the appointment belongs to; it writes `slotAvailable`,
+`appointmentDate`, `alternativeDate`, `withinRequestedWindow`, `appointmentWithinTwoWeeks`,
+`schedulingServiceOutcome` and `supersededAppointment`. It serves the new patient appointment in
+`core-1` and the follow-up appointment in `core-4`.
+
+The appointment is recorded on the register against the patient and the referral. The booking key
+names the request - the instance and the period that was asked for - so a retry of one request returns
+the appointment it made, while a request for a different period is a different booking: the
+appointment it makes supersedes the patient's earlier appointment for that referral rather than
+leaving two on the register as though both were going to happen.
 
 **`treatment-availability`** (job type `check-treatment-availability`) books the treatment
 appointment through the simulated treatment, laboratory and imaging service, after the funding and
-payment gate. It reads `proposedTreatment`, `treatmentStartDate`, `specialResources` and
-`clinicalAuthorised`, and writes `externalServiceAvailable`, `treatmentSlotAvailable`,
-`appointmentReference`, `treatmentAppointmentDate`, `bookingStatus`, `treatmentRetryCount` and
-`duplicateAttempt`.
+payment gate. It reads `proposedTreatment`, `treatmentStartDate`, `specialResources`,
+`clinicalAuthorised` and `patientId`, and writes `externalServiceAvailable`, `treatmentSlotAvailable`,
+`appointmentReference`, `treatmentAppointmentDate`, `bookingStatus`, `treatmentRetryCount`,
+`duplicateAttempt` and `supersededAppointment`.
+
+The booking key names the start date that was asked for, so a retry of one request returns the
+appointment it made, while a rescheduled request - a different start date, recorded by the reschedule
+task - books a new appointment and supersedes the one it replaces. The appointment the service
+returns carries the start date the request asked for, which is what makes the rescheduled booking a
+different appointment rather than the same generated date again.
 
 **`payment-processing`** (job type `process-payment`) sends the payment request to the simulated
 Payment Service Provider. It reads `chargeAmount`, `fundingRoute` and `paymentReference`, and writes
@@ -183,14 +224,26 @@ Payment Service Provider. It reads `chargeAmount`, `fundingRoute` and `paymentRe
 `requiresInvestigation` and `duplicateAttempt`.
 
 **`correspondence-dispatch`** (job type `send-correspondence`) sends appointment letters and clinic
-letters through the simulated correspondence service. It reads `recipients`, `documentType` and an
-optional `channelPreference`, and writes `dispatchDate`, `dispatchChannel`, `dispatchReference`,
-`documentType` and `recipients`. It serves four service tasks across the models.
+letters through the simulated correspondence service. It reads `recipients`, `documentType`, an
+optional `channelPreference` and the optional `patientId` the letter is for, and writes
+`dispatchDate`, `dispatchChannel`, `channelSource`, `dispatchReference`, `documentType` and
+`recipients`. It serves five service tasks across the models.
+
+The dispatch is recorded in the store, and so is the preference the request named when the patient is
+one the register holds: a later letter that names no channel is dispatched on the preference the
+patient's own record carries (NFR-011, FR-051), and `channelSource` says whether the channel came
+from the request, from the patient's record or from the default.
 
 **`refund-processing`** (job type `process-refund`) sends an approved refund to the simulated
 Payment Service Provider. It reads `paymentReference`, `refundDecision`, `refundAmount` for a
 partial refund and `refundReason`, and writes `refundStatus`, `refundReference`, `refundDate`,
 `refundedAmount` and `duplicateRefundAttempt`.
+
+**`document-receipt`** (job type `record-document-receipt`) records that the documentation requested
+from the referring organisation has arrived. It reads `referralId`, marks that referral's information
+request supplied in the store, and writes `informationRequestStatus` and `documentsReceivedDate`. It
+serves `N_MS_RecordReceipt` in `core-5`, and it decides nothing: whether what arrived is complete is
+the check the Medical Secretaries make next.
 
 A refund is not a payment with the sign reversed, which is why it has its own job type rather than
 reusing `process-payment`. The money moves out, so the provider has to confirm that the payment
@@ -222,7 +275,12 @@ In `core-4`, `N_OB_CheckAvailability` runs `appointment-availability`, `N_OB_Sen
 runs `correspondence-dispatch` and `N_F_ProcessRefund` runs `refund-processing`.
 
 In `core-5`, `N_MS_RequestDocuments` runs `referral-document-request`, the worker that publishes
-rather than calls.
+rather than calls, and `N_MS_RecordReceipt` runs `document-receipt`, which records the reply against
+the request it answers.
+
+In `core-0`, the pathway end to end, there is no service task at all: every stage is a call activity
+that runs one of the five stage processes, so the automated work is reached through the process each
+call names rather than from this model directly.
 
 Every service task in the operational models is covered. The strategic and socio-technical models
 contain no service tasks, so nothing is bound to them.
@@ -265,7 +323,7 @@ starts the delayed-letter path without a worker being involved.
 **A gateway's fallback has to be declared.** Camunda does not treat a sequence flow without a
 condition as a fallback: an exclusive gateway only falls back to the flow named in its `default`
 attribute, and raises "Expected at least one condition to evaluate to true, or to have a default
-flow" when no condition matches. Every exclusive gateway in the five operational models declares
+flow" when no condition matches. Every exclusive gateway in the operational models declares
 one, and the flow it names carries no condition of its own.
 
 **A variable written on an error does not reach the process.** The variables attached to a BPMN
@@ -298,8 +356,9 @@ echoed but not honoured end to end.
 
 Three of the four keep a ledger keyed by the booking or payment reference, and that is what makes
 "no duplicate appointment", "no second charge" and "no second refund" testable: a second request for
-the same key returns the first result instead of creating another. The ledgers are in memory, so
-they are per worker process and are cleared when it restarts.
+the same key returns the first result instead of creating another. The ledgers are in the hospital's
+record store rather than in the worker's memory, so the guarantee holds after a restart of the worker
+process as well as within one run, which is what the `recordsSurviveARestart` unit test drives.
 
 The ledgers are also the one place where running on a JVM rather than on Node changes the code
 rather than only its shape. Job workers are served by more than one thread, so the check that a
@@ -362,7 +421,7 @@ receives a job of its type, returns its result and lets the process continue, an
 error is caught by the model's boundary event.
 
 `mvn test -Pengine -Dtest=OperationalModelsTest` drives the delivered models rather than a fixture.
-It deploys the five operational models and the forms, starts the workers and runs nine scenarios:
+It deploys the six operational models and the forms, starts the workers and runs twelve scenarios:
 the normal referral path in `core-1` to the appointment being arranged; authorisation, funding,
 payment and the between-cycle review in `core-2`; the clinic letter in `core-3` to its distribution;
 a follow-up requested and booked in `core-4`; a paid appointment cancelled and refunded in `core-4`;
@@ -370,6 +429,11 @@ an urgent clinical enquiry routed to the clinical team in `core-4`; the two deci
 `core-1` before an appointment; the urgent referral with no slot escalated out of the booking; and
 the message exchange in `core-5`, where the request is published by the worker and the reply is
 correlated by the referral the instance is waiting on.
+
+Three of them were added with the feedback pass: a declined confirmation in `core-2` that ends at the
+appointment-not-confirmed event, a reschedule in `core-2` that books again for the new start date, and
+the pathway end to end through `core-0`, which is asserted to have run all five stage processes from
+the tree of instances the engine recorded.
 
 The refund scenario is run after the payment scenario on purpose: the refund it records is made
 against the payment reference the earlier scenario settled with the provider, which is the only way

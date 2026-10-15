@@ -10,7 +10,9 @@
           "key": "enquiryReference",
           "label": "Enquiry Reference",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -18,7 +20,8 @@
           "key": "responseProvided",
           "label": "Response Provided",
           "validate": {
-            "required": true
+            "required": true,
+            "maxLength": 2000
           }
         },
         {
@@ -44,7 +47,10 @@
           "key": "responsibleTeam",
           "label": "Responsible Team",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         },
         {
@@ -70,7 +76,10 @@
           "type": "textarea",
           "key": "responseNotes",
           "label": "Notes",
-          "description": "Where the enquiry is not resolved it stays open rather than being closed unanswered."
+          "description": "Where the enquiry is not resolved it stays open rather than being closed unanswered.",
+          "validate": {
+            "maxLength": 2000
+          }
         }
       ]
     }

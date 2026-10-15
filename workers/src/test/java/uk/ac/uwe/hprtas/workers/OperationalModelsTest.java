@@ -71,6 +71,8 @@ class OperationalModelsTest {
 
   private static final List<String> MODELS =
       List.of(
+          // the pathway that calls the others, so an orchestrated run can be driven too
+          "core-0-patient-pathway-end-to-end.bpmn",
           "core-1-referral-and-new-patient-appointment.bpmn",
           "core-2-treatment-authorisation-funding-and-payment.bpmn",
           "core-3-clinic-letter-and-pathway-escalation.bpmn",
@@ -93,6 +95,10 @@ class OperationalModelsTest {
       return;
     }
 
+    // The engine run gets a throwaway record store: the scenarios assert on what the
+    // workers record during the run, and a store left over from an earlier run would make a
+    // reference from it look like a duplicate.
+    System.setProperty("hprtas.dbUrl", TestSupport.throwawayStoreUrl());
     config = Config.load();
     services = Services.create(config);
     System.setProperty("org.slf4j.simpleLogger.defaultLogLevel", "error");
@@ -162,6 +168,10 @@ class OperationalModelsTest {
             Vars.of(
                 "N_MS_CheckReferral",
                     Vars.of(
+                        "referralId", "REF-E2E-0001",
+                        "patientId", "PAT-E2E-0001",
+                        "nhsNumber", "9434765919",
+                        "patientName", "Ada Lovelace",
                         "documentsComplete", true, "referringOrganisation", "St Mary GP Surgery"),
                 "N_C_ClinicalReview", Vars.of("decision", "accepted"),
                 "N_OB_PrepareRequest",
@@ -212,7 +222,11 @@ class OperationalModelsTest {
                         "fundingRoute", "patient",
                         "paymentReference", PAYMENT_REFERENCE),
                 "N_TB_ConfirmAppointment",
-                    Vars.of("recipients", List.of("patient"), "documentType", "appointment_letter"),
+                    Vars.of(
+                        "confirmationOutcome", "confirmed",
+                        "confirmationBasis", "payment_settled",
+                        "recipients", List.of("patient"),
+                        "documentType", "appointment_letter"),
                 "N_OC_PreCycleReview", Vars.of("fitToContinue", false),
                 "N_CL_ModifyTreatment", Vars.of("affectsCharge", true)));
 
@@ -269,7 +283,8 @@ class OperationalModelsTest {
                         "requestedWindow", 21,
                         "recipients", List.of("patient"),
                         "documentType", "follow_up_clinic_letter"),
-                "N_OB_ConfirmFollowUp", Vars.of()));
+                "N_OB_ConfirmFollowUp",
+                    Vars.of("confirmationOutcome", "confirmed", "confirmationBasis", "not_applicable")));
 
     assertTrue(
         run.elements().contains("N_OB_FollowUpBooked"),
@@ -396,7 +411,11 @@ class OperationalModelsTest {
               Vars.of(
                   "N_MS_CheckReferral",
                       Vars.of(
-                          "documentsComplete", true, "referringOrganisation", "St Mary GP Surgery"),
+                          "referralId", "REF-E2E-0001",
+                        "patientId", "PAT-E2E-0001",
+                        "nhsNumber", "9434765919",
+                        "patientName", "Ada Lovelace",
+                        "documentsComplete", true, "referringOrganisation", "St Mary GP Surgery"),
                   "N_C_ClinicalReview", Vars.of("decision", outcome.decision())));
 
       assertTrue(
@@ -427,7 +446,12 @@ class OperationalModelsTest {
             Vars.of(),
             Vars.of(
                 "N_MS_CheckReferral",
-                    Vars.of("documentsComplete", true, "referringOrganisation", "St Mary GP Surgery"),
+                    Vars.of(
+                        "referralId", "REF-E2E-0001",
+                        "patientId", "PAT-E2E-0001",
+                        "nhsNumber", "9434765919",
+                        "patientName", "Ada Lovelace",
+                        "documentsComplete", true, "referringOrganisation", "St Mary GP Surgery"),
                 "N_C_ClinicalReview", Vars.of("decision", "accepted"),
                 "N_OB_PrepareRequest",
                     Vars.of(
@@ -562,16 +586,351 @@ class OperationalModelsTest {
 
     report("");
     report("=".repeat(74));
-    report("All five operational models ran against the real workers. Both messages core-4 is");
-    report("started by were sent - the cancellation in scenario 5 and the enquiry in scenario 6 -");
+    report("All six models ran against the real workers: the five stages and the pathway that");
+    report("calls them. Both messages core-4 is started by were sent - the cancellation in");
+    report("scenario 5 and the enquiry in scenario 6 -");
     report("scenario 7 drove both decisions that end core-1 before an appointment, scenario 8 drove");
     report("an urgent referral that could not be booked to the escalation DEF-11 was about, and");
     report("scenario 9 drove the message exchange: the request was published by the worker and the");
     report("reply was correlated by the referral, with a reply for another referral ignored.");
     report("Every service task was reached and every gateway routed on what the workers returned.");
     report("The refund in scenario 5 was recorded by the provider against the payment scenario 2");
-    report("settled.");
+    report("settled. Scenarios 10 to 12 were added with the feedback pass: a declined confirmation");
+    report("and a reschedule in core-2, and the pathway end to end through core-0.");
   }
+
+  @Test
+  @Order(10)
+  @DisplayName("Scenario 10 - core-2, a declined treatment appointment is recorded, and the appointment released")
+  void core2DeclinedConfirmation() {
+    assumeTrue(client != null, EngineTestSupport.engineNotRunningMessage());
+    // The confirmation contact has more than one outcome now, and the ones that do not confirm are
+    // process paths rather than a note: a decline goes to the recording task and ends the instance
+    // at the end event that says the appointment was not confirmed, and no notification letter goes
+    // out as though it had been.
+    final Driven run =
+        drive(
+            "Scenario 10 - core-2, the patient declines the treatment appointment",
+            "core-2-treatment-authorisation-funding-and-payment",
+            Vars.of(),
+            Vars.of(
+                "N_CL_AssessPatient", Vars.of("consentGiven", true),
+                "N_CL_AuthoriseTreatment",
+                    Vars.of(
+                        "proposedTreatment", "FOLFOX cycle 1",
+                        "treatmentStartDate", "2026-10-01",
+                        "numberOfCycles", 6,
+                        "clinicalAuthorised", true,
+                        "authorisingClinician", "Dr Chen"),
+                "N_TB_VerifyAuthorisation", Vars.of(),
+                "N_F_DetermineFunding",
+                    Vars.of(
+                        "fundingRoute", "hospital",
+                        "fundingApprovalRequired", false,
+                        "paymentRequiredFromPatient", false),
+                "N_TB_ConfirmAppointment",
+                    Vars.of(
+                        "confirmationOutcome", "declined_by_patient",
+                        "confirmationBasis", "not_applicable",
+                        "recipients", List.of("patient"),
+                        "documentType", "deferral_or_cancellation_letter"),
+                "N_TB_RecordCancellation",
+                    Vars.of(
+                        "cancellationType", "declined",
+                        "paidAppointment", false,
+                        "offerAnotherAppointment", false,
+                        "pathwayReviewRequired", false,
+                        "recordedBy", "Bookings Clerk")));
+
+    for (String id :
+        List.of("N_TB_ConfirmationOutcome", "N_TB_RecordCancellation", "N_TB_AppointmentCancelled")) {
+      assertTrue(run.elements().contains(id), "the declined appointment should have run " + id);
+    }
+    assertFalse(
+        run.elements().contains("N_TB_NotifyPatient"),
+        "a declined appointment is not confirmed with an appointment letter");
+    assertFalse(
+        run.elements().contains("N_OC_PreCycleReview"),
+        "there is no cycle to review once the appointment was declined");
+  }
+
+  @Test
+  @Order(11)
+  @DisplayName("Scenario 11 - core-2, a patient who asks for another date is booked again")
+  void core2RescheduledConfirmation() {
+    assumeTrue(client != null, EngineTestSupport.engineNotRunningMessage());
+    // The same task is reached twice and answered differently each time: the contact is recorded as
+    // a reschedule, the change is recorded, and the booking is sought again for the new start date
+    // - which is a different booking, so the appointment the first request made is not simply
+    // returned again.
+    final Driven run =
+        drive(
+            "Scenario 11 - core-2, the patient asks for another date and is booked again",
+            "core-2-treatment-authorisation-funding-and-payment",
+            Vars.of(),
+            Vars.of(
+                "N_CL_AssessPatient", Vars.of("consentGiven", true),
+                "N_CL_AuthoriseTreatment",
+                    Vars.of(
+                        "proposedTreatment", "FOLFOX cycle 1",
+                        "treatmentStartDate", "2026-10-01",
+                        "numberOfCycles", 6,
+                        "clinicalAuthorised", true,
+                        "authorisingClinician", "Dr Chen"),
+                "N_TB_VerifyAuthorisation", Vars.of(),
+                "N_F_DetermineFunding",
+                    Vars.of(
+                        "fundingRoute", "hospital",
+                        "fundingApprovalRequired", false,
+                        "paymentRequiredFromPatient", false),
+                "N_TB_ConfirmAppointment",
+                    List.of(
+                        Vars.of(
+                            "confirmationOutcome", "reschedule_requested",
+                            "confirmationBasis", "not_applicable",
+                            "recipients", List.of("patient"),
+                            "documentType", "appointment_letter"),
+                        Vars.of(
+                            "confirmationOutcome", "confirmed",
+                            "confirmationBasis", "funding_in_place",
+                            "recipients", List.of("patient"),
+                            "documentType", "appointment_letter")),
+                "N_TB_RescheduleAppointment",
+                    Vars.of(
+                        "newRequestedDate", "2026-10-15",
+                        "rescheduleReason", "patient_request",
+                        "patientInformed", true,
+                        "recordedBy", "Bookings Clerk"),
+                "N_OC_PreCycleReview", Vars.of("fitToContinue", false),
+                "N_CL_ModifyTreatment",
+                    Vars.of(
+                        "affectsCharge", false,
+                        "modificationReason", "no change to the plan")));
+
+    assertTrue(
+        run.elements().contains("N_TB_RescheduleAppointment"),
+        "the requested change should have been recorded");
+    final long availabilityChecks =
+        EngineTestSupport.visitedElementInstanceCount(run.instanceKey(), "N_TB_CheckAvailability");
+    assertEquals(
+        2,
+        availabilityChecks,
+        "the booking should have been sought again for the new request, not answered with the"
+            + " appointment the first request made");
+    assertTrue(
+        run.elements().contains("N_TB_NotifyPatient"),
+        "the appointment the second request made is confirmed with a letter");
+  }
+
+  @Test
+  @Order(12)
+  @DisplayName("Scenario 12 - the pathway end to end, one instance through all five stages")
+  void endToEndPathway() {
+    assumeTrue(client != null, EngineTestSupport.engineNotRunningMessage());
+    // The integration: one instance of core-0 walks the referral, the treatment, the letter and the
+    // follow-up, while the documentation the referral arrived without is obtained from the
+    // referring organisation through core-5's message exchange. Every stage runs as the process the
+    // call activity names, which is asserted from the tree of instances afterwards.
+    final String referralId = "REF-E2E-" + System.currentTimeMillis();
+
+    report("");
+    report("Scenario 12 - the pathway end to end (core-0): referral, documentation, treatment,");
+    report("letter and follow-up, each stage as the process the call activity names");
+    report("  referral %s", referralId);
+
+    // The reply the exchange waits for is buffered by the engine for its time to live, so it is
+    // published before the instance reaches the waiting step. It is correlated by the referral, so
+    // it can only move that referral's instance on.
+    publishCorrelated(
+        "missing-information-supplied", referralId, Vars.of("suppliedItems", "diagnostic report"));
+
+    final Driven run =
+        drive(
+            "Scenario 12 - the pathway end to end",
+            "core-0-patient-pathway-end-to-end",
+            null,
+            Vars.of(
+                "referralId", referralId,
+                "patientId", "PAT-E2E-0001",
+                "nhsNumber", "9434765919",
+                "patientName", "Ada Lovelace",
+                "referringOrganisation", "St Mary GP Surgery",
+                "documentsComplete", false,
+                "missingItems", List.of("diagnostic report")),
+            Vars.of(
+                "N_MS_RecordMissingItems",
+                    Vars.of(
+                        "referralId", referralId,
+                        "requestedFrom", "St Mary GP Surgery",
+                        "requestedItems", List.of("diagnostic report")),
+                "N_MS_CheckSuppliedDocuments",
+                    Vars.of(
+                        "referralId", referralId,
+                        "patientId", "PAT-E2E-0001",
+                        "nhsNumber", "9434765919",
+                        "patientName", "Ada Lovelace",
+                        "referringOrganisation", "St Mary GP Surgery",
+                        "supportingDocuments", "diagnostic report",
+                        "documentsComplete", true,
+                        "missingItems", List.of(),
+                        "patientIdentificationConfirmed", true,
+                        "checkedBy", "Medical Secretary"),
+                "N_MS_CheckReferral",
+                    Vars.of(
+                        "referralId", referralId,
+                        "patientId", "PAT-E2E-0001",
+                        "nhsNumber", "9434765919",
+                        "patientName", "Ada Lovelace",
+                        "referringOrganisation", "St Mary GP Surgery",
+                        "supportingDocuments", "diagnostic report",
+                        "documentsComplete", true,
+                        // The referral arrived without this and it has since been supplied, so the
+                        // list of missing items is cleared: a referral marked complete that still
+                        // lists missing items cannot be decided.
+                        "missingItems", List.of(),
+                        "patientIdentificationConfirmed", true,
+                        "checkedBy", "Medical Secretary"),
+                "N_C_ClinicalReview",
+                    Vars.of(
+                        "referralId", referralId,
+                        "patientName", "Ada Lovelace",
+                        "referringOrganisation", "St Mary GP Surgery",
+                        "clinicalSummary", "Suspected lymphoma, referred for assessment",
+                        "decision", "accepted",
+                        "decisionReason", "Meets the referral criteria",
+                        "speciality", "oncology",
+                        "priority", "routine",
+                        "requestedWindow", 14),
+                "N_OB_PrepareRequest",
+                    Vars.of(
+                        "referralId", referralId,
+                        "patientId", "PAT-E2E-0001",
+                        "speciality", "oncology",
+                        "priority", "routine",
+                        "requestedWindow", 14,
+                        "recipients", List.of("patient"),
+                        "documentType", "appointment_letter"),
+                "N_OB_TelephonePatient",
+                    Vars.of(
+                        "patientId", "PAT-E2E-0001",
+                        "contactMethod", "telephone",
+                        "contactOutcome", "contacted",
+                        "contactAttemptNumber", 1),
+                "N_CL_AssessPatient",
+                    Vars.of(
+                        "patientId", "PAT-E2E-0001",
+                        "diagnosis", "Lymphoma",
+                        "diagnosisDiscussed", true,
+                        "treatmentOptionsExplained", true,
+                        "consentGiven", true,
+                        "assessingClinician", "Dr Chen"),
+                "N_CL_AuthoriseTreatment",
+                    Vars.of(
+                        "treatmentRequestId", "TR-E2E-0001",
+                        "proposedTreatment", "FOLFOX cycle 1",
+                        "treatmentStartDate", "2026-10-01",
+                        "numberOfCycles", 6,
+                        "clinicalAuthorised", true,
+                        "authorisingClinician", "Dr Chen"),
+                "N_TB_VerifyAuthorisation",
+                    Vars.of(
+                        "treatmentRequestId", "TR-E2E-0001",
+                        "authorisationVerified", true,
+                        "verifiedBy", "Bookings Clerk"),
+                "N_F_DetermineFunding",
+                    Vars.of(
+                        "treatmentRequestId", "TR-E2E-0001",
+                        "fundingRoute", "hospital",
+                        "fundingApprovalRequired", false,
+                        "paymentRequiredFromPatient", false),
+                "N_TB_ConfirmAppointment",
+                    Vars.of(
+                        "patientId", "PAT-E2E-0001",
+                        "appointmentReference", "TR-E2E-0001",
+                        "confirmationOutcome", "confirmed",
+                        "confirmationBasis", "funding_in_place",
+                        "recipients", List.of("patient"),
+                        "documentType", "appointment_letter"),
+                "N_OC_PreCycleReview",
+                    Vars.of(
+                        "patientId", "PAT-E2E-0001",
+                        "cycleNumber", 2,
+                        "bloodTestResults", "Full blood count within range",
+                        "fitToContinue", false,
+                        "reviewedBy", "Dr Chen"),
+                "N_CL_ModifyTreatment",
+                    Vars.of(
+                        "treatmentRequestId", "TR-E2E-0001",
+                        "proposedTreatment", "FOLFOX reduced dose",
+                        "modificationReason", "Blood count low: cycle delayed",
+                        "affectsCharge", false,
+                        "clinicalAuthorised", true,
+                        "authorisingClinician", "Dr Chen"),
+                "N_F_ReviewFinancialImpact",
+                    Vars.of(
+                        "treatmentRequestId", "TR-E2E-0001",
+                        "financialImpact", "none",
+                        "reviewedBy", "Finance Officer"),
+                "N_C_PrepareLetter",
+                    Vars.of(
+                        "consultationId", "CONS-E2E-0001",
+                        "letterContent", "Seen in clinic; imaging reviewed; plan discussed.",
+                        "authoringClinician", "Dr Chen",
+                        "recipients", List.of("patient", "GP"),
+                        "documentType", "new_patient_clinic_letter"),
+                "N_C_ApproveLetter",
+                    Vars.of("consultationId", "CONS-E2E-0001", "authoringClinician", "Dr Chen"),
+                "N_MS_ProcessLetter",
+                    Vars.of(
+                        "consultationId", "CONS-E2E-0001",
+                        "suspectedClinicalError", false,
+                        "appointmentDate", "2026-09-20",
+                        "approvalDate", "2026-09-21",
+                        "processingDate", "2026-09-22",
+                        "processedBy", "Medical Secretary"),
+                "N_MS_ConfirmRecipients",
+                    Vars.of(
+                        "consultationId", "CONS-E2E-0001",
+                        "recipients", List.of("patient", "GP"),
+                        "documentType", "new_patient_clinic_letter"),
+                "N_OB_ArrangeFollowUp",
+                    Vars.of(
+                        "referralId", referralId,
+                        "patientId", "PAT-E2E-0001",
+                        "speciality", "oncology",
+                        "priority", "routine",
+                        "requestedWindow", 21,
+                        "recipients", List.of("patient"),
+                        "documentType", "follow_up_clinic_letter"),
+                "N_OB_ConfirmFollowUp",
+                    Vars.of(
+                        "patientId", "PAT-E2E-0001",
+                        "appointmentReference", "TR-E2E-0001",
+                        "confirmationOutcome", "confirmed",
+                        "confirmationBasis", "not_applicable",
+                        "recipients", List.of("patient"),
+                        "documentType", "follow_up_clinic_letter")),
+            240_000);
+
+    assertTrue(
+        run.elements().contains("N_CO_PathwayComplete"),
+        "the pathway should have completed: " + String.join(" -> ", run.elements()));
+
+    final List<String> processes = EngineTestSupport.processIdsInTree(run.instanceKey());
+    for (String stage :
+        List.of(
+            "core-5-missing-information-message-exchange",
+            "core-1-referral-and-new-patient-appointment",
+            "core-2-treatment-authorisation-funding-and-payment",
+            "core-3-clinic-letter-and-pathway-escalation",
+            "core-4-follow-up-cancellation-enquiry-and-refund")) {
+      assertTrue(
+          processes.contains(stage),
+          "the pathway should have run " + stage + " as the process its call activity names, and"
+              + " ran " + processes);
+    }
+  }
+
 
   /** Completes the open user task at an element, which is how a Tasklist user would do it. */
   private static void completeUserTask(
@@ -582,7 +941,7 @@ class OperationalModelsTest {
     // way, so that a task which never appears is a timeout rather than a race.
     final long deadline = System.currentTimeMillis() + 30000;
     while (System.currentTimeMillis() < deadline) {
-      for (EngineTestSupport.UserTask task : EngineTestSupport.openUserTasks(instanceKey)) {
+      for (EngineTestSupport.UserTask task : EngineTestSupport.openUserTasksInTree(instanceKey)) {
         if (elementId.equals(task.elementId())) {
           EngineTestSupport.completeUserTask(task.userTaskKey(), variables);
           report("  %-32s completed with %s", elementId, Json.write(variables));
@@ -593,6 +952,20 @@ class OperationalModelsTest {
     }
     throw new IllegalStateException(
         "the instance " + instanceKey + " has no open user task at " + elementId);
+  }
+
+  /** What to complete an element's task with, taking the next entry where a list of them is given. */
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> variablesFor(
+      Map<String, Object> taskVariables, String elementId, Map<String, Integer> visits) {
+
+    final Object configured = taskVariables.get(elementId);
+    if (configured instanceof List<?> sequence) {
+      final int visit = visits.merge(elementId, 1, Integer::sum) - 1;
+      final Object entry = sequence.get(Math.min(visit, sequence.size() - 1));
+      return (Map<String, Object>) entry;
+    }
+    return configured == null ? Map.of() : (Map<String, Object>) configured;
   }
 
   /** Publishes a message addressed to one subscription, which is what a correlation key does. */
@@ -632,7 +1005,7 @@ class OperationalModelsTest {
   /** Starts an instance, completes every user task it opens, and reports the path it took. */
   private Driven drive(
       String label, String processDefinitionId, Map<String, Object> variables, Map<String, Object> taskVariables) {
-    return drive(label, processDefinitionId, null, variables, taskVariables);
+    return drive(label, processDefinitionId, null, variables, taskVariables, 90_000);
   }
 
   private Driven drive(
@@ -641,6 +1014,24 @@ class OperationalModelsTest {
       String message,
       Map<String, Object> variables,
       Map<String, Object> taskVariables) {
+    return drive(label, processDefinitionId, message, variables, taskVariables, 90_000);
+  }
+
+  /**
+   * The same, with a deadline of the caller's choosing and per-visit variables.
+   *
+   * A value in {@code taskVariables} may be a list of maps rather than one map: the first time the
+   * element's task is completed it is given the first, the second time the second, and so on, which
+   * is how a scenario drives a task the process reaches more than once differently each time (a
+   * confirmation that first asks for another date and is then confirmed, for instance).
+   */
+  private Driven drive(
+      String label,
+      String processDefinitionId,
+      String message,
+      Map<String, Object> variables,
+      Map<String, Object> taskVariables,
+      long timeoutMs) {
 
     final long instanceKey = start(processDefinitionId, message, variables, label);
 
@@ -650,16 +1041,16 @@ class OperationalModelsTest {
 
     final Set<String> completed = new LinkedHashSet<>();
     final Set<String> visitedTasks = new LinkedHashSet<>();
-    final long deadline = System.currentTimeMillis() + 90000;
+    final Map<String, Integer> visits = new LinkedHashMap<>();
+    final long deadline = System.currentTimeMillis() + timeoutMs;
 
     while (true) {
-      for (EngineTestSupport.UserTask task : EngineTestSupport.openUserTasks(instanceKey)) {
+      for (EngineTestSupport.UserTask task : EngineTestSupport.openUserTasksInTree(instanceKey)) {
         if (completed.contains(task.userTaskKey())) {
           continue;
         }
         @SuppressWarnings("unchecked")
-        final Map<String, Object> supplied =
-            (Map<String, Object>) taskVariables.getOrDefault(task.elementId(), Map.of());
+        final Map<String, Object> supplied = variablesFor(taskVariables, task.elementId(), visits);
         EngineTestSupport.completeUserTask(task.userTaskKey(), supplied);
         completed.add(task.userTaskKey());
         visitedTasks.add(task.elementId());

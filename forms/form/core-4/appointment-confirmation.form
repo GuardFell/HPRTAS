@@ -10,19 +10,58 @@
           "key": "patientId",
           "label": "Patient ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example PAT-1001."
           }
         },
         {
           "type": "textfield",
-          "key": "treatmentRequestId",
-          "label": "Treatment Request ID"
+          "key": "appointmentReference",
+          "label": "Appointment Reference",
+          "description": "The appointment this contact is about, as the hospital booked it.",
+          "validate": {
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example APPT-2026-0001."
+          }
+        },
+        {
+          "type": "select",
+          "key": "confirmationOutcome",
+          "label": "Outcome of the Confirmation Contact",
+          "description": "What happened when the appointment was confirmed with the patient. Confirmed and No Response keep the appointment; a reschedule records a new request; a decline or a hospital cancellation releases it.",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            {
+              "label": "Appointment Confirmed",
+              "value": "confirmed"
+            },
+            {
+              "label": "No Response From the Patient",
+              "value": "no_response"
+            },
+            {
+              "label": "Patient Requested a Different Date",
+              "value": "reschedule_requested"
+            },
+            {
+              "label": "Declined by the Patient",
+              "value": "declined_by_patient"
+            },
+            {
+              "label": "Cancelled by the Hospital",
+              "value": "cancelled_by_hospital"
+            }
+          ]
         },
         {
           "type": "select",
           "key": "confirmationBasis",
           "label": "Basis for Confirming",
-          "description": "The appointment is confirmed only once the funding route and, where required, the payment or an authorised exemption are in place.",
+          "description": "The appointment is confirmed only once the funding route and, where required, the payment, an authorised exemption or a recorded payment arrangement are in place. Where the outcome above is not Confirmed, record Not Applicable.",
           "validate": {
             "required": true
           },
@@ -42,23 +81,23 @@
             {
               "label": "Exemption Authorised",
               "value": "exemption_authorised"
+            },
+            {
+              "label": "Payment Arrangement Recorded",
+              "value": "payment_arrangement"
+            },
+            {
+              "label": "Not Applicable (Appointment Not Confirmed)",
+              "value": "not_applicable"
             }
           ]
-        },
-        {
-          "type": "checkbox",
-          "key": "appointmentConfirmed",
-          "label": "Appointment Confirmed",
-          "validate": {
-            "required": true
-          }
         },
         {
           "type": "datetime",
           "subtype": "date",
           "dateLabel": "Date",
           "key": "confirmationDate",
-          "label": "Confirmation Date",
+          "label": "Date of the Confirmation Contact",
           "validate": {
             "required": true
           }
@@ -68,7 +107,18 @@
           "key": "confirmedBy",
           "label": "Confirmed By",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "confirmationNotes",
+          "label": "Notes",
+          "validate": {
+            "maxLength": 2000
           }
         }
       ]
@@ -83,7 +133,8 @@
           "label": "Recipients",
           "description": "Separate recipients with commas. Passed to the correspondence service.",
           "validate": {
-            "required": true
+            "required": true,
+            "maxLength": 2000
           }
         },
         {
@@ -120,6 +171,7 @@
           "type": "select",
           "key": "channelPreference",
           "label": "Channel Preference",
+          "description": "Where the patient is known to the hospital, the preference already recorded for them is used when this is left empty.",
           "values": [
             {
               "label": "Post",
@@ -138,11 +190,6 @@
               "value": "accessible_format"
             }
           ]
-        },
-        {
-          "type": "textarea",
-          "key": "confirmationNotes",
-          "label": "Notes"
         }
       ]
     }

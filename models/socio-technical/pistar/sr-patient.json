@@ -1,0 +1,136 @@
+{
+ "actors": [
+  {
+   "id": "patient",
+   "text": "Patient",
+   "type": "istar.Agent",
+   "x": 60.0,
+   "y": 60.0,
+   "nodes": [
+    {
+     "id": "patient-S1",
+     "text": "Registration and booking are quick",
+     "type": "istar.Quality",
+     "x": 120.0,
+     "y": 300.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-03"
+     }
+    },
+    {
+     "id": "patient-S2",
+     "text": "The cost is clear before payment",
+     "type": "istar.Quality",
+     "x": 336.0,
+     "y": 300.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-04"
+     }
+    },
+    {
+     "id": "patient-G1",
+     "text": "Registered and given an appointment",
+     "type": "istar.Goal",
+     "x": 233.0,
+     "y": 564.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-01, SD-02"
+     }
+    },
+    {
+     "id": "patient-T1",
+     "text": "Give personal and insurance details at the desk",
+     "type": "istar.Task",
+     "x": 100.0,
+     "y": 804.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-01"
+     }
+    },
+    {
+     "id": "patient-T2",
+     "text": "Request an appointment and make the payment",
+     "type": "istar.Task",
+     "x": 336.0,
+     "y": 804.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-02, SD-04"
+     }
+    }
+   ],
+   "customProperties": {
+    "Intent": "Get registered, be given an appointment quickly, pay the fee, and reach a diagnosis.",
+    "Evidence": ""
+   }
+  }
+ ],
+ "orphans": [],
+ "dependencies": [],
+ "links": [
+  {
+   "id": "patient-G1-S1",
+   "type": "istar.ContributionLink",
+   "source": "patient-G1",
+   "target": "patient-S1",
+   "label": "help"
+  },
+  {
+   "id": "patient-T1-G1",
+   "type": "istar.OrRefinementLink",
+   "source": "patient-T1",
+   "target": "patient-G1"
+  },
+  {
+   "id": "patient-T2-G1",
+   "type": "istar.OrRefinementLink",
+   "source": "patient-T2",
+   "target": "patient-G1"
+  },
+  {
+   "id": "patient-T2-S2",
+   "type": "istar.ContributionLink",
+   "source": "patient-T2",
+   "target": "patient-S2",
+   "label": "help"
+  }
+ ],
+ "display": {
+  "patient-S1": {
+   "width": 140.0,
+   "height": 104.0
+  },
+  "patient-S2": {
+   "width": 130,
+   "height": 104.0
+  },
+  "patient-G1": {
+   "width": 120,
+   "height": 80.0
+  },
+  "patient-T1": {
+   "width": 160.0,
+   "height": 88.0
+  },
+  "patient-T2": {
+   "width": 150.0,
+   "height": 88.0
+  }
+ },
+ "tool": "pistar.2.1.0",
+ "istar": "2.0",
+ "saveDate": "Tue, 13 Oct 2026 03:10:25 GMT",
+ "diagram": {
+  "width": 900.0,
+  "height": 952.0,
+  "name": "HPRTAS SR - Patient",
+  "customProperties": {
+   "Source": "HPRTAS/models/socio-technical/sr-hprtas.json",
+   "Note": "Get registered, be given an appointment quickly, pay the fee, and reach a diagnosis."
+  }
+ }
+}

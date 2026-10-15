@@ -16,7 +16,7 @@
 |---|---|---|
 | The five `core-N` operational models in `models/operational/` | They are the executable system: referral to appointment, treatment authorisation with funding and payment, clinic letter and escalation, follow-up, cancellation, enquiry and refund. `AS-14` recorded the first-release scope as four models, which `core-5` has since extended. | |
 | The Camunda Forms in `forms/`, bound to their user tasks (40 at the `release-1.0` tag, 41 at `main`) | A user task without its form cannot be completed as a Tasklist user would, so the models are not usable without them. | M4 |
-| The seven external workers and their simulated services in `workers/` | Every service task in the five models is bound to one of them, so the models would stall without them. | |
+| The eight external workers and their simulated services in `workers/` | Every service task in the operational models is bound to one of them, so the models would stall without them. | |
 | The strategic model `models/strategic/patient-pathway-all-entities.bpmn` | The non-executable view of the whole pathway across all entities, and the only place the enquiry requirements sit at strategic level. It is not deployed. | |
 | The requirements list and its traceability in `docs/requirements/requirements.md` | Every acceptance criterion in the test plan is linked to a requirement and a business rule, so the criteria cannot be read without it. | |
 | The test plan and the evidence in `tests/` | The delivery gate: a criterion with no evidence has not been demonstrated. | M5 |
@@ -27,7 +27,7 @@
 
 | Item | Reason for deferral | Target release |
 |---|---|---|
-| The i\* Strategic Dependency and Strategic Rationale models | Not produced yet. `models/socio-technical/` is described but empty of models. | Second release |
+| The i\* Strategic Dependency and Strategic Rationale models | **Delivered in Sprint 3.** Not produced for the first release; `models/socio-technical/` held no model at `submission-2026-09-29`, which is the version the models describe. They are now in `models/socio-technical/` with their exports in `models/exports/istar-*`, checked by `tools/verify_hprtas_istar.py`. | Second release - done |
 | Role-based access control (FR-045, NFR-001, NFR-002) | Not implemented. User tasks carry the candidate group of their lane, but no user is authenticated and no permission is enforced anywhere, so the separation of duties rests on the lane structure alone (`DEF-07`). | Second release |
 | The audit trail (FR-046, FR-047, NFR-003) | Not implemented in the models or the workers; there is nothing to record it. | Second release |
 | Management reporting (FR-050, NFR-010) | Not implemented; no reporting surface exists. | Second release |

@@ -2,6 +2,7 @@ package uk.ac.uwe.hprtas.workers;
 
 import uk.ac.uwe.hprtas.workers.workers.AppointmentAvailability;
 import uk.ac.uwe.hprtas.workers.workers.CorrespondenceDispatch;
+import uk.ac.uwe.hprtas.workers.workers.DocumentReceipt;
 import uk.ac.uwe.hprtas.workers.workers.PaymentProcessing;
 import uk.ac.uwe.hprtas.workers.workers.ReferralDocumentRequest;
 import uk.ac.uwe.hprtas.workers.workers.ReferralValidation;
@@ -19,6 +20,7 @@ public final class Workers {
       List.of(
           new ReferralValidation(),
           new ReferralDocumentRequest(),
+          new DocumentReceipt(),
           new AppointmentAvailability(),
           new TreatmentAvailability(),
           new PaymentProcessing(),

@@ -60,6 +60,10 @@ public final class Main {
         check(config);
         return;
       }
+      if ("--show-records".equals(args[i])) {
+        showRecords(config);
+        return;
+      }
       if ("--publish-message".equals(args[i])) {
         publishMessage(config, args, i);
         return;
@@ -145,9 +149,11 @@ public final class Main {
 
       // A job that completed has no error code, and the line does not carry the field at all rather
       // than carrying a null: an absent field and an empty one read differently in the evidence, and
-      // only one of them means "there was no error".
+      // only one of them means "there was no error". The message is recorded beside the code because
+      // it says which variable the model refused and why, and the code alone does not.
       if (outcome instanceof Outcome.BusinessError error) {
         fields.put("errorCode", error.errorCode());
+        fields.put("errorMessage", error.errorMessage());
       }
 
       switch (outcome.kind()) {
@@ -180,7 +186,8 @@ public final class Main {
   /** Validates the configuration and prints what would be registered. */
   static void check(Config config) {
     // Built and discarded, so the wiring is exercised: a simulated service that cannot be
-    // constructed from the configuration fails here rather than at the first job.
+    // constructed from the configuration fails here rather than at the first job, and the record
+    // store is opened and its schema created rather than being found broken at the first job.
     Services.create(config);
 
     final Map<String, Object> connection = config.connection();
@@ -189,6 +196,7 @@ public final class Main {
     Console.out("  .env file present: %s", config.dotEnvLoaded());
     Console.out("  Zeebe gRPC address: %s", connection.get("ZEEBE_GRPC_ADDRESS"));
     Console.out("  authentication: %s", connection.get("CAMUNDA_AUTH_STRATEGY"));
+    Console.out("  record store: %s", config.database().url());
     Console.out("  log level: %s", config.logging().level());
     Console.out("Workers that would be registered:");
     for (WorkerModule worker : Workers.ALL) {
@@ -201,6 +209,36 @@ public final class Main {
           settings.timeoutMs());
     }
     Console.out("Configuration and wiring are valid.");
+  }
+
+  /**
+   * Prints what the hospital's own records hold.
+   *
+   * The record store is where the pathway's state lives once the process instances have finished
+   * with it - the patient register, the referrals, the appointments, the ledgers and the
+   * outstanding information requests - so this is what a demonstration ends by showing, and what a
+   * later run reads back when it retrieves a patient the hospital already knows.
+   */
+  static void showRecords(Config config) {
+    final Services services = Services.create(config);
+    final uk.ac.uwe.hprtas.workers.db.Database.Report report = services.database().report();
+
+    Console.out("Record store %s", config.database().url());
+    for (String table : report.tables()) {
+      Console.out("  %s", table);
+    }
+
+    final java.util.List<String> rows = services.database().rows();
+    if (rows.isEmpty()) {
+      Console.out("");
+      Console.out("The store holds no records yet: no worker has run against it.");
+      return;
+    }
+    Console.out("");
+    Console.out("Records:");
+    for (String row : rows) {
+      Console.out("%s", row);
+    }
   }
 
   /**

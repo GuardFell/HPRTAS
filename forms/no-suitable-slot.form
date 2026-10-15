@@ -10,7 +10,9 @@
           "key": "referralId",
           "label": "Referral ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -18,7 +20,9 @@
           "key": "patientId",
           "label": "Patient ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -68,20 +72,27 @@
           "dateLabel": "Date",
           "key": "alternativeDateOffered",
           "label": "Alternative Date Offered",
-          "description": "Recorded where a slot outside the period was offered."
+          "description": "Recorded where a slot outside the period was offered.",
+          "disallowPassedDates": true
         },
         {
           "type": "textfield",
           "key": "recordedBy",
           "label": "Recorded By",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         },
         {
           "type": "textarea",
           "key": "noSlotNotes",
-          "label": "Notes"
+          "label": "Notes",
+          "validate": {
+            "maxLength": 2000
+          }
         }
       ]
     }

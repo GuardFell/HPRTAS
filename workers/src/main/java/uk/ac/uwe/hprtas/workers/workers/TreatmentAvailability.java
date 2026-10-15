@@ -40,6 +40,9 @@ public final class TreatmentAvailability implements WorkerModule {
           // Written by the treatment authorisation form. Administrative staff cannot supply it,
           // which is the point of the check (BR-04, AS-06).
           "clinicalAuthorised", FieldSpec.bool().required(),
+          // Whose appointment it is, so the register can record it and a rescheduled booking can
+          // supersede the appointment it replaces. Optional, as in appointment-availability.
+          "patientId", FieldSpec.identifier(),
           "treatmentOutcome",
               FieldSpec.string()
                   .oneOf(TreatmentService.AVAILABLE, TreatmentService.UNAVAILABLE));
@@ -74,13 +77,26 @@ public final class TreatmentAvailability implements WorkerModule {
           Vars.of("bookingStatus", "not_processed", "treatmentSlotAvailable", false));
     }
 
-    final String bookingKey = context.instanceKey() + ":treatment-appointment";
+    final String patientId = (String) check.values().get("patientId");
+    final String treatmentStartDate = (String) check.values().get("treatmentStartDate");
+
+    // The key names the request: the appointment type and the start date asked for. A rescheduled
+    // request names a different date, so it books a new appointment rather than being answered with
+    // the one the earlier request made - while a retry of the original request still returns it.
+    final String bookingKey =
+        context.instanceKey() + ":treatment-appointment:" + treatmentStartDate;
+
     final TreatmentService.BookingResult result =
         context
             .services()
             .treatment()
             .bookTreatment(
-                bookingKey, (String) check.values().get("treatmentOutcome"), context.now());
+                bookingKey,
+                (String) check.values().get("treatmentOutcome"),
+                context.now(),
+                treatmentStartDate,
+                patientId,
+                null);
 
     context
         .log()
@@ -91,7 +107,8 @@ public final class TreatmentAvailability implements WorkerModule {
                 "externalServiceAvailable", result.externalServiceAvailable(),
                 "appointmentReference", result.appointmentReference(),
                 "treatmentRetryCount", result.treatmentRetryCount(),
-                "duplicateAttempt", result.duplicateAttempt()));
+                "duplicateAttempt", result.duplicateAttempt(),
+                "supersededAppointment", result.supersededAppointment()));
 
     return Outcome.completed(
         Vars.of(
@@ -102,8 +119,9 @@ public final class TreatmentAvailability implements WorkerModule {
             "bookingStatus", result.bookingStatus(),
             "treatmentRetryCount", result.treatmentRetryCount(),
             "duplicateAttempt", result.duplicateAttempt(),
+            "supersededAppointment", result.supersededAppointment(),
             "proposedTreatment", check.values().get("proposedTreatment"),
-            "treatmentStartDate", check.values().get("treatmentStartDate"),
+            "treatmentStartDate", treatmentStartDate,
             "specialResources", Validate.asList(check.values().get("specialResources"))));
   }
 }

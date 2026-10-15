@@ -52,6 +52,18 @@
       <scope>runtime</scope>
     </dependency>
 
+    <!--
+      The hospital's own record store. The workers persist the patient register, the referrals, the
+      appointments, the payment and refund ledger and the dispatches in an embedded H2 database, so
+      the records outlive the worker process instead of being cleared when it restarts. Camunda 8 Run
+      keeps its own data in H2 as well, so the prototype stays on one database family.
+    -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.2.224</version>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>

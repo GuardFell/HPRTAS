@@ -21,3 +21,8 @@ structural alignment of the models with the forms and the workers, and the compa
 against actual progress with the cause of each variance. It is a companion to the plan and to
 `../../tests/test-plan.md`, not a summary of either - it is where the plan, the requirements and the
 test results are read together and judged.
+
+`exports/plan-evaluation.docx` is the same evaluation as a readable Word document, for reading and
+printing rather than editing. It is generated from the Markdown by `exports/render-plan-evaluation.py`
+(which reuses the renderer beside the test plan), so a change belongs in the Markdown and the export
+is re-run after it.

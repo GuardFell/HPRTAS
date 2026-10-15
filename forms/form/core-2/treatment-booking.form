@@ -10,7 +10,9 @@
           "key": "treatmentRequestId",
           "label": "Treatment Request ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -29,7 +31,8 @@
           "label": "Required Start Date",
           "validate": {
             "required": true
-          }
+          },
+          "disallowPassedDates": true
         },
         {
           "type": "number",
@@ -37,13 +40,17 @@
           "label": "Number of Cycles",
           "validate": {
             "required": true,
-            "min": 1
+            "min": 1,
+            "max": 52
           }
         },
         {
           "type": "textarea",
           "key": "specialResources",
-          "label": "Special Resources Required"
+          "label": "Special Resources Required",
+          "validate": {
+            "maxLength": 2000
+          }
         }
       ]
     },
@@ -64,7 +71,10 @@
           "key": "authorisingClinician",
           "label": "Authorising Clinician",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         }
       ]

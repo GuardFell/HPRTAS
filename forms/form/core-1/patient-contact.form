@@ -10,7 +10,9 @@
           "key": "patientId",
           "label": "Patient ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -21,9 +23,18 @@
             "required": true
           },
           "values": [
-            { "label": "Telephone", "value": "telephone" },
-            { "label": "Letter", "value": "letter" },
-            { "label": "Email", "value": "email" }
+            {
+              "label": "Telephone",
+              "value": "telephone"
+            },
+            {
+              "label": "Letter",
+              "value": "letter"
+            },
+            {
+              "label": "Email",
+              "value": "email"
+            }
           ]
         },
         {
@@ -34,10 +45,22 @@
             "required": true
           },
           "values": [
-            { "label": "Contacted", "value": "contacted" },
-            { "label": "Unanswered", "value": "unanswered" },
-            { "label": "Wrong Number", "value": "wrong_number" },
-            { "label": "Alternative Requested", "value": "alternative_requested" }
+            {
+              "label": "Contacted",
+              "value": "contacted"
+            },
+            {
+              "label": "Unanswered",
+              "value": "unanswered"
+            },
+            {
+              "label": "Wrong Number",
+              "value": "wrong_number"
+            },
+            {
+              "label": "Alternative Requested",
+              "value": "alternative_requested"
+            }
           ]
         },
         {
@@ -46,13 +69,18 @@
           "label": "Attempt Number",
           "description": "Which attempt this is, so each attempt and its outcome is kept.",
           "validate": {
-            "min": 1
+            "min": 1,
+            "max": 5,
+            "required": true
           }
         },
         {
           "type": "textarea",
           "key": "contactNotes",
-          "label": "Contact Notes"
+          "label": "Contact Notes",
+          "validate": {
+            "maxLength": 2000
+          }
         }
       ]
     }

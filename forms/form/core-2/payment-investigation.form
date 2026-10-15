@@ -10,14 +10,20 @@
           "key": "paymentReference",
           "label": "Payment Reference",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
           "type": "textfield",
           "key": "transactionReference",
           "label": "Provider Transaction Reference",
-          "description": "The reference the provider returned, where one was returned."
+          "description": "The reference the provider returned, where one was returned.",
+          "validate": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
+          }
         },
         {
           "type": "select",
@@ -71,7 +77,10 @@
         {
           "type": "textarea",
           "key": "investigationNotes",
-          "label": "Notes"
+          "label": "Notes",
+          "validate": {
+            "maxLength": 2000
+          }
         }
       ]
     }

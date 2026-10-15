@@ -1,0 +1,106 @@
+{
+  "id": "appointment-reschedule",
+  "components": [
+    {
+      "type": "group",
+      "label": "Requested Change",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example PAT-1001."
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "appointmentReference",
+          "label": "Appointment Reference",
+          "description": "The appointment that is being replaced.",
+          "validate": {
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example APPT-2026-0001."
+          }
+        },
+        {
+          "type": "datetime",
+          "subtype": "date",
+          "dateLabel": "Date",
+          "key": "newRequestedDate",
+          "label": "New Date Requested",
+          "description": "The date the appointment is to move to. It cannot be in the past.",
+          "disallowPassedDates": true,
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "select",
+          "key": "rescheduleReason",
+          "label": "Reason for the Change",
+          "validate": {
+            "required": true
+          },
+          "values": [
+            {
+              "label": "Requested by the Patient",
+              "value": "patient_request"
+            },
+            {
+              "label": "Clinical Reason",
+              "value": "clinical_reason"
+            },
+            {
+              "label": "Service Not Available",
+              "value": "service_unavailable"
+            },
+            {
+              "label": "Other",
+              "value": "other"
+            }
+          ]
+        },
+        {
+          "type": "checkbox",
+          "key": "patientInformed",
+          "label": "The Patient Has Been Told About the Change",
+          "validate": {
+            "required": true
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "recordedBy",
+          "label": "Recorded By",
+          "validate": {
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
+          }
+        },
+        {
+          "type": "textarea",
+          "key": "rescheduleNotes",
+          "label": "Notes",
+          "validate": {
+            "minLength": 5,
+            "maxLength": 2000
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

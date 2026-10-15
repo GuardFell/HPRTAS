@@ -31,16 +31,22 @@ burden is its bound form's field count, because a user task cannot be completed 
 
 | | |
 |---|---|
-| Forms | 41 |
+| Forms | 43 (41 at the measurement below; the feedback pass added `appointment-reschedule` and `referral-start`) |
 | Leaf fields across all forms | 293 |
 | Sections across all forms | 55 |
 | Fields carrying a description | 66 of 293 |
-| User tasks in the five operational models | 58 elements over 56 distinct ids |
+| User tasks in the operational models | 61 elements over 59 distinct ids, plus the end-to-end process's start form |
 | Largest single form | 10 fields (`referral-check`, `referral-review`, `appointment-confirmation`, `cancellation-record`) |
 
-Every one of the 58 user tasks binds a form, and no form is left unbound: 41 form files carry 41
-distinct `formId`s, every one is referenced, and nothing references a form that does not exist. That
-is the same check `tools/verify_hprtas_bpmn_bindings.py` makes.
+Every one of the 61 user tasks binds a form, the end-to-end process binds one on its start event, and
+no form is left unbound: 43 form files carry 43 distinct `formId`s, every one is referenced, and
+nothing references a form that does not exist. That is the same check
+`tools/verify_hprtas_bpmn_bindings.py` makes.
+
+The field counts beside this section are **the measurement taken at `57b3c1d`**, and they are left as
+they stand because they are what the burden review was done against. The feedback pass added the
+input-validation rules to the fields (patterns, lengths, bounds and the future-date rule) and two
+forms; it did not add many fields to the tasks a clinician fills in.
 
 ## NFR-009 - the recording burden on clinical staff
 

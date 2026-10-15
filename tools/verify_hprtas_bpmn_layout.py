@@ -44,6 +44,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import bpmn_render as R                    # noqa: E402
 from export_hprtas_bpmn_pdf import BPMN, BPMNDI, DC, DI, REPO  # noqa: E402
+from export_hprtas_bpmn_pdf import Diagram, inner_box  # noqa: E402
 
 MODEL_DIRS = (os.path.join(REPO, "models", "operational"),
               os.path.join(REPO, "models", "strategic"))
@@ -377,6 +378,27 @@ def check_model(path, problems, warnings):
     return m
 
 
+def inside_name_problems(path, name, problems):
+    """A name drawn inside its shape has to fit there.
+
+    An element with no label box of its own carries its name inside its shape -
+    which is how a strategic model draws its activities - and the name is drawn
+    at the size the export works out for the model. If it needs more lines than
+    the shape is tall, it is drawn over the border, which the export check would
+    only catch as unreadable text rather than as the layout fault it is.
+    """
+    diagram = Diagram(path)
+    for shape in diagram.shapes.values():
+        if shape["label"] or not shape["name"]:
+            continue
+        inner = inner_box(shape["box"])
+        lines = R.wrap(shape["name"], diagram.node_size, inner[2])
+        used = len(lines) * diagram.node_size * R.LINE_SPACING
+        if used > inner[3]:
+            problems.append("%s: the name of %s needs %.0f units of height and the shape "
+                            "gives it %.0f" % (name, shape["id"], used, inner[3]))
+
+
 def label_problems(path, name, problems):
     root = ET.parse(path).getroot()
     boxes, labels, edges = diagram_boxes(path)
@@ -416,6 +438,27 @@ def label_problems(path, name, problems):
         for gid, other in flow_labels[i + 1:]:
             if rects_overlap(lb, other, 0.0):
                 problems.append("%s: labels overlap: flow %s / flow %s" % (name, fid, gid))
+    # a flow's label must not be set across an activity or a gateway: the words and the shape
+    # obscure each other, which is how a branch label becomes unreadable
+    tag_of = {}
+    for el in root.iter():
+        tag = local(el.tag)
+        if el.get("id") and tag in NODE_TAGS:
+            tag_of[el.get("id")] = tag
+    for fid, lb in flow_labels:
+        for node_id, tag in tag_of.items():
+            shape = boxes.get(node_id)
+            if shape is None or tag == "boundaryEvent":
+                continue
+            # A gateway's box is not the diamond: the glyph is inscribed in it, so the test is
+            # against the middle of the box rather than its corners. For a task the box is the
+            # shape, and the label must clear it.
+            if "Gateway" in tag:
+                inset_w, inset_h = shape[2] * 0.3, shape[3] * 0.3
+                shape = (shape[0] + inset_w, shape[1] + inset_h,
+                         shape[2] - 2 * inset_w, shape[3] - 2 * inset_h)
+            if rects_overlap(lb, shape, 0.0):
+                problems.append("%s: the label of flow %s sits on %s" % (name, fid, node_id))
 
 
 def main():
@@ -429,6 +472,7 @@ def main():
         before, warned = len(problems), len(warnings)
         check_model(path, problems, warnings)
         label_problems(path, name, problems)
+        inside_name_problems(path, name, problems)
         found = problems[before:]
         crossed = warnings[warned:]
         state = "ok" if not found and not crossed else             "%d problems, %d crossings" % (len(found), len(crossed))

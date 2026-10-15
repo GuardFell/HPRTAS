@@ -19,6 +19,11 @@ no engine, and it catches the disagreements that only show up at run time.
   7  every error code a worker can raise has a catch event on the service task
      that runs it, so the worker's business error is a handled outcome and not an
      incident (`DEF-12` was the case that had no such check)
+  8  a call activity names a process in this directory, and what that process
+     returns counts as produced here, so the gateways around it can be read
+  9  every user task carries a candidate group, so a role is assigned to it
+ 10  the forms carry the input-validation policy: references and NHS numbers have
+     their patterns and a person's name cannot be digits alone
 
 The workers' side of the contract is read from the worker sources themselves -
 `INPUT_VARIABLES` and the keys of the `Vars.of(...)` they return - so the
@@ -34,6 +39,10 @@ import sys
 import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# the tables the validation policy is written in, so the check and the script that applies it
+# cannot disagree about what the policy is
+import apply_form_validation as policy
 
 # the repository root: <repo>/tools/<script>.py, so the tools run from any checkout
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -150,8 +159,10 @@ def model_facts(path):
     root = ET.parse(path).getroot()
     process = root.find(BPMN + "process")
     facts = {"path": path, "name": os.path.basename(path), "process": process,
+             "process_id": process.get("id"),
              "service_tasks": [], "user_tasks": [], "condition_variables": set(),
-             "groups": set(), "default_flows": set(), "lane_group": {}}
+             "groups": set(), "default_flows": set(), "lane_group": {},
+             "start_forms": [], "called_processes": []}
     lane_of = {}
     for lane in process.iter(BPMN + "lane"):
         for ref in lane.findall(BPMN + "flowNodeRef"):
@@ -164,6 +175,19 @@ def model_facts(path):
                 {"id": el.get("id"), "name": el.get("name") or "",
                  "job_type": definition.get("type") if definition is not None else None,
                  "has_user_task": el.find(".//" + ZEBBE + "userTask") is not None})
+        elif tag == BPMN + "callActivity":
+            # A call activity runs another process. What that process returns is in this
+            # process's scope when it completes, which is what makes the gateways around it
+            # readable: the variable comes from the model the call names.
+            called = el.find(".//" + ZEBBE + "calledElement")
+            facts["called_processes"].append(
+                {"id": el.get("id"), "name": el.get("name") or "",
+                 "process_id": called.get("processId") if called is not None else None})
+        elif tag == BPMN + "startEvent":
+            form = el.find(".//" + ZEBBE + "formDefinition")
+            if form is not None:
+                facts["start_forms"].append(
+                    {"id": el.get("id"), "form": form.get("formId")})
         elif tag == BPMN + "userTask":
             form = el.find(".//" + ZEBBE + "formDefinition")
             assignment = el.find(".//" + ZEBBE + "assignmentDefinition")
@@ -174,6 +198,7 @@ def model_facts(path):
             facts["user_tasks"].append(
                 {"id": el.get("id"), "name": el.get("name") or "",
                  "form": form.get("formId") if form is not None else None,
+                 "assigned_group": groups.strip(),
                  "zeebe_user_task": el.find(".//" + ZEBBE + "userTask") is not None})
         elif tag in (BPMN + "exclusiveGateway", BPMN + "inclusiveGateway"):
             default = el.get("default")
@@ -255,12 +280,23 @@ def form_facts():
                     problems.append("%s: group %r has no components, so it renders empty"
                                     % (os.path.basename(path), component.get("label")))
 
+        fields = {}
+
+        def walk_fields(components):
+            for component in components:
+                if component.get("key"):
+                    fields[component["key"]] = component
+                if component.get("components"):
+                    walk_fields(component["components"])
+
         walk(data.get("components", []))
+        walk_fields(data.get("components", []))
         duplicates = {k for k in keys if keys.count(k) > 1}
         for key in sorted(duplicates):
             problems.append("%s: field key %r appears %d times" % (os.path.basename(path), key, keys.count(key)))
         forms[os.path.basename(path)[:-len(".form")]] = {
-            "path": path, "id": data.get("id"), "keys": keys, "problems": problems}
+            "path": path, "id": data.get("id"), "keys": keys, "fields": fields,
+            "problems": problems}
     return forms
 
 
@@ -286,6 +322,20 @@ def main():
         problems += form["problems"]
         if form["id"] != name:
             problems.append("%s.form declares id %r" % (name, form["id"]))
+        # the input-validation policy, checked against the same tables the script that applies it
+        # uses: a reference takes the reference pattern, an NHS number ten digits, a person's name
+        # a letter. A field a form lets through unvalidated is one the worker has to refuse later.
+        for key, component in sorted(form["fields"].items()):
+            validate = component.get("validate") or {}
+            if key in policy.IDENTIFIER_KEYS and validate.get("pattern") != policy.IDENTIFIER_PATTERN:
+                problems.append("%s.form: field %r is a reference without the reference pattern"
+                                % (name, key))
+            if key in policy.NHS_NUMBER_KEYS and validate.get("pattern") != policy.NHS_NUMBER_PATTERN:
+                problems.append("%s.form: field %r is an NHS number without the ten-digit pattern"
+                                % (name, key))
+            if key in policy.NAME_KEYS and validate.get("pattern") != policy.NAME_PATTERN:
+                problems.append("%s.form: field %r names a person or team without the pattern that "
+                                "refuses digits alone" % (name, key))
 
     used_job_types, used_forms = set(), set()
     lane_groups = {}
@@ -293,8 +343,40 @@ def main():
     for worker in workers.values():
         produced_by_workers.update(worker["outputs"])
 
-    for path in sorted(glob.glob(os.path.join(MODEL_DIR, "*.bpmn"))):
-        facts = model_facts(path)
+    model_paths = sorted(glob.glob(os.path.join(MODEL_DIR, "*.bpmn")))
+    model_facts_by_path = {path: model_facts(path) for path in model_paths}
+    facts_by_process_id = {f["process_id"]: f for f in model_facts_by_path.values()}
+
+    def produced_by(facts):
+        """The variables a model produces: its forms' keys and its workers' outputs."""
+        names = set(_worker_outputs(
+            {job_types[task["job_type"]] for task in facts["service_tasks"]
+             if task["job_type"] in job_types}, workers))
+        for form in list(facts["model_forms"]) + [entry["form"] for entry in facts["start_forms"]]:
+            if form in forms:
+                names |= set(forms[form]["keys"])
+        return names
+
+    # what a model produces, and - transitively - what the models it calls produce, which is in
+    # its scope when the call activity completes
+    produced_by_model = {}
+    for path, facts in model_facts_by_path.items():
+        facts["model_forms"] = {task["form"] for task in facts["user_tasks"] if task["form"]}
+    changed = True
+    while changed:
+        changed = False
+        for path, facts in model_facts_by_path.items():
+            names = produced_by(facts)
+            for call in facts["called_processes"]:
+                called = facts_by_process_id.get(call["process_id"])
+                if called is not None:
+                    names |= produced_by_model.get(called["process_id"], set())
+            if names != produced_by_model.get(facts["process_id"]):
+                produced_by_model[facts["process_id"]] = names
+                changed = True
+
+    for path in model_paths:
+        facts = model_facts_by_path[path]
         model = facts["name"]
         model_forms = set()
         model_workers = set()
@@ -321,6 +403,9 @@ def main():
                             % (model, task["id"], worker_name, code,
                                ", ".join(sorted(caught)) or "nothing"))
         for task in facts["user_tasks"]:
+            if not task["assigned_group"]:
+                problems.append("%s: user task %s carries no candidate group, so no role is "
+                                "assigned to it" % (model, task["id"]))
             if not task["zeebe_user_task"]:
                 problems.append("%s: user task %s is not a Camunda user task, so it never appears "
                                 "in Tasklist" % (model, task["id"]))
@@ -335,6 +420,18 @@ def main():
                 used_forms.add(task["form"])
                 if not forms[task["form"]]["keys"]:
                     problems.append("%s: form %s carries no field" % (model, task["form"]))
+        for entry in facts["start_forms"]:
+            if entry["form"] not in forms:
+                problems.append("%s: start event %s binds form %r, which is not in forms/"
+                                % (model, entry["id"], entry["form"]))
+            else:
+                used_forms.add(entry["form"])
+                model_forms.add(entry["form"])
+        for call in facts["called_processes"]:
+            if call["process_id"] not in facts_by_process_id:
+                problems.append(
+                    "%s: call activity %s calls %r, which is not a model in models/operational/"
+                    % (model, call["id"], call["process_id"]))
         for group in sorted(facts["groups"]):
             if group not in GROUPS:
                 problems.append("%s: candidate group %r is not a role the case study names"
@@ -346,12 +443,10 @@ def main():
             for group in groups:
                 lane_groups.setdefault(lane, set()).add(group)
 
-        # what this model reads has to be written in this model: a form bound
-        # here, or a worker this model runs
-        produced_here = set(_worker_outputs(model_workers, workers))
-        for form in model_forms:
-            if form in forms:
-                produced_here = produced_here | set(forms[form]["keys"])
+        # what this model reads has to be written here: a form bound in this model, a worker it
+        # runs, the start form it is begun with, or - for a call activity - what the process it
+        # calls returns
+        produced_here = set(produced_by_model.get(facts["process_id"], set()))
         for variable in sorted(facts["condition_variables"]):
             if variable in ENGINE_VARIABLES or variable in produced_here:
                 continue

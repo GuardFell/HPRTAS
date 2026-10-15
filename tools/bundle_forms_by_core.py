@@ -7,7 +7,7 @@ picking them out of the full set. The copies are the demonstration's, not the
 originals: `forms/*.form` is the set of record, and `forms/form/core-N/<id>.form`
 has to be byte-identical to `forms/<id>.form` or the bundle has drifted from it.
 
-This re-reads the five models and reports:
+This re-reads the models and reports:
 
   1  a form a model binds that is missing from that model's folder
   2  a `.form` file in a folder that the model does not bind
@@ -66,7 +66,12 @@ def same_content(path, original):
 
 
 def bound_forms(model_path):
-    """The form keys the model's user tasks bind, in the order they appear."""
+    """The form keys the model binds, in the order they appear.
+
+    A user task binds the form its work is recorded in; a start event binds the form the instance
+    is started with where the model has one (the end-to-end process does). Both are forms the model
+    needs deployed beside it, so both are bundled.
+    """
     root = ET.parse(model_path).getroot()
     keys = []
     for task in root.iter(BPMN + "userTask"):
@@ -75,6 +80,10 @@ def bound_forms(model_path):
             keys.append(None)
             continue
         keys.append(definition.get("formId"))
+    for event in root.iter(BPMN + "startEvent"):
+        definition = event.find(".//" + ZEBBE + "formDefinition")
+        if definition is not None:
+            keys.append(definition.get("formId"))
     return keys
 
 
@@ -129,7 +138,7 @@ def check():
             problems.append("%s: %s is in forms/form/%s and is neither a form nor a README"
                             % (core, entry, core))
         total_copies += len(found)
-        print("  %-8s %2d user tasks  %2d forms bound  %2d copies" % (
+        print("  %-8s %2d bindings  %2d forms bound  %2d copies" % (
             core, len(keys), len(bound), len(found)))
     print()
     print("%d copies in %d folders" % (total_copies, len(models)))

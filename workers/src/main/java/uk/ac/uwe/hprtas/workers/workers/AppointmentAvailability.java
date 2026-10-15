@@ -18,6 +18,11 @@ import java.util.Map;
  * the model can decide between booking, highlighting the case, and recording the telephone contact
  * the two-week rule requires (FR-007, BR-03, BR-17, EX-06, TC-01, TC-04, TC-05, TC-18).
  *
+ * The appointment is recorded on the hospital's register through the simulated service, against the
+ * patient and referral it is for. A booking request for the same patient and referral that asks for a
+ * different window is a new booking, and the appointment the earlier request made is marked
+ * superseded rather than being left on the register as though it were still going to happen.
+ *
  * The simulated service returns three outcomes; see {@link SchedulingService}. The scenario decides
  * which one, through the optional {@code schedulingOutcome} variable, so a test can be reproduced
  * from its test data.
@@ -29,6 +34,11 @@ public final class AppointmentAvailability implements WorkerModule {
           "speciality", FieldSpec.identifier().required(),
           "priority", FieldSpec.string().required().oneOf("urgent", "routine"),
           "requestedWindow", FieldSpec.days().required(),
+          // Which patient and referral the appointment is for, so the register can record it against
+          // them and a rebooking can supersede what it replaces. Optional: a fixture that drives the
+          // worker without a pathway around it still works.
+          "patientId", FieldSpec.identifier(),
+          "referralId", FieldSpec.identifier(),
           // Supplied by the form as a hint. The value that is written back is always recomputed from
           // the slot actually found, because that is what the two-week contact rule applies to.
           "appointmentWithinTwoWeeks", FieldSpec.bool(),
@@ -62,7 +72,16 @@ public final class AppointmentAvailability implements WorkerModule {
           Vars.of("slotAvailable", false));
     }
 
-    final String bookingKey = context.instanceKey() + ":new-patient-appointment";
+    final String patientId = (String) check.values().get("patientId");
+    final String referralId = (String) check.values().get("referralId");
+    final int requestedWindow = ((Number) check.values().get("requestedWindow")).intValue();
+
+    // The key names the request: the instance and the window that was asked for. A retry of the same
+    // request returns the appointment it made; a request for a different window is a different
+    // booking, which is what lets a patient asking for another date get one.
+    final String bookingKey =
+        context.instanceKey() + ":patient-appointment:" + requestedWindow;
+
     final SchedulingService.Appointment result =
         context
             .services()
@@ -71,8 +90,11 @@ public final class AppointmentAvailability implements WorkerModule {
                 bookingKey,
                 (String) check.values().get("schedulingOutcome"),
                 (String) check.values().get("priority"),
-                ((Number) check.values().get("requestedWindow")).intValue(),
-                context.now());
+                requestedWindow,
+                context.now(),
+                patientId,
+                referralId,
+                SchedulingService.PATIENT_APPOINTMENT);
 
     final boolean withinTwoWeeks =
         SchedulingService.appointmentWithinTwoWeeks(
@@ -88,7 +110,8 @@ public final class AppointmentAvailability implements WorkerModule {
                 "appointmentOutcome", result.outcome(),
                 "slotAvailable", result.slotAvailable(),
                 "appointmentDate", result.appointmentDate(),
-                "duplicateRequest", result.duplicateRequest()));
+                "duplicateRequest", result.duplicateRequest(),
+                "supersededAppointment", result.supersededAppointment()));
 
     return Outcome.completed(
         Vars.of(
@@ -97,6 +120,7 @@ public final class AppointmentAvailability implements WorkerModule {
             "alternativeDate", result.alternativeDate(),
             "withinRequestedWindow", result.withinRequestedWindow(),
             "appointmentWithinTwoWeeks", withinTwoWeeks,
-            "schedulingServiceOutcome", result.outcome()));
+            "schedulingServiceOutcome", result.outcome(),
+            "supersededAppointment", result.supersededAppointment()));
   }
 }

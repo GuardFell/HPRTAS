@@ -10,7 +10,9 @@
           "key": "treatmentRequestId",
           "label": "Treatment Request ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -18,7 +20,10 @@
           "key": "fundingOrganisation",
           "label": "Funding Organisation",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         },
         {
@@ -26,7 +31,9 @@
           "key": "authorisationReference",
           "label": "Authorisation Reference",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -53,14 +60,20 @@
           "type": "textarea",
           "key": "approvalLimitations",
           "label": "Limitations on the Approval",
-          "description": "Any treatment, period or amount the approval does not cover."
+          "description": "Any treatment, period or amount the approval does not cover.",
+          "validate": {
+            "maxLength": 2000
+          }
         },
         {
           "type": "textfield",
           "key": "approvedBy",
           "label": "Approved By",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         }
       ]

@@ -73,6 +73,8 @@ def main():
             expected.update(words(s["name"]))
         for _, nm, _ in diagram.pools + diagram.lanes:
             expected.update(words(nm))
+        for note in diagram.notes:
+            expected.update(words(note["text"]))
         if not expected:
             continue
 

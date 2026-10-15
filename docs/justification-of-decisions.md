@@ -5,12 +5,42 @@ presentation asks for: the process structure, the participant boundaries, how ta
 how the gateways are arranged, how the process meets the outside world, how failure is handled, the
 assumptions the models rest on, the alternatives that were rejected and the trade-offs accepted.
 
-It is written against the five operational models in `../models/operational/`, the strategic models
+It is written against the six operational models in `../models/operational/` - the five stages and
+`core-0`, which calls them - the strategic models
 in `../models/strategic/`, and the evidence in `../tests/evidence/`. Readable PDF exports of every
 model are in `../models/exports/`. Where a decision has a cost, the cost is stated here rather than
 left out: a justification that claims no downside is not a justification.
 
 ## 1. Process structure
+
+**The five stages are integrated by a sixth process that calls them.** The feedback this edition
+answers asked for the processes to be integrated into one coherent end-to-end workflow, and the
+integration is `core-0-patient-pathway-end-to-end`: an executable process with no task of its own
+whose stages are **call activities** naming `core-5`, `core-1`, `core-2`, `core-3` and `core-4`, in
+that order, with a gateway between them. It is started from its own start form with the referral the
+instance belongs to, so the front door collects the referral's identifiers, the referring
+organisation and whether the supporting information arrived - and that last answer is what decides
+whether the documentation exchange runs first.
+
+**The gates between stages read only what the process before them returned.** A call activity
+returns its instance's variables to the caller when it completes, so `decision` and `slotAvailable`
+gate the move from `core-1` to `core-2`, and `consentGiven` gates the move from `core-2` to `core-3`:
+accepted-with-an-appointment-arranged continues, a referral that was rejected, redirected, queried or
+escalated ends the pathway at the end event that says so, and a consultation the patient did not
+proceed from ends it there. Nothing is decided by `core-0` itself: it holds no clinical or
+administrative task, every check inside a stage stays with the teams, forms and workers that stage
+binds, and the parties outside the hospital are drawn in the process that exchanges with them.
+
+**The alternatives to call activities were weighed.** Chaining the processes with messages - each
+stage publishing the message the next one starts on - was rejected because it makes the hand-off
+asynchronous and unconditional: a referral that was rejected would still start the treatment process,
+and the decision about whether to continue would have to be made inside the stage that receives the
+message rather than at the boundary. Merging the five into one process was rejected for the reason
+given below. The cost of the call activities is real and is stated in section 9: the pathway is one
+instance of `core-0` plus one instance per stage, so a reader of Operate sees a tree rather than a
+single token, and `core-4`'s follow-up stage is reached only when the pathway runs that far - its two
+message-started paths (a cancellation arriving, an enquiry arriving) are started by those messages,
+not by `core-0`.
 
 **Five processes, not one.** The pathway was modelled as five executable processes rather than one
 large one, because the case describes four points at which the work is picked up and handed on, and
@@ -41,8 +71,12 @@ the traceability table no longer matched the models.
 of the pathway across the organisation, `models/socio-technical/` the i\* view of who depends on
 whom and why, and `models/operational/` the executable processes. The strategic model
 `patient-pathway-all-entities.bpmn` is the one place where every entity in the case appears
-together: eight pools and eleven lanes, not deployed, used to check that the operational split does
-not lose a participant.
+together: one pool with a lane for each team that owns a stage of it, at one activity per stage, not
+deployed, used to check that the operational split does not lose a team. The parties outside the
+hospital are not drawn as pools here - at this level the model is the hospital's process, and each
+exchange with an outside party is named in the documentation of the activity it belongs to, carried
+as a dependency in the i* models, and drawn as a pool with its message flows in the operational
+models.
 
 ## 2. Participant boundaries
 
@@ -66,12 +100,16 @@ Medical Secretaries check documents but have no decision task; the Consultant de
 Consultants lane; refunds sit in the Finance Team lane and no clinical lane reaches them. The lanes
 are bound to `candidateGroups` on the user tasks, so the separation is not only drawn but assigned.
 
-**Coverage of the case's entities.** Eighteen of the case's twenty participants appear as a pool or
-a lane. Two do not, and both are deliberate:
+**Coverage of the case's entities.** The operational models draw the parties outside the hospital
+as their own pools. In the strategic view, which is drawn as one pool, the coverage is by team:
+every internal entity of the case study has a lane. The i\* models in `../models/socio-technical/`
+are the workshop goal model redrawn - the patient, the reception desk, the doctor and the
+specialist - and are a view of that pathway rather than a second participant list; see
+`../models/socio-technical/modelling-choices.md` section 4. Two of the case's participants are
+deliberately not drawn anywhere as a pool or a lane:
 
-- The **Clinical Nurse Specialist Administrative Support Team** owns a lane in
-  `patient-pathway-all-entities.bpmn` but no lane in any operational process, because no activity in
-  the five processes is exclusively its own.
+- The **Clinical Nurse Specialist Administrative Support Team** carries no lane in the strategic model
+  either, because no activity in the five processes is exclusively its own.
 - The **patient's GP and other letter recipients** are not a pool. They are recorded as the
   `recipients` a letter is dispatched to, reached through the correspondence service pool. Making
   them a pool would add a pool with no activity in it.
@@ -84,6 +122,25 @@ lane, and - where the task needs structured input - a bound form. Every automate
 task with a job type, and every job type has a worker registered against it. The split is not by
 difficulty but by accountability: a step that a person must sign their name to is a user task even
 if a system could do most of it.
+
+**Input validation has two layers, and the first one is the form.** A field the process cannot
+continue without is `required`; a reference has to look like a reference; a person's name has to
+contain a letter, so `12345` is not a name; an NHS number has to be ten digits (BR-46); a number the
+process acts on has an upper bound; and a date that is a future commitment - a treatment start date,
+a rescheduled date, an alternative offered - is marked so the picker does not offer a day in the
+past. The rules are **one policy applied from one place** (`tools/apply_form_validation.py`, whose
+tables the bindings check imports and re-checks) rather than 43 hand-edited files, so a rule cannot
+reach one form and miss another, and a form cannot quietly lose it. `tools/check_forms_formjs.mjs`
+then drives the rules through `@bpmn-io/form-js-viewer`, the library Tasklist renders forms with, and
+asserts that each one fires.
+
+The second layer is the worker, which re-checks everything it reads and refuses what it cannot act
+on. That is deliberately not redundant: the form is what stops unusable input at the desk, where it
+can be corrected in seconds, and the worker is what stops it if the task was completed by an API
+call or by a client that ignored the form. The two layers are documented side by side because the
+division between them is a design decision - the form carries what a field can check about itself,
+the worker carries what needs the other variables (a referral marked complete that also lists missing
+items, an NHS number that is the wrong shape, an amount that is not a number).
 
 **Validation is separated from decision.** `validate-referral` reports whether the documents are
 complete and returns no clinical judgement; the decision to accept, reject, query or redirect is
@@ -105,6 +162,22 @@ back only to the flow named in its `default` attribute, and raises an incident w
 matches. All 24 exclusive gateways in the five processes therefore declare one, and the flow each
 names carries no condition of its own.
 
+**Where paths come together, a merging gateway says so.** Twenty-six convergence points across the
+five stage processes - the places where a repair path returns to the task that owns the request, an
+alternative decision re-joins, or a boundary event's outcome lands - are drawn as an explicit
+**exclusive merge gateway** rather than as several arrows arriving at one activity. In Camunda the two
+behave the same way, so this is not a behaviour change: it is the diagram saying what it means, and
+the feedback asked for it. Each gateway carries the documentation of what it merges and why. The
+gateways are named for the convergence they represent (`N_OB_MergeContactPath`, `N_F_MergeRefundRequest`),
+so a reader of the model or of a run's element path can see them.
+
+**One convergence is left at the task, and the model says why.** The two payment-error repair paths
+into `N_F_CorrectPaymentRequest` in `core-2` keep their direct merge. Both come from boundary events
+on `N_F_ProcessPayment`, and no candidate layout routed a repair path back across the payment task's
+column without the line crossing the task's own box, which the layout check refuses. Rather than ship
+a diagram with a line through an activity for the sake of symmetry, that one merge is left at the
+task and the task's documentation records the exception.
+
 Which branch is the default is a deliberate choice, and it is always the conservative one: an
 unrecognised referral decision becomes "further information" rather than an automatic rejection; a
 missing priority is treated as routine and goes to a person to review rather than straight to an
@@ -120,6 +193,30 @@ user task with three conditional outgoing flows. It has the same failure mode as
 default and now declares one.
 
 ## 5. External interactions
+
+**The hospital's own records live in a database, not in the workers' memory.** The case's assumption
+AS-02 - the HPAS becomes the system of record - was, until this edition, only half true: the
+simulated services kept their ledgers in maps, so an appointment, a payment or a refund was known only
+to the worker process that had made it, and a restart forgot everything (`DEF-10`). The workers now
+persist the patient register, the referrals, the appointments, the payment and refund ledger, the
+dispatches and the outstanding information requests in an embedded H2 database
+(`workers/src/main/java/uk/ac/uwe/hprtas/workers/db/Database.java`), which is the database Camunda 8
+Run itself keeps its data in. One connection serves every worker thread and every operation takes its
+lock, which is the same discipline the in-memory ledgers used: the check and the write that follows
+it have to be one step, or two jobs can both find a reference unpaid and both take money.
+
+**The process reads what earlier runs wrote, and that is the point of it.** The identifier the case
+gives the referring organisation is the NHS number, so that is what the register is looked up by
+(BR-46, FR-048): a patient the hospital already holds is matched to the record rather than registered
+again, a name that disagrees with the record is reported as a disagreement instead of being written
+over it - which of the two is right is a person's to say - and one NHS number arriving under a second
+hospital identifier is reported as a conflict rather than stored as a second patient. What is
+retrieved is used: a letter that names no channel is dispatched on the channel the patient's own
+record holds (NFR-011, FR-051), and a booking request for a different period supersedes the
+appointment the earlier request made instead of leaving two live appointments on the register. The
+tests drive each of those (`PersistenceTest`), including one that closes the store and opens it
+again to show a settled payment is still a duplicate - which is the part a memory ledger could never
+show.
 
 **Every call outside the hospital is a job worker against a service task, and every simulated
 service says what it does not model.** The four external services the case describes - scheduling,
@@ -245,6 +342,13 @@ reclassifying them.
 **The simulated services are per-process and in memory** (`DEF-10`), so a duplicate-prevention
 result holds only within one worker process. The ledger is what makes the rule testable, and its
 limitation is stated where the rule is claimed.
+
+**The record store is a prototype, not the hospital's system of record.** It is a single-file H2
+database with no access control, no backup, no retention policy and no audit trail of who read
+what, and the demonstration runs it in memory so that nothing is left behind. It shows that the
+process retrieves and updates stored records rather than only its own variables; it does not meet the
+data-protection, retention or audit requirements the case states, and it is not offered as if it did
+(`DEF-07`, `FR-046`, `FR-047`).
 
 **The models are wider than a page.** The PDF exports in `../models/exports/` are sized to the
 diagram with element labels at 10 pt, which is what keeps them readable; a diagram this wide cannot

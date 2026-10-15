@@ -7,6 +7,7 @@ import uk.ac.uwe.hprtas.workers.Validate;
 import uk.ac.uwe.hprtas.workers.Vars;
 import uk.ac.uwe.hprtas.workers.WorkerContext;
 import uk.ac.uwe.hprtas.workers.WorkerModule;
+import uk.ac.uwe.hprtas.workers.db.Database;
 
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,22 @@ public final class ReferralDocumentRequest implements WorkerModule {
                     "referralId", referralId,
                     "requestedItems", requestedItems,
                     "requestedFrom", requestedFrom));
+
+    // The request is recorded in the hospital's own records as outstanding, so what the referring
+    // organisation was asked for, when, and whether it has answered is a record rather than
+    // something only the process instance knows. The receipt worker marks it supplied.
+    context
+        .services()
+        .database()
+        .saveInformationRequest(
+            new Database.InformationRequest(
+                referralId,
+                requestedItems.toString(),
+                requestedFrom,
+                Validate.toIsoDate(context.now()),
+                "requested",
+                null,
+                Validate.toIsoDate(context.now())));
 
     context
         .log()

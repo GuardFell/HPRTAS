@@ -40,6 +40,10 @@ public final class CorrespondenceDispatch implements WorkerModule {
           "channelPreference", FieldSpec.string().oneOf(CorrespondenceService.CHANNELS.toArray(new String[0])),
           "documentType",
               FieldSpec.string().required().oneOf(DOCUMENT_TYPES.toArray(new String[0])),
+          // Which patient the letter is for. When the request names no channel and the patient is
+          // known, the preference the register holds for them is used, and a request that does name
+          // one is recorded against them for later letters.
+          "patientId", FieldSpec.identifier(),
           "correspondenceOutcome",
               FieldSpec.string().oneOf(CorrespondenceService.DISPATCHED));
 
@@ -73,7 +77,11 @@ public final class CorrespondenceDispatch implements WorkerModule {
             .services()
             .correspondence()
             .dispatch(
-                recipients, (String) check.values().get("channelPreference"), documentType, context.now());
+                recipients,
+                (String) check.values().get("channelPreference"),
+                documentType,
+                context.now(),
+                (String) check.values().get("patientId"));
 
     context
         .log()
@@ -82,6 +90,7 @@ public final class CorrespondenceDispatch implements WorkerModule {
             Vars.of(
                 "documentType", documentType,
                 "channel", result.dispatchChannel(),
+                "channelSource", result.channelSource(),
                 "recipientCount", recipients.size(),
                 "dispatchReference", result.dispatchReference()));
 
@@ -89,6 +98,7 @@ public final class CorrespondenceDispatch implements WorkerModule {
         Vars.of(
             "dispatchDate", result.dispatchDate(),
             "dispatchChannel", result.dispatchChannel(),
+            "channelSource", result.channelSource(),
             "dispatchReference", result.dispatchReference(),
             "documentType", documentType,
             "recipients", recipients));

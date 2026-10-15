@@ -3,6 +3,11 @@
     "ZEEBE_GRPC_ADDRESS": "grpc://localhost:26500",
     "CAMUNDA_AUTH_STRATEGY": "NONE"
   },
+  "database": {
+    "url": "jdbc:h2:file:./data/hprtas",
+    "user": "sa",
+    "password": ""
+  },
   "workers": {
     "referral-validation": {
       "taskType": "validate-referral",
@@ -11,6 +16,11 @@
     },
     "referral-document-request": {
       "taskType": "request-referral-documents",
+      "maxJobsToActivate": 4,
+      "timeoutMs": 15000
+    },
+    "document-receipt": {
+      "taskType": "record-document-receipt",
       "maxJobsToActivate": 4,
       "timeoutMs": 15000
     },

@@ -10,7 +10,9 @@
           "key": "consultationId",
           "label": "Consultation ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -18,23 +20,33 @@
           "key": "letterContent",
           "label": "Clinic Letter Content",
           "validate": {
-            "required": true
+            "required": true,
+            "maxLength": 2000
           }
         },
         {
           "type": "textarea",
           "key": "diagnosis",
-          "label": "Diagnosis"
+          "label": "Diagnosis",
+          "validate": {
+            "maxLength": 2000
+          }
         },
         {
           "type": "textarea",
           "key": "treatmentDecisions",
-          "label": "Treatment Decisions"
+          "label": "Treatment Decisions",
+          "validate": {
+            "maxLength": 2000
+          }
         },
         {
           "type": "textarea",
           "key": "followUpArrangements",
-          "label": "Follow-up Arrangements"
+          "label": "Follow-up Arrangements",
+          "validate": {
+            "maxLength": 2000
+          }
         },
         {
           "type": "textfield",
@@ -56,7 +68,8 @@
           "key": "recipients",
           "label": "Recipients (separate with commas)",
           "validate": {
-            "required": true
+            "required": true,
+            "maxLength": 2000
           }
         },
         {

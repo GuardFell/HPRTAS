@@ -61,6 +61,15 @@ public final class Config {
 
   public record Logging(String level, Path file) {}
 
+  /**
+   * The record store the workers persist the pathway's records in.
+   *
+   * A file database by default, so the records outlive the worker process; a run that wants a
+   * throwaway store points the url at an in-memory H2 database instead, which is what the unit tests
+   * do. `HPRTAS_DB_URL` overrides the url from the environment, like the other settings.
+   */
+  public record DatabaseSettings(String url, String user, String password) {}
+
   /** Forced outcomes accepted per simulated service: the environment name, and the service it sets. */
   private static final Map<String, String> SERVICE_ENV =
       Map.of(
@@ -81,6 +90,7 @@ public final class Config {
   private final Map<String, WorkerSettings> workers;
   private final SimulatedServices simulatedServices;
   private final BusinessCalendar businessCalendar;
+  private final DatabaseSettings database;
 
   private Config(
       Map<String, Object> tree,
@@ -90,7 +100,8 @@ public final class Config {
       Logging logging,
       Map<String, WorkerSettings> workers,
       SimulatedServices simulatedServices,
-      BusinessCalendar businessCalendar) {
+      BusinessCalendar businessCalendar,
+      DatabaseSettings database) {
     this.tree = tree;
     this.dotEnv = dotEnv;
     this.dotEnvLoaded = dotEnvLoaded;
@@ -99,6 +110,7 @@ public final class Config {
     this.workers = workers;
     this.simulatedServices = simulatedServices;
     this.businessCalendar = businessCalendar;
+    this.database = database;
   }
 
   public static Config load() {
@@ -143,11 +155,20 @@ public final class Config {
     final Map<String, WorkerSettings> workers = readWorkers(tree);
     final SimulatedServices simulatedServices = readSimulatedServices(tree);
     final BusinessCalendar businessCalendar = readBusinessCalendar(tree);
+    final DatabaseSettings database = readDatabase(tree, dotEnv, workersDir);
 
     validate(logging, workers, tree, dotEnv);
 
     return new Config(
-        tree, dotEnv, dotEnvLoaded, workersDir, logging, workers, simulatedServices, businessCalendar);
+        tree,
+        dotEnv,
+        dotEnvLoaded,
+        workersDir,
+        logging,
+        workers,
+        simulatedServices,
+        businessCalendar,
+        database);
   }
 
   /** Forces each simulated service's outcome from its environment variable, where one is set. */
@@ -210,6 +231,49 @@ public final class Config {
         intAt(calendar, "higherManagementEscalationDays", 0));
   }
 
+  /**
+   * The record store's settings.
+   *
+   * A file url is resolved against the workers directory, so the database lives beside the
+   * configuration that names it however the workers were started, and a url that is already absolute
+   * or in-memory is left alone.
+   */
+  private static DatabaseSettings readDatabase(
+      Map<String, Object> tree, Map<String, String> dotEnv, Path workersDir) {
+
+    final Map<String, Object> database = section(tree, "database");
+    final String configuredUrl = valueOr(stringAt(database, "url"), "");
+    // The system property is what the tests set, so a run can be given a throwaway store without a
+    // file on disk: the environment cannot be changed from inside the JVM.
+    final String systemUrl = valueOr(System.getProperty("hprtas.dbUrl"), "");
+    final String url =
+        !systemUrl.isBlank()
+            ? systemUrl
+            : valueOr(environment(dotEnv, "HPRTAS_DB_URL"), configuredUrl);
+    final String user = valueOr(environment(dotEnv, "HPRTAS_DB_USER"), valueOr(stringAt(database, "user"), "sa"));
+    final String password =
+        valueOr(environment(dotEnv, "HPRTAS_DB_PASSWORD"), valueOr(stringAt(database, "password"), ""));
+
+    if (url.isEmpty()) {
+      throw new IllegalStateException(
+          "no record store is configured: set database.url in config/workers.default.json or"
+              + " HPRTAS_DB_URL");
+    }
+    return new DatabaseSettings(resolveDatabaseUrl(url, workersDir), user, password);
+  }
+
+  private static String resolveDatabaseUrl(String url, Path workersDir) {
+    final String prefix = "jdbc:h2:file:";
+    if (!url.startsWith(prefix)) {
+      return url;
+    }
+    final String path = url.substring(prefix.length());
+    final String[] parts = path.split(";", 2);
+    final String options = parts.length > 1 ? ";" + parts[1] : "";
+    final Path resolved = workersDir.resolve(parts[0]).toAbsolutePath().normalize();
+    return prefix + resolved + options;
+  }
+
   /** The connection settings handed to the Camunda 8 Java client. */
   public Map<String, Object> connection() {
     final Map<String, Object> connection = new LinkedHashMap<>(section(tree, "connection"));
@@ -254,6 +318,10 @@ public final class Config {
 
   public BusinessCalendar businessCalendar() {
     return businessCalendar;
+  }
+
+  public DatabaseSettings database() {
+    return database;
   }
 
   public Logging logging() {

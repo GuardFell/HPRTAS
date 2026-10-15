@@ -10,7 +10,9 @@
           "key": "referralId",
           "label": "Referral ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -19,7 +21,20 @@
           "label": "Patient ID",
           "description": "The identifier the patient is known by on the hospital system.",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "nhsNumber",
+          "label": "NHS Number",
+          "description": "Ten digits. Checked against the patient register, so a patient the hospital already knows is matched rather than duplicated.",
+          "validate": {
+            "required": true,
+            "pattern": "^[0-9]{10}$",
+            "patternErrorMessage": "An NHS number is ten digits, for example 9434765919."
           }
         },
         {
@@ -27,7 +42,10 @@
           "key": "patientName",
           "label": "Patient Name",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         },
         {
@@ -49,7 +67,10 @@
           "type": "textarea",
           "key": "supportingDocuments",
           "label": "Supporting Information Received",
-          "description": "The documents and information that arrived with the referral."
+          "description": "The documents and information that arrived with the referral.",
+          "validate": {
+            "maxLength": 2000
+          }
         },
         {
           "type": "checkbox",
@@ -61,7 +82,10 @@
           "type": "textarea",
           "key": "missingItems",
           "label": "Missing Items",
-          "description": "One item per line. Leave empty when the documentation is complete."
+          "description": "One item per line. Leave empty when the documentation is complete.",
+          "validate": {
+            "maxLength": 2000
+          }
         },
         {
           "type": "checkbox",
@@ -77,13 +101,19 @@
           "key": "checkedBy",
           "label": "Checked By",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         },
         {
           "type": "textarea",
           "key": "checkNotes",
-          "label": "Notes"
+          "label": "Notes",
+          "validate": {
+            "maxLength": 2000
+          }
         }
       ]
     }

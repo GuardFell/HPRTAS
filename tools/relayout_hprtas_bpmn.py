@@ -49,6 +49,15 @@ DI = "{http://www.omg.org/spec/DD/20100524/DI}"
 # element sizes, in model units, and the vertical room a label needs
 SIZE = {"task": (150.0, 80.0), "gateway": (50.0, 50.0), "event": (36.0, 36.0)}
 LABEL_SIZE = R.LABEL_SIZE            # 17.0, a label under an element
+
+# The models whose activity names are drawn *inside* their box rather than
+# under it. The strategic view has to read as one picture, so an activity
+# carries its name where the reader looks for it and the lane needs no room
+# under the shape; the operational diagrams label under the shape, which is
+# the style the W02 tutorial models use. Named by file, so that re-running a
+# layout reproduces the same choice instead of depending on a flag.
+NAMES_INSIDE = ("patient-pathway-all-entities.bpmn",)
+INSIDE_SIZE = 12.0                   # the size a name drawn inside a box is cut for
 FLOW_SIZE = R.FLOW_SIZE              # 14.0, a label beside a flow
 LINE = R.LINE_SPACING
 
@@ -63,6 +72,9 @@ COL_PAD = 20.0
 MIN_GAP = 100.0                      # between two columns
 TRACK = 26.0                         # between two vertical runs in one gap
 CORRIDOR_MIN = 34.0                  # a clear band at the foot of every lane
+NOTE_SIZE = 12.0                     # a note is drawn at the size its box was cut for
+NOTE_MAX_WIDTH = 1400.0              # and wraps rather than crossing the pool
+NOTE_GAP = 12.0                      # between two notes, and above the first
 CORRIDOR_MAX = 130.0                 # past this a lane is mostly empty space
 EXPANSION_LIMIT = 90000              # give up on a search that finds nothing
 OUTSIDE = 150.0                      # between the hospital pool and the others
@@ -120,6 +132,15 @@ class Model(object):
                 "id": el.get("id"), "src": el.get("sourceRef"), "tgt": el.get("targetRef"),
                 "name": el.get("name") or "",
                 "condition": (condition.text or "").strip() if condition is not None else ""}
+
+        # A text annotation is an artifact, not a flow node: it carries
+        # information about the process rather than a step in it, so it is
+        # placed as a block of text and takes no part in the layering.
+        self.annotations = []
+        for el in self.process.iter(BPMN + "textAnnotation"):
+            text = el.find(BPMN + "text")
+            if text is not None and (text.text or "").strip():
+                self.annotations.append({"id": el.get("id"), "text": text.text.strip()})
 
         self.lanes = []
         for lane in self.process.iter(BPMN + "lane"):
@@ -221,8 +242,22 @@ def label_height(text, size, limit):
     return len(label_lines(text, size, limit)) * size * LINE
 
 
-def task_width(name):
-    """Widen a task until its name needs no more than three lines."""
+def names_inside(model):
+    """True for a model whose activities carry their name inside the box."""
+    return os.path.basename(model.path) in NAMES_INSIDE
+
+
+def task_width(name, inside=False):
+    """Size a task to its name.
+
+    With the name under the box, the box only has to be wide enough for the name
+    to wrap to three lines. With the name *in* the box, the box is what has to
+    hold it: it is cut to the name at the size the export draws an in-box name
+    at, so the name sits on one line inside it instead of being squeezed by a box
+    that was sized for a column of text below.
+    """
+    if inside:
+        return min(300.0, max(150.0, math.ceil(R.text_width(name, INSIDE_SIZE) + 30.0)))
     for width in (150.0, 180.0, 210.0, 240.0):
         if len(R.wrap(name, LABEL_SIZE, width)) <= 3:
             return width
@@ -241,7 +276,8 @@ def place(model, layer):
     widths = {}
     for col, nodes in columns.items():
         widths[col] = max([SIZE[n["kind"]][0] if n["kind"] != "task"
-                           else task_width(n["name"]) for n in nodes] + [60.0])
+                           else task_width(n["name"], names_inside(model))
+                           for n in nodes] + [60.0])
 
     # a gap has to be wide enough for the vertical runs that pass through it
     def needs_gap(flow):
@@ -307,14 +343,61 @@ def place(model, layer):
         lane_heights[lane["id"]] = LANE_HEADER + tallest + corridor + LANE_PAD_BOTTOM
         lane_shapes[lane["id"]] = per_column
 
+    # A lane with no activity of its own is a band carrying a name and nothing
+    # else. At the level a strategic model is drawn at, several teams appear
+    # only inside an activity that merges a whole stage of the pathway, and
+    # giving each of them the height of a working lane is most of the empty
+    # space in the picture - so their band is cut to the room the name needs.
+    # Nothing is routed through them: a band that holds no activity holds no
+    # flow that has to run along it.
+    for lane in model.lanes:
+        if not [m for m in lane["members"] if m in model.nodes]:
+            lane_heights[lane["id"]] = LANE_HEADER + LANE_PAD_BOTTOM
+
     content_width = x - gap.get(ordered[-1], MIN_GAP)
     pool_width = content_width + POOL_PAD_X
     pool_top = 120.0
+    # The pool carries its name at the foot of its left header, turned on its
+    # side, so the name's own length is the height of that box (see
+    # `write_diagram`). A last lane shorter than that box puts the lane's label
+    # and the pool's name in the same place, which the layout check reports as
+    # two labels overlapping - and a lane with no activity is short, so a pool
+    # whose bottom lane is a team with no activity of its own (a strategic view
+    # merged by stage) hits it every time. The band is grown to hold the name
+    # rather than the name being moved, which keeps it at the foot of the header
+    # where a horizontal pool expects it.
+    hospital = next((p for p in model.participants if p["processRef"] == model.process_id), None)
+    pool_name_h = min(140.0, R.text_width(hospital["name"] if hospital else "Hospital",
+                                          LABEL_SIZE))
+    if model.lanes:
+        last = model.lanes[-1]["id"]
+        lane_heights[last] = max(lane_heights[last], pool_name_h + LANE_PAD_BOTTOM + 12.0)
     lane_y, y = {}, pool_top + POOL_HEADER
     for lane in model.lanes:
         lane_y[lane["id"]] = y
         y += lane_heights[lane["id"]]
     pool_height = y - pool_top + POOL_PAD_Y
+
+    # The notes sit in a band inside the pool, under the last lane, one line
+    # each where the pool is wide enough for that. They say something about the
+    # process as a whole - who its customer is, which systems it exchanges
+    # information with - so they are drawn where a reader looks for them rather
+    # than attached to one activity, and the pool grows to hold them.
+    pool_x = 120.0 - POOL_PAD_X + 40.0
+    # clear of the pool's own name, which sits at the foot of the left header
+    # turned on its side (see `write_diagram`), so the notes start to the right
+    # of it and the two do not read as one block of text
+    note_width = min(NOTE_MAX_WIDTH, pool_width - 120.0)
+    note_boxes = []
+    note_y = y + NOTE_GAP
+    for annotation in model.annotations:
+        lines = R.wrap(annotation["text"], NOTE_SIZE, note_width - 30.0)
+        height = len(lines) * NOTE_SIZE * LINE + 16.0
+        note_boxes.append({"id": annotation["id"], "x": pool_x + 48.0, "y": note_y,
+                           "w": note_width, "h": height})
+        note_y += height + NOTE_GAP
+    if note_boxes:
+        pool_height = max(pool_height, note_y + POOL_PAD_Y - pool_top)
 
     # place the activities, and keep the columns aligned on the lattice
     geometry = {}
@@ -327,7 +410,7 @@ def place(model, layer):
                                                    - block) / 2.0)
             for node in nodes:
                 width = (SIZE[node["kind"]][0] if node["kind"] != "task"
-                         else task_width(node["name"]))
+                         else task_width(node["name"], names_inside(model)))
                 x = snap(x_of_col[col] + (widths[col] - width) / 2.0)
                 geometry[node["id"]] = {"x": x, "y": snap(cursor), "w": width,
                                         "h": SIZE[node["kind"]][1]}
@@ -346,7 +429,8 @@ def place(model, layer):
                                 "w": 36.0, "h": 36.0}
 
     return {"geometry": geometry, "lane_y": lane_y, "lane_heights": lane_heights,
-            "pool": {"x": 120.0 - POOL_PAD_X + 40.0, "y": pool_top,
+            "notes": note_boxes,
+            "pool": {"x": pool_x, "y": pool_top,
                      "w": pool_width, "h": pool_height},
             "content_right": 120.0 + content_width, "x_of_col": x_of_col,
             "lane_index": lane_index}
@@ -357,7 +441,10 @@ def node_height(model, node):
     name = node["name"]
     if not name:
         return SIZE[node["kind"]][1]
-    width = SIZE[node["kind"]][0] if node["kind"] != "task" else task_width(name)
+    if node["kind"] == "task" and names_inside(model):
+        return SIZE[node["kind"]][1] + 4.0        # the name is drawn in the box
+    width = (SIZE[node["kind"]][0] if node["kind"] != "task"
+             else task_width(name, names_inside(model)))
     limit = width if node["kind"] == "task" else max(width, 190.0)
     height = SIZE[node["kind"]][1]
     room = label_height(name, LABEL_SIZE, limit)
@@ -651,8 +738,16 @@ def route_one(router, flow, geometry, make_region, pool_region, strict):
     return points
 
 
-def shape_crossings(routes, geometry, flows, boundary_of):
-    """Flows whose line would cut across an activity it does not belong to."""
+def shape_crossings(routes, geometry, flows, boundary_of, strict=False):
+    """Flows whose line would cut across an activity it does not belong to.
+
+    `strict` is the rule the layout check reads the drawn diagram against, and it does not exempt
+    the activity a boundary event hangs off - a line drawn across the box is a line drawn across the
+    box. The routing uses the looser rule to repair offenders (a boundary event is drawn on its
+    host's border, so a repair path leaving it may have to run along that host), and the strict
+    count decides between the candidate orderings, so a layout that keeps the lines off the boxes is
+    preferred wherever one exists.
+    """
     offenders = set()
     for fid, points in routes.items():
         flow = flows[fid]
@@ -660,7 +755,8 @@ def shape_crossings(routes, geometry, flows, boundary_of):
             for nid, box in geometry.items():
                 if nid in (flow["src"], flow["tgt"]):
                     continue
-                if boundary_of.get(flow["src"]) == nid or boundary_of.get(flow["tgt"]) == nid:
+                if not strict and (boundary_of.get(flow["src"]) == nid
+                                   or boundary_of.get(flow["tgt"]) == nid):
                     continue          # the activity a boundary event hangs off
                 if R._rect_hits_segment((box["x"], box["y"], box["w"], box["h"]), p, q, inner=1.0):
                     offenders.add(fid)
@@ -756,17 +852,28 @@ def overlaps(a, b, gap=0.0):
 
 
 class LabelPlacer(object):
-    """Places labels, and refuses to let them collide."""
+    """Places labels, and refuses to let them collide.
 
-    def __init__(self, width, height):
+    `avoid` holds the activities and gateways already drawn. A label that would be set across one of
+    them is not free either: a flow's label is pushed along its line until it clears the shapes, and
+    only accepted over one when the flow has nowhere else to put it.
+    """
+
+    def __init__(self, width, height, avoid=()):
         self.boxes = []
+        self.avoid = list(avoid)
         self.width = width
         self.height = height
 
     def free(self, box):
         if box[0] < 0 or box[1] < 0 or box[0] + box[2] > self.width or box[1] + box[3] > self.height:
             return False
+        if any(overlaps(box, shape, 1.0) for shape in self.avoid):
+            return False
         return not any(overlaps(box, other, 1.0) for other in self.boxes)
+
+    def clear_of_shapes(self, box):
+        return not any(overlaps(box, shape, 1.0) for shape in self.avoid)
 
     def take(self, box):
         self.boxes.append(box)
@@ -776,6 +883,11 @@ class LabelPlacer(object):
         """The first candidate box that is free, or the widest one if none is."""
         for box in candidates:
             if self.free(box):
+                return self.take(box)
+        # Nothing is free: take the first candidate that at least clears the shapes, and only then
+        # the first one at all. A label over another label is busy; a label over a task is wrong.
+        for box in candidates:
+            if self.clear_of_shapes(box):
                 return self.take(box)
         fallback = candidates[0]
         return self.take(fallback)
@@ -788,7 +900,7 @@ def bounds_xml(x, y, w, h, indent):
 
 
 def write_diagram(model, geometry, routes, lane_boxes, pool_box, other_pools, labels,
-                  message_routes, plane_id):
+                  message_routes, plane_id, notes=()):
     hospital = next((p for p in model.participants if p["processRef"] == model.process_id),
                     {"id": "Participant_Hospital", "name": "Hospital"})
     lines = ['  <bpmndi:BPMNDiagram id="BPMNDiagram_1">',
@@ -824,6 +936,14 @@ def write_diagram(model, geometry, routes, lane_boxes, pool_box, other_pools, la
         lines.append('      <bpmndi:BPMNShape id="%s_di" bpmnElement="%s" isHorizontal="true">'
                      % (pool["id"], pool["id"]))
         lines.append(bounds_xml(pool["x"], pool["y"], pool["w"], pool["h"], "        "))
+        lines.append("      </bpmndi:BPMNShape>")
+
+    # a note carries its text in the element and is drawn in the box recorded
+    # here, so it needs a shape and nothing else - no edge, no label box
+    for note in notes:
+        lines.append('      <bpmndi:BPMNShape id="%s_di" bpmnElement="%s">'
+                     % (note["id"], note["id"]))
+        lines.append(bounds_xml(note["x"], note["y"], note["w"], note["h"], "        "))
         lines.append("      </bpmndi:BPMNShape>")
 
     def shape_order(node):
@@ -926,7 +1046,10 @@ def relayout(path, verbose=True):
                     pool["y"] + CELL <= y <= pool["y"] + pool["h"] - CELL)
         return region
 
-    placer = LabelPlacer(canvas_w, canvas_h)
+    # The element and gateway boxes, which a flow label must not be set across. The lanes and pools
+    # are not in this list: they are large and a label inside one is exactly where it belongs.
+    shapes = [(g["x"], g["y"], g["w"], g["h"]) for g in geometry.values()]
+    placer = LabelPlacer(canvas_w, canvas_h, avoid=shapes)
     labels = {}
 
     # element labels first: they are what a reader needs most
@@ -934,6 +1057,8 @@ def relayout(path, verbose=True):
         box = geometry.get(node["id"])
         if box is None or not node["name"]:
             continue
+        if node["kind"] == "task" and names_inside(model):
+            continue                              # drawn inside the box, no label box
         width = box["w"] if node["kind"] != "task" else box["w"] + 30.0
         limit = width if node["kind"] == "task" else max(width, 190.0)
         lines = R.wrap(node["name"], LABEL_SIZE, limit)
@@ -1040,13 +1165,15 @@ def relayout(path, verbose=True):
                     routes[flow["id"]] = points
                     router.reserve(points)
             crossings = count_crossings(routes)
+            across_boxes = len(shape_crossings(routes, geometry, by_id, boundary_of, strict=True))
             if verbose:
-                print("      %-16s %-6s %2d crossings, %d of %d routed"
+                print("      %-16s %-6s %2d crossings, %d of %d routed, %d across a box"
                       % (name, "strict" if strict else "shared", crossings,
-                         len(routes), len(routable)))
-            if best is None or (crossings, -len(routes)) < (best[0], -len(best[1])):
-                best = (crossings, routes)
-    routes = best[1]
+                         len(routes), len(routable), across_boxes))
+            if best is None or ((across_boxes, crossings, -len(routes))
+                                < (best[0], best[1], -len(best[2]))):
+                best = (across_boxes, crossings, routes)
+    routes = best[2]
 
     # flow labels beside their flow, near the branch they belong to
     for flow in model.flows.values():
@@ -1072,7 +1199,7 @@ def relayout(path, verbose=True):
                 candidates.append((p[0] - text_w - 8.0, mid - height / 2.0, text_w, height))
             # and further out from the line, so a label has somewhere to go when
             # an element label is sitting where it wants to be
-            for shift in (10.0, 22.0, 34.0):
+            for shift in (10.0, 22.0, 34.0, 48.0, 64.0, 82.0):
                 if p[1] == q[1]:
                     mid = (p[0] + q[0]) / 2.0
                     candidates.append((mid - text_w / 2.0, p[1] - height - 6.0 - shift, text_w, height))
@@ -1146,7 +1273,7 @@ def relayout(path, verbose=True):
 
     plane_id = model.collaboration_id or model.process_id
     diagram = write_diagram(model, geometry, routes, lane_boxes, pool, other_pools, labels,
-                            message_routes, plane_id)
+                            message_routes, plane_id, layout.get("notes", ()))
     text = open(path, encoding="utf-8", newline="").read()
     newline = "\r\n" if "\r\n" in text else "\n"
     diagram = diagram.replace("\n", newline)

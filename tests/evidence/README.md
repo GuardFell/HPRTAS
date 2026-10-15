@@ -15,6 +15,18 @@ For example, `TC-01_normal-referral-accepted_release-1.0_2026-09-25.png`.
 carry a `TC-` id covers a run that spans several test cases, and what it covers is described in its
 own header.
 
+## The feedback-pass records
+
+Two files in this directory were written by the pass of 2026-10-13 and name the working tree rather
+than a commit, because the pass is uncommitted:
+
+- `feedback-pass-static-checks-and-forms_working-tree_2026-10-13.txt` - the binding, layout, bundle
+  and export checks, the form-validation policy and the `@bpmn-io/form-js` import and validation
+  check.
+- `workers-and-models_working-tree_2026-10-13.txt` - the unit suite and the engine run, with the
+  twelve operational-model scenarios (including the declined confirmation, the reschedule and the
+  pathway end to end) written out per task.
+
 ## What each file has to record
 
 Every piece of evidence identifies the version under test, states what the run covers and what it

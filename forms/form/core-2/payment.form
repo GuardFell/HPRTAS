@@ -10,7 +10,9 @@
           "key": "treatmentRequestId",
           "label": "Treatment Request ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -31,10 +33,22 @@
             "required": true
           },
           "values": [
-            { "label": "Hospital Funded", "value": "hospital" },
-            { "label": "Approved Insurer", "value": "insurer" },
-            { "label": "Patient Payment", "value": "patient" },
-            { "label": "Exempt", "value": "exempt" }
+            {
+              "label": "Hospital Funded",
+              "value": "hospital"
+            },
+            {
+              "label": "Approved Insurer",
+              "value": "insurer"
+            },
+            {
+              "label": "Patient Payment",
+              "value": "patient"
+            },
+            {
+              "label": "Exempt",
+              "value": "exempt"
+            }
           ]
         },
         {
@@ -42,7 +56,9 @@
           "key": "paymentReference",
           "label": "Payment Reference",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         }
       ]

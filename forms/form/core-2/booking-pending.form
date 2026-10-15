@@ -10,7 +10,9 @@
           "key": "treatmentRequestId",
           "label": "Treatment Request ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -40,7 +42,10 @@
           "key": "notifiedTeam",
           "label": "Team Notified",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         },
         {
@@ -57,13 +62,19 @@
           "key": "recordedBy",
           "label": "Recorded By",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         },
         {
           "type": "textarea",
           "key": "pendingNotes",
-          "label": "Notes"
+          "label": "Notes",
+          "validate": {
+            "maxLength": 2000
+          }
         }
       ]
     }

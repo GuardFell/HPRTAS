@@ -1,8 +1,8 @@
 # Camunda Forms
 
 The Camunda Forms the staff fill in, one `.form` file per form, and the user tasks in the
-operational models they are bound to. Every one of the 58 user tasks in the five operational models
-binds a form.
+operational models they are bound to. Every one of the 61 user tasks binds a form, and the end-to-end
+process binds one more on its start event, so an instance is started with the referral it belongs to.
 
 ## How a form is bound to a task
 
@@ -83,6 +83,30 @@ the two have different jobs: the `value` is what the model's gateway and the wor
 not be touched, while the `label` is free to be reworded. A picker that shows "Payment Settled" and
 writes `payment_settled` is working as intended.
 
+### Input validation
+
+Beyond `required`, the forms carry the validation the fields need, applied from one set of rules by
+`tools/apply_form_validation.py` and checked against the same rules by
+`tools/verify_hprtas_bpmn_bindings.py`:
+
+* a reference (`referralId`, `patientId`, `treatmentRequestId`, `appointmentReference`,
+  `paymentReference`, `consultationId`, `enquiryReference`, `authorisationReference`) has to look like
+  one, with a message that says so rather than the pattern;
+* an **NHS number is ten digits** and nothing else (BR-46), which is the first half of the
+  identification rule the `referral-check` and `referral-start` forms carry;
+* a field that names a person or a team has to contain a letter, so `12345` is not a name;
+* an upper bound on the numbers the process acts on (`numberOfCycles`, `reminderNumber`,
+  `contactAttemptNumber`, `requestedWindow`, the money fields) and on free text;
+* the dates that are future commitments - a treatment start date, a rescheduled date, an alternative
+  offered - are marked `disallowPassedDates`, so the date picker does not offer a day in the past.
+
+Re-running the script is a no-op, and the checks fail if a form drifts from the policy, so a field
+cannot quietly lose its rule. What the forms cannot express is a rule that depends on another field:
+`missingItems` is required when the documents are incomplete and meaningless when they are complete,
+and `confirmationBasis` has to be answered `Not Applicable` where the appointment was not confirmed.
+Both are stated in the field's own description, and both are refused by the worker or the gateway that
+reads them.
+
 ### `required` on a checkbox means "must be ticked"
 
 The validator rejects an unchanged checkbox when it is required:
@@ -107,7 +131,8 @@ needs a model change — a gateway on `fundingRoute`, or an explicit acknowledge
 form change, and that decision is not taken here.
 
 Where the answer really is only ever "yes" — `patientIdentificationConfirmed`, `letterCorrected`,
-`referrerNotified`, `appointmentConfirmed` — the field is required. A boolean whose false answer is
+`referrerNotified` — the field is required. `appointmentConfirmed` used to be one of those; it is gone,
+because the outcome it recorded has become a choice with more than one answer (below). A boolean whose false answer is
 meaningful and which nothing reads uses a Yes/No `select` instead, so the answer is always explicit.
 
 ## The forms and what they cover
@@ -144,11 +169,6 @@ method, the attempt number, the outcome and any notes. Its outcome values are th
 branches on: `contacted` reaches the appointment being arranged, `alternative_requested` returns to
 preparing the request, and `unanswered` and `wrong_number` record another attempt.
 
-`cancellation-record` is bound to recording a cancellation, a decline or a non-attendance in
-`core-4`. It records the event and its date, and then the three decisions the model routes on:
-whether a paid appointment is affected, whether another appointment is to be offered, and whether
-the pathway needs a clinical review.
-
 `no-suitable-slot`, `delay-review`, `unbooked-case-review` and `referrer-notification` cover what
 happens when the appointment the clinician asked for cannot be found: the scheduling outcome and the
 action taken are recorded, the pathway team reviews the case, and the referring organisation is
@@ -166,9 +186,24 @@ retried succeeds, with the reason for the failure and the alternative channel th
 reached on.
 
 `appointment-confirmation` is bound to confirming a treatment appointment in `core-2` and a
-follow-up appointment in `core-4`. It records the basis for confirming — funding in place, payment
-settled, payment not required or an exemption — and the recipients and document type for the
-notification that follows.
+follow-up appointment in `core-4`. What happened is recorded as `confirmationOutcome`, and it is more
+than a note: the model routes on it. `confirmed` and `no_response` keep the appointment and notify the
+patient; `reschedule_requested` records the change and the booking is sought again;
+`declined_by_patient` and `cancelled_by_hospital` record the cancellation and release the appointment.
+The basis for confirming — funding in place, payment settled, payment not required, an authorised
+exemption, a recorded payment arrangement, or Not Applicable where the appointment was not confirmed —
+is recorded beside it (BR-15), as are the recipients and document type for the notification that
+follows.
+
+`appointment-reschedule` is bound to the two reschedule tasks, one in `core-2` and one in `core-4`. It
+records the date the patient asked for, why the appointment is moving, that the patient has been told,
+and who recorded it. The date cannot be in the past, and it is what the booking is sought for next.
+
+`cancellation-record` records a cancellation, a decline, a non-attendance or an appointment the
+hospital cancelled, and the three decisions the model routes on: whether a paid appointment is
+affected, whether another appointment is to be offered, and whether the pathway needs a clinical
+review. In `core-4` a followed-up appointment the patient declines reaches the same task a
+cancellation message reaches, so the decisions are made in one place.
 
 `patient-assessment` is bound to assessing the patient and explaining the treatment options in
 `core-2`. It records the diagnosis and that it was discussed, and takes the two clinical answers the
@@ -238,7 +273,7 @@ result, and `fitToContinue`, which is the clinical decision the model branches o
 ## Every binding
 
 A form shared by several tasks is listed once per task, because the same form is the variable
-contract for each of them. Every user task in the five operational models appears exactly once.
+contract for each of them. Every user task in the operational models appears exactly once.
 
 `by-core.md` arranges the same bindings by the model that uses them, with the lane and the candidate
 group of each task and the set of forms a model needs deployed with it, which is the arrangement a
@@ -246,6 +281,8 @@ demonstration works from.
 
 | Form | Tasks bound to it |
 |---|---|
+| `appointment-reschedule.form` | `N_TB_RescheduleAppointment`, `N_OB_RecordReschedule` |
+| `referral-start.form` | the start event of `core-0-patient-pathway-end-to-end` |
 | `appointment-confirmation.form` | `N_TB_ConfirmAppointment`, `N_OB_ConfirmFollowUp` |
 | `authorisation-return.form` | `N_TB_ReturnRequest` |
 | `authorisation-verification.form` | `N_TB_VerifyAuthorisation` |
@@ -327,11 +364,15 @@ with the task completion call instead, so they do not exercise the form bindings
 
 What has been checked about the forms themselves:
 
-- All 41 deploy to the engine, and every user task in the five operational models resolves a form
-  key.
-- All 41 import in `@bpmn-io/form-js`, the library Tasklist renders them with, and each one's
-  submission carries exactly its own field keys and nothing else, at the top level — 293 fields,
-  293 variables. That is the check that a field's output name is its `key`.
+- All 43 deploy to the engine, and every user task in the six operational models resolves a form key,
+  as does the start event of the end-to-end process.
+- All 43 import in `@bpmn-io/form-js`, and the validation rules fire: a reference in the wrong shape
+  is refused with the message the form carries, a name of digits alone is refused, an NHS number that
+  is not ten digits is refused, and a form whose fields are all answered reports nothing.
+  `node tools/check_forms_formjs.mjs` runs that check against the viewer library (with `jsdom` and
+  `@bpmn-io/form-js-viewer` installed somewhere the loader can find them), and the transcript is in
+  `../tests/evidence/`.
+
 - The form bound to `N_MS_CheckReferral` renders in Tasklist with all ten of its fields, becomes
   editable once the task is assigned, and enables `Complete Task` only when the required fields are
   filled.

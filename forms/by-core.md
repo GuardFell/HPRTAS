@@ -1,7 +1,7 @@
 # The forms, by operational model
 
-Every user task in `../models/operational/` binds a Camunda Form, and each of the 41 `.form` files
-in this directory is one a model points at. `README.md` is the reference for the set: how a form is
+Every user task in `../models/operational/` binds a Camunda Form, and the end-to-end process binds
+one on its start event; each of the 43 `.form` files in this directory is one a model points at. `README.md` is the reference for the set: how a form is
 bound to a task, the five schema rules that fail silently, and every binding as a single list. This
 file is the same set of bindings **arranged by the model that uses them**, which is the arrangement
 a demonstration needs - deploy a model, and the forms it resolves are the ones listed under it.
@@ -14,14 +14,15 @@ is what resolves it. So the table below is also the list of form keys each model
 
 | Model | File | Lanes | User tasks | Forms bound |
 |---|---|---|---|---|
+| `core-0` | `core-0-patient-pathway-end-to-end.bpmn` | 1 | 0 | 1 (start form) |
 | `core-1` | `core-1-referral-and-new-patient-appointment.bpmn` | 4 | 13 | 10 |
-| `core-2` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | 4 | 18 | 16 |
+| `core-2` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | 4 | 20 | 18 |
 | `core-3` | `core-3-clinic-letter-and-pathway-escalation.bpmn` | 4 | 10 | 8 |
-| `core-4` | `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | 5 | 15 | 12 |
+| `core-4` | `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | 5 | 16 | 13 |
 | `core-5` | `core-5-missing-information-message-exchange.bpmn` | 1 | 2 | 2 |
-| **all five** | | | **58** | **41 distinct** |
+| **all six** | | | **61 + 1 start form** | **43 distinct** |
 
-Five of the 41 forms are bound in more than one model. They are listed under each model that binds
+Seven of the 43 forms are bound in more than one model. They are listed under each model that binds
 them, because the same form is the variable contract for every task that binds it and those
 contracts differ from model to model:
 

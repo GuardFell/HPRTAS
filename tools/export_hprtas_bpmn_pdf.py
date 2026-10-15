@@ -42,12 +42,25 @@ TARGET_PT = 10.0          # point size an element label is set at on the page
 PAD = 20.0                # model units of white space around the diagram
 
 NODE_TAGS = ("startEvent", "endEvent", "userTask", "serviceTask", "manualTask",
+             "task", "receiveTask", "sendTask", "businessRuleTask",
              "exclusiveGateway", "parallelGateway", "inclusiveGateway",
+             "eventBasedGateway", "complexGateway",
              "boundaryEvent", "intermediateCatchEvent", "intermediateThrowEvent",
              "callActivity", "subProcess")
 
 CONTAINER_INK = (150, 154, 160)
 LANE_FILL = (252, 252, 252)
+
+
+def inner_box(box, pad_x=14.0, pad_y=8.0):
+    """The room inside a shape for a name drawn in it, clear of the border.
+
+    An element with no label box of its own carries its name inside its shape -
+    which is how the strategic model draws its activities - and the name has to
+    stay off the border rather than touch it.
+    """
+    return (box[0] + pad_x, box[1] + pad_y, max(1.0, box[2] - 2.0 * pad_x),
+            max(1.0, box[3] - 2.0 * pad_y))
 
 
 def bounds(el):
@@ -83,10 +96,20 @@ class Diagram(object):
         self.edges = []        # dict(kind, points, label box, text)
 
         names = {}
+        markers = {}
         for tag in ("participant", "lane") + NODE_TAGS:
             for el in root.iter(BPMN + tag):
                 if el.get("id"):
                     names[el.get("id")] = (tag, el.get("name") or "")
+            for el in root.iter(BPMN + tag):
+                if not el.get("id"):
+                    continue
+                # what an event catches: the marker drawn inside its ring
+                markers[el.get("id")] = {
+                    "message": el.find(BPMN + "messageEventDefinition") is not None,
+                    "error": el.find(BPMN + "errorEventDefinition") is not None,
+                    "timer": el.find(BPMN + "timerEventDefinition") is not None,
+                }
 
         flows = {}
         for tag in ("sequenceFlow", "messageFlow", "association"):
@@ -120,6 +143,7 @@ class Diagram(object):
                 "name": name,
                 "box": boxes[eid],
                 "label": labels.get(eid),
+                **markers.get(eid, {}),
             }
 
         for edge in root.iter(BPMNDI + "BPMNEdge"):
@@ -151,10 +175,28 @@ class Diagram(object):
         # three model units - unreadable, and far smaller than the element
         # labels beside them. The orientation is respected here, and the label is
         # drawn turned to match.
+        # A text annotation is an artifact: its text is the element's content
+        # and it is drawn in the box the model gives it. Its size is worked out
+        # separately from the element labels, because a note is a sentence and
+        # letting one set the size every element label is drawn at would shrink
+        # the labels to fit the note.
+        self.notes = []
+        for el in root.iter(BPMN + "textAnnotation"):
+            text = el.find(BPMN + "text")
+            box = boxes.get(el.get("id"))
+            if text is not None and box is not None and (text.text or "").strip():
+                self.notes.append({"text": text.text.strip(), "box": box})
+        self.note_size = self._size_for(
+            [(n["text"], (0.0, 0.0, n["box"][2] - 26.0, n["box"][3] - 8.0), False)
+             for n in self.notes], 9.0)
+
         self.container_size = self._size_for(
             [(nm, lb, _is_vertical(lb)) for _, nm, lb in self.pools + self.lanes], 16.0)
+        # measured against the box the name will actually be drawn in: the label
+        # box where the model gives one, the inside of the shape where it does not
         self.node_size = self._size_for(
-            [(s["name"], s["label"], False) for s in self.shapes.values()], 13.0)
+            [(s["name"], s["label"] or inner_box(s["box"]), False)
+             for s in self.shapes.values()], 13.0)
         self.flow_size = self._size_for(
             [(e["text"], e["label"], False) for e in self.edges], 11.0)
 
@@ -193,6 +235,9 @@ class Diagram(object):
             if s["label"]:
                 xs += [s["label"][0], s["label"][0] + s["label"][2]]
                 ys += [s["label"][1], s["label"][1] + s["label"][3]]
+        for note in self.notes:
+            xs += [note["box"][0], note["box"][0] + note["box"][2]]
+            ys += [note["box"][1], note["box"][1] + note["box"][3]]
         for e in self.edges:
             for x, y in e["points"]:
                 xs.append(x)
@@ -292,6 +337,26 @@ def render(diagram, png_path, scale=SCALE, pad=PAD):
         if kind == "task":
             draw.rounded_rectangle(box, radius=10 * scale, fill="white",
                                    outline=R.INK, width=max(1, int(round(1.5 * scale))))
+        elif kind == "call":
+            # a task that runs another process: the same box, the thicker border the notation gives it
+            draw.rounded_rectangle(box, radius=10 * scale, fill="white",
+                                   outline=R.INK, width=max(1, int(round(2.6 * scale))))
+        elif kind == "boundary":
+            # an event on the border of the activity it is attached to: a double ring with the
+            # marker of what it catches
+            R._ring(draw, box, 1.5 * scale, 0)
+            R._ring(draw, (x + 3.5 * scale, y + 3.5 * scale,
+                           x + w - 3.5 * scale, y + h - 3.5 * scale), 1.0 * scale, 0)
+            if s.get("message"):
+                R._envelope(draw, box, scale)
+            elif s.get("error"):
+                R._lightning(draw, box, scale)
+            elif s.get("timer"):
+                R._clock(draw, box, scale)
+        elif kind == "catch":
+            R._ring(draw, box, 1.5 * scale, 0)
+            if s.get("message"):
+                R._envelope(draw, box, scale)
         elif kind == "start":
             R._ring(draw, box, 1.5 * scale, 0)
         elif kind == "end":
@@ -301,6 +366,13 @@ def render(diagram, png_path, scale=SCALE, pad=PAD):
             draw.polygon([(cx, cy - r), (cx + r, cy), (cx, cy + r), (cx - r, cy)],
                          fill="white", outline=R.INK, width=max(1, int(round(1.5 * scale))))
             R._gateway_marker(draw, kind, cx, cy, r, scale)
+        else:
+            # An element whose kind this drawing does not know is an element that would be dropped
+            # from the export without a word - which is how the boundary events and the call
+            # activities went missing once. Failing here is the point.
+            raise SystemExit(
+                "the export does not know how to draw %s (%s): add its kind to the drawing"
+                % (s.get("name") or s, kind))
 
     # --- 4. labels: containers first, then nodes, then flows
     for box, name, lb in diagram.pools:
@@ -321,18 +393,54 @@ def render(diagram, png_path, scale=SCALE, pad=PAD):
                           origin, align="left" if lb else "center")
     for s in diagram.shapes.values():
         if s["name"]:
-            # a task whose label has no stored box carries its name centred in
-            # the task itself, which is how the modeller draws it
-            R._draw_label(draw, s["name"], s["label"] or s["box"],
+            # an element whose label has no stored box carries its name centred
+            # in the shape itself, which is how the modeller draws a task
+            R._draw_label(draw, s["name"], s["label"] or inner_box(s["box"]),
                           diagram.node_size, scale, origin)
     for e in diagram.edges:
         if e["text"] and e["label"]:
             R._draw_label(draw, e["text"], e["label"], diagram.flow_size, scale,
                           origin, color=R.GRAY)
 
+    # --- 5. notes: the model's text annotations, each in the box it was given
+    for note in diagram.notes:
+        x, y, w, h = note["box"]
+        px, py = off((x, y))
+        pw, ph = w * scale, h * scale
+        tick = min(10.0 * scale, ph / 3.0)
+        lw = max(1, int(round(1.3 * scale)))
+        draw.line([(px, py), (px, py + ph)], fill=R.GRAY, width=lw)
+        draw.line([(px, py), (px + tick, py)], fill=R.GRAY, width=lw)
+        draw.line([(px, py + ph), (px + tick, py + ph)], fill=R.GRAY, width=lw)
+        R._draw_label(draw, note["text"], (x + 14.0, y + 4.0, w - 20.0, h - 8.0),
+                      diagram.note_size, scale, origin, align="left")
+
     os.makedirs(os.path.dirname(png_path), exist_ok=True)
     img.save(png_path)
     return img, width, height
+
+
+def normalise_timestamp(path, when="D:19800101000000Z"):
+    """Give the PDF a fixed creation date.
+
+    Pillow stamps the file with the wall clock, so exporting the same diagram
+    twice produces two files that differ in nothing but the date - which is
+    churn in every diff and, worse, means an export cannot be reproduced from
+    its version. The date is rewritten to a fixed one after writing, the same
+    way `tests/exports/render-test-plan.py` fixes the timestamps of the zip
+    entries in the test plan's .docx.
+    """
+    with open(path, "rb") as handle:
+        data = handle.read()
+    for field in (b"/CreationDate", b"/ModDate"):
+        start = data.find(field)
+        if start < 0:
+            continue
+        open_paren = data.find(b"(", start)
+        close_paren = data.find(b")", open_paren)
+        data = data[:open_paren + 1] + when.encode("ascii") + data[close_paren:]
+    with open(path, "wb") as handle:
+        handle.write(data)
 
 
 def main():
@@ -352,6 +460,7 @@ def main():
         dpi = SCALE * diagram.node_size * 72.0 / TARGET_PT
         pdf = os.path.join(OUT_DIR, name + ".pdf")
         img.save(pdf, "PDF", resolution=dpi)
+        normalise_timestamp(pdf)
         print("%-52s %5d x %5d px -> %5.1f x %5.1f in at %5.1f dpi, label %.1f units"
               % (name, w, h, w / dpi, h / dpi, dpi, diagram.node_size))
         if args.pdf_only:

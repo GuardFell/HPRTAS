@@ -10,7 +10,9 @@
           "key": "treatmentRequestId",
           "label": "Treatment Request ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
@@ -29,13 +31,17 @@
           "label": "Revised Start Date",
           "validate": {
             "required": true
-          }
+          },
+          "disallowPassedDates": true
         },
         {
           "type": "textarea",
           "key": "specialResources",
           "label": "Special Resources Required",
-          "description": "One resource per line, or separated by commas."
+          "description": "One resource per line, or separated by commas.",
+          "validate": {
+            "maxLength": 2000
+          }
         },
         {
           "type": "textarea",
@@ -43,7 +49,9 @@
           "label": "Reason for the Modification",
           "description": "Only a formally submitted modification is processed. One requested by email, telephone or informal communication is refused.",
           "validate": {
-            "required": true
+            "required": true,
+            "maxLength": 2000,
+            "minLength": 5
           }
         }
       ]
@@ -71,7 +79,10 @@
           "key": "authorisingClinician",
           "label": "Authorising Clinician",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         }
       ]

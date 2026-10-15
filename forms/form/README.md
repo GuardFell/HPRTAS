@@ -6,18 +6,22 @@ The same arrangement is documented, without the copies, in `forms/by-core.md` be
 
 ## Summary
 
-| Folder | Model | User tasks | Forms | Files copied |
+| Folder | Model | Bindings | Forms | Files copied |
 |---|---|---|---|---|
+| `core-0/` | `core-0-patient-pathway-end-to-end.bpmn` | 1 | 1 | 1 |
 | `core-1/` | `core-1-referral-and-new-patient-appointment.bpmn` | 13 | 10 | 10 |
-| `core-2/` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | 18 | 16 | 16 |
+| `core-2/` | `core-2-treatment-authorisation-funding-and-payment.bpmn` | 20 | 18 | 18 |
 | `core-3/` | `core-3-clinic-letter-and-pathway-escalation.bpmn` | 10 | 8 | 8 |
-| `core-4/` | `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | 15 | 12 | 12 |
+| `core-4/` | `core-4-follow-up-cancellation-enquiry-and-refund.bpmn` | 16 | 13 | 13 |
 | `core-5/` | `core-5-missing-information-message-exchange.bpmn` | 2 | 2 | 2 |
-| **all five** | | **58** | **41 distinct** | **48 copies** |
+| **all six** | | **62** | **43 distinct** | **52 copies** |
+
+A binding is a user task's form or the end-to-end process's start form: `core-0` has no user task and
+one start form.
 
 ## The forms that appear in more than one folder
 
-5 of the 41 forms are bound by more than one model. They are copied into each model that binds them, because the variable contract is read by that model's tasks:
+7 of the 43 forms are bound by more than one model. They are copied into each model that binds them, because the variable contract is read by that model's tasks:
 
 | Form | Bound in |
 |---|---|

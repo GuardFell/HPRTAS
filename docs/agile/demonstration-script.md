@@ -3,10 +3,12 @@
 The demonstration `PB-008` asks for. It is written to be run against the repository at an identified
 commit, in front of an audience, without editing anything while it runs.
 
-**What it demonstrates:** the delivered system at an identified version - the five operational models,
-the 41 Camunda Forms bound to their user tasks, and the seven external workers - with the normal path,
-a decision that ends a referral, one exception path that a defect used to block, and the message
-exchange where a process waits for an answer rather than assuming one.
+**What it demonstrates:** the delivered system at an identified version - the six operational models
+(the five stages and the end-to-end process that calls them), the 43 Camunda Forms bound to their user
+tasks or, for the end-to-end process, to its start event, and the eight external workers - with the
+normal path, a decision that ends a referral, one exception path that a defect used to block, the
+message exchange where a process waits for an answer rather than assuming one, and the records the
+workers leave behind in the hospital's own store.
 
 **Read `## What this does not demonstrate` before giving it.** Everything simulated or not
 implemented is listed there, and it is part of the demonstration rather than an apology for it.
@@ -19,7 +21,7 @@ implemented is listed there, and it is part of the demonstration rather than an 
 | Commit to demonstrate | the commit this file is committed in; `git rev-parse --short HEAD` names it |
 | Release tag | `release-2.0` and `submission-2026-09-29`, the tags on the commit this file is committed in. `release-1.0` names the earlier first release |
 | Recorded run in this shape of the tree | `../../tests/evidence/core-5-message-exchange-and-layout-tidy_2c3c2eb_2026-09-28.txt` (the current one: five models, nine scenarios, seven workers, 42 unit and 11 engine tests) and `../../tests/evidence/operational-models-and-forms_end-to-end_57b3c1d_2026-09-28.txt` (the same engine run written out per task, before `core-5` existed) |
-| Defects open at this version | `DEF-07` (no authentication, no enforced role separation), `DEF-08` (no form submitted by a signed-in user), `DEF-10` (simulated ledgers are per worker process), `DEF-14` (a condition on an activity's only outgoing flow is not evaluated) - `../../tests/test-plan.md` section 6 |
+| Defects open at this version | `DEF-07` (no authentication, no enforced role separation), `DEF-08` (no form submitted by a signed-in user), `DEF-14` (a condition on an activity's only outgoing flow is not evaluated) - `../../tests/test-plan.md` section 6. `DEF-10` was closed by the feedback pass: the ledgers are in the hospital's record store now. Open at the *tagged* version but not at the tree this script is read against: none - check the table before the demonstration |
 
 Say the commit out loud at the start. The test plan's rule is that a claim belongs to one version, and
 the same rule applies to a demonstration.
@@ -57,7 +59,7 @@ rehearsal machine's engine answers `8.10.0-alpha5`.
 ### 2. The models and the forms
 
 A model points at its forms **by key**, so Tasklist needs both deployed or a user task shows no form.
-The loops below deploy all five models and all 41 forms, which is what a demonstration of the whole
+The loops below deploy all six models and all 43 forms, which is what a demonstration of the whole
 system needs:
 
 ```bash

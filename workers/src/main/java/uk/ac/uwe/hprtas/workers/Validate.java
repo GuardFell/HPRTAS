@@ -112,8 +112,12 @@ public final class Validate {
       }
 
       case LIST -> {
+        // An empty list is a problem only where the field is required, because then the request
+        // names nothing and cannot be acted on. An optional list that is empty is a legitimate
+        // answer - a booking with no special resources - and it is what a worker that echoes its
+        // own optional list back leaves in the process for the next run of the same activity.
         final List<Object> entries = asList(value);
-        if (entries.isEmpty()) {
+        if (entries.isEmpty() && spec.isRequired()) {
           problems.add(name + " must not be empty");
         } else if (spec.max() != null && entries.size() > spec.max()) {
           problems.add(

@@ -10,13 +10,20 @@
           "key": "patientId",
           "label": "Patient ID",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
           }
         },
         {
           "type": "textfield",
           "key": "appointmentReference",
-          "label": "Appointment Reference"
+          "label": "Appointment Reference",
+          "validate": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001.",
+            "required": true
+          }
         },
         {
           "type": "select",
@@ -37,6 +44,10 @@
             {
               "label": "Did Not Attend",
               "value": "non_attendance"
+            },
+            {
+              "label": "Cancelled by the Hospital",
+              "value": "cancelled_by_hospital"
             }
           ]
         },
@@ -75,7 +86,11 @@
         {
           "type": "textarea",
           "key": "cancellationNotes",
-          "label": "Notes"
+          "label": "Notes",
+          "validate": {
+            "maxLength": 2000,
+            "minLength": 5
+          }
         }
       ]
     },
@@ -105,7 +120,10 @@
           "key": "recordedBy",
           "label": "Recorded By",
           "validate": {
-            "required": true
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
           }
         }
       ]

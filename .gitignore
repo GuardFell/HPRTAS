@@ -28,6 +28,10 @@ workers/config/workers.local.json
 # Worker logs captured through HPRTAS_LOG_FILE
 workers/logs/
 
+# The workers' record store (H2), which holds runtime state rather than anything
+# delivered: the patient register and the ledgers are created when the workers run.
+workers/data/
+
 # Java (external workers, if the Java SDK is used)
 target/
 *.class

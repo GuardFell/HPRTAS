@@ -24,7 +24,9 @@ belongs to rather than to the tree as it stands.
 
 `models/` holds the BPMN. `models/strategic/` contains the high-level view of the wider process,
 `models/socio-technical/` the i\* Strategic Dependency and Strategic Rationale models, and
-`models/operational/` the five executable processes that Camunda runs.
+`models/operational/` the six executable processes that Camunda runs: the five `core-N` stages of
+the pathway and `core-0-patient-pathway-end-to-end`, which invokes them in order through call
+activities so the pathway can also be run and demonstrated as one instance.
 
 `forms/` holds the Camunda Forms the user tasks are bound to, one `.form` file per form, each with
 the form key the model refers to.
@@ -34,9 +36,17 @@ simulated external services they call, and their configuration.
 
 `docs/` holds everything that describes the project rather than implements it: the case study
 summary, the requirements and their traceability, and the backlog, planning and working agreements
-that go with delivering it.
+that go with delivering it. The two written evaluations are here as well - the plan and alignment
+evaluation (`docs/planning/plan-evaluation.md`, with the requirement traceability and the
+stakeholder goals) and the acceptance criteria it judges (`tests/test-plan.md` sections 3 to 6) -
+and each is committed beside a readable Word rendering (`docs/planning/exports/plan-evaluation.docx`,
+`tests/exports/test-plan.docx`).
 
 `tests/` holds the test plan and the evidence of the runs.
+
+`models/exports/` holds the drawings: a PDF and a PNG of every BPMN model, the strategic ones
+included, and, for the i\* models, the PNG of every page and of the two overview figures plus the
+renderer's `istar-sd-hprtas.pdf` and `istar-sr-hprtas.pdf`.
 
 `tools/` holds the scripts that redraw the diagrams, export them and check that the models, the
 forms and the workers agree with each other, so that what is claimed here can be reproduced rather
@@ -87,12 +97,21 @@ cd workers
 mvn compile exec:java
 ```
 
+They keep the hospital's own records - the patient register, the referrals, the appointments, the
+payment and refund ledger, the dispatches and the outstanding information requests - in an embedded
+H2 database beside them (`workers/data/hprtas` by default, `HPRTAS_DB_URL` to point it elsewhere),
+so the records outlive the process that wrote them and a later run retrieves what an earlier one
+recorded. `mvn compile exec:java -Dexec.args="--show-records"` prints what the store holds, and
+deleting `workers/data/` starts the register empty again.
+
 They need Java 21, which is the runtime the engine uses. `mvn compile exec:java -Dexec.args="--check"`
 validates the configuration and the wiring without connecting to the engine, which is useful before
 a demonstration.
 
-The five operational processes are separate, so each is started separately from Tasklist under
-Processes. Complete the user tasks on an instance as it reaches them; each task is assigned to the
+The five stage processes are also deployable and runnable separately, so each is started on its own
+from Tasklist under Processes when a single stage is what is being demonstrated. The end-to-end
+process is started the same way, from its start form, and reaches the stages through call
+activities. Complete the user tasks on an instance as it reaches them; each task is assigned to the
 candidate group its lane represents. `core-4-follow-up-cancellation-enquiry-and-refund` also has
 two message start events, for a cancellation arriving and for a patient enquiry arriving, which are
 started by sending that message rather than from the Processes page:
@@ -125,8 +144,9 @@ deployment that contains no executable process.
 
 ## Deployment configuration
 
-Everything the engine runs is deployed from this repository: the five models in
-`models/operational/`, each with the forms its user tasks resolve. Nothing is configured inside the
+Everything the engine runs is deployed from this repository: the six models in
+`models/operational/`, each with the forms its user tasks resolve (and, for the end-to-end
+process, the form its start event is begun with). Nothing is configured inside the
 engine itself, so the configuration is the files below and the commands above. The strategic model
 and the socio-technical views are not deployed, for the reason just given.
 
@@ -163,7 +183,7 @@ cd workers
 mvn test                                          # the worker unit tests, no engine
 mvn compile exec:java -Dexec.args="--check"               # the configuration and the worker wiring, no engine
 mvn test -Pengine -Dtest=SmokeTest                # the workers against a purpose-built fixture, engine running
-mvn test -Pengine -Dtest=OperationalModelsTest    # the five operational models and the forms, engine running
+mvn test -Pengine -Dtest=OperationalModelsTest    # the operational models and the forms, engine running
 ```
 
 The engine tests are left out of the default build because they need Camunda 8 Run to be up and they

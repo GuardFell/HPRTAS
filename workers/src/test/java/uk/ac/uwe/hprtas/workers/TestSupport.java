@@ -34,6 +34,13 @@ public final class TestSupport {
 
   private static final Path DEFAULTS = Path.of("config", "workers.default.json");
 
+  /**
+   * Each test gets its own in-memory record store, so no test can see another test's records and
+   * none of them touches the file database the workers use when they are run for real.
+   */
+  private static final java.util.concurrent.atomic.AtomicInteger STORE_COUNTER =
+      new java.util.concurrent.atomic.AtomicInteger();
+
   /** The moment the tests fix their clock to, so the dates in the assertions do not move. */
   public static final Instant NOW = Instant.parse("2026-09-16T09:00:00Z");
 
@@ -43,6 +50,11 @@ public final class TestSupport {
   public static final long JOB_KEY = 2251799813685300L;
 
   private TestSupport() {}
+
+  /** A throwaway in-memory record store url, unique to the caller. */
+  public static String throwawayStoreUrl() {
+    return "jdbc:h2:mem:hprtas-test-" + STORE_COUNTER.incrementAndGet() + ";DB_CLOSE_DELAY=-1";
+  }
 
   /** The committed defaults, which is what a test starts from. */
   public static Map<String, Object> defaults() {
@@ -68,6 +80,7 @@ public final class TestSupport {
     for (Object service : ((Map<String, Object>) tree.get("simulatedServices")).values()) {
       ((Map<String, Object>) service).put("latencyMs", 0);
     }
+    ((Map<String, Object>) tree.get("database")).put("url", throwawayStoreUrl());
     return Config.fromTree(tree, Path.of("").toAbsolutePath());
   }
 
@@ -87,22 +100,61 @@ public final class TestSupport {
   /**
    * The same, with the publisher the test wants - the recorder it will assert on, or one that fails
    * so the job-failure path can be exercised.
+   *
+   * Every context gets its own throwaway record store, so a test that builds one context cannot see
+   * another test's records, and a test that builds one context and drives several jobs through it
+   * (which is how the duplicate-prevention rules are tested) sees them all.
    */
   public static WorkerContext buildContext(
       Config config, Instant now, long instanceKey, long jobKey, MessagePublisher messages) {
     return new WorkerContext(
-        now, jobKey, instanceKey, Services.create(config), messages, config, silentLogger());
+        now, jobKey, instanceKey, buildServices(config), messages, config, silentLogger());
+  }
+
+  /** The services on a throwaway store, which is what a unit test drives. */
+  public static Services buildServices(Config config) {
+    return buildServices(config, buildDatabase());
+  }
+
+  /**
+   * The services on a store the caller holds, so a test can inspect what was recorded in it or reuse
+   * it across two worker contexts - which is how a restart is simulated.
+   */
+  public static Services buildServices(
+      Config config, uk.ac.uwe.hprtas.workers.db.Database database) {
+    final Config.SimulatedServices simulated = config.simulatedServices();
+    return new Services(
+        database,
+        new SchedulingService(simulated.scheduling(), database),
+        new TreatmentService(simulated.treatment(), database),
+        new PaymentServiceProvider(simulated.payment(), database),
+        new CorrespondenceService(simulated.correspondence(), database));
+  }
+
+  /** A context over the services the test built, for the cases that need two of them on one store. */
+  public static WorkerContext buildContext(Config config, Services services) {
+    return new WorkerContext(
+        NOW, JOB_KEY, INSTANCE_KEY, services, RecordingMessagePublisher.recording(),
+        config, silentLogger());
+  }
+
+  /** A store of the test's own, never the file database the workers run against. */
+  public static uk.ac.uwe.hprtas.workers.db.Database buildDatabase() {
+    return uk.ac.uwe.hprtas.workers.db.Database.open(
+        new Config.DatabaseSettings(throwawayStoreUrl(), "sa", ""));
   }
 
   /** A context whose payment provider is the one given, so a test can watch what it is asked to do. */
   public static WorkerContext buildContext(Config config, CountingPaymentProvider provider) {
     final Config.SimulatedServices simulated = config.simulatedServices();
+    final uk.ac.uwe.hprtas.workers.db.Database database = buildDatabase();
     final Services services =
         new Services(
-            new SchedulingService(simulated.scheduling()),
-            new TreatmentService(simulated.treatment()),
+            database,
+            new SchedulingService(simulated.scheduling(), database),
+            new TreatmentService(simulated.treatment(), database),
             provider,
-            new CorrespondenceService(simulated.correspondence()));
+            new CorrespondenceService(simulated.correspondence(), database));
     return new WorkerContext(
         NOW, JOB_KEY, INSTANCE_KEY, services, RecordingMessagePublisher.recording(),
         config, silentLogger());
@@ -173,7 +225,8 @@ public final class TestSupport {
    * A payment provider that records whether the hospital asked it to move any money.
    *
    * The rule it exists to check is that the provider is not called at all - not that it answers
-   * something particular. Its ledger is its own, which does not matter for that assertion.
+   * something particular. It therefore has a throwaway store of its own: the test asserts on whether
+   * it was called, and nothing else reads what it recorded.
    */
   public static final class CountingPaymentProvider extends PaymentServiceProvider {
 
@@ -181,7 +234,10 @@ public final class TestSupport {
     private final AtomicBoolean refundRequested = new AtomicBoolean();
 
     public CountingPaymentProvider(Config.PaymentSettings settings) {
-      super(settings);
+      super(
+          settings,
+          uk.ac.uwe.hprtas.workers.db.Database.open(
+              new Config.DatabaseSettings(throwawayStoreUrl(), "sa", "")));
     }
 
     public boolean wasAskedToTakePayment() {
@@ -273,5 +329,14 @@ public final class TestSupport {
   /** Convenience for asserting on a list outcome. */
   public static List<Object> listOf(Object... items) {
     return Vars.list(items);
+  }
+
+  /** A copy of the variables with some of them replaced, for building one case out of another. */
+  public static Map<String, Object> with(Map<String, Object> base, Object... keysAndValues) {
+    final Map<String, Object> copy = new LinkedHashMap<>(base);
+    for (int i = 0; i < keysAndValues.length; i += 2) {
+      copy.put((String) keysAndValues[i], keysAndValues[i + 1]);
+    }
+    return copy;
   }
 }

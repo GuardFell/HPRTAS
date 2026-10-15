@@ -1,0 +1,87 @@
+{
+  "id": "referral-start",
+  "components": [
+    {
+      "type": "group",
+      "label": "Referral",
+      "components": [
+        {
+          "type": "textfield",
+          "key": "referralId",
+          "label": "Referral Reference",
+          "validate": {
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientId",
+          "label": "Patient ID",
+          "validate": {
+            "required": true,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,39}$",
+            "patternErrorMessage": "Use the reference as the system writes it, for example REF-2026-0001."
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "nhsNumber",
+          "label": "NHS Number",
+          "description": "Ten digits. Checked against the patient register, so a patient the hospital already knows is matched rather than duplicated.",
+          "validate": {
+            "required": true,
+            "pattern": "^[0-9]{10}$",
+            "patternErrorMessage": "An NHS number is ten digits, for example 9434765919."
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "patientName",
+          "label": "Patient Name",
+          "validate": {
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
+          }
+        },
+        {
+          "type": "textfield",
+          "key": "referringOrganisation",
+          "label": "Referring Organisation",
+          "validate": {
+            "required": true,
+            "pattern": "^(?=.*[A-Za-z]).+$",
+            "patternErrorMessage": "Enter a name or role that contains letters.",
+            "maxLength": 120
+          }
+        },
+        {
+          "type": "checkbox",
+          "key": "documentsComplete",
+          "label": "The Supporting Information Is Complete",
+          "description": "Leave this unticked where the referral arrived without some of the expected supporting information: the referring organisation is asked for it before the hospital's own process starts."
+        },
+        {
+          "type": "textarea",
+          "key": "missingItems",
+          "label": "Missing Items",
+          "description": "One item per line where the supporting information is not complete. A referral recorded as incomplete with nothing listed cannot be asked about, and there is nothing to request (BR-01, EX-01).",
+          "validate": {
+            "maxLength": 2000
+          }
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 1,
+  "type": "default",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.0.0"
+  },
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.9.0"
+}

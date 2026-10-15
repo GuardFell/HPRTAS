@@ -66,6 +66,10 @@ class SmokeTest {
       return;
     }
 
+    // The engine run gets a throwaway record store: the scenarios assert on what the
+    // workers record during the run, and a store left over from an earlier run would make a
+    // reference from it look like a duplicate.
+    System.setProperty("hprtas.dbUrl", TestSupport.throwawayStoreUrl());
     config = Config.load();
     services = Services.create(config);
 
@@ -138,6 +142,11 @@ class SmokeTest {
         // something to ask for, because a request that names no missing item is refused - which is
         // the rule that stops the referring organisation being asked for nothing (EX-01).
         "referralId", "REF-SMOKE-" + instanceSuffix,
+        // The referral-validation worker identifies the patient against the register by these, so
+        // the fixture supplies what the referral-check form would have collected.
+        "patientId", "PAT-SMOKE-" + instanceSuffix,
+        "nhsNumber", "9434765919",
+        "patientName", "Ada Lovelace",
         "requestedFrom", "St Mary GP Surgery",
         "requestedItems", List.of("investigation results", "diagnostic reports"),
         "speciality", "Oncology",

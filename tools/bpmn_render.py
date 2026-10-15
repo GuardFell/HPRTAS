@@ -34,9 +34,15 @@ SHAPE_KINDS = {
     "endEvent": "end",
     # a waiting event: a thin ring, with the envelope a message subscription displays
     "intermediateCatchEvent": "catch",
+    # an event on the border of the activity it is attached to: a double ring, with the marker of
+    # what it catches
+    "boundaryEvent": "boundary",
     "task": "task",
     "userTask": "task",
     "serviceTask": "task",
+    # a task that runs another process: the same box with the thicker border the notation gives it
+    "callActivity": "call",
+    "subProcess": "call",
     "exclusiveGateway": "xor",
     "parallelGateway": "and",
     "inclusiveGateway": "or",
@@ -135,8 +141,11 @@ class Model(object):
                 "outgoing": [f.text for f in el.findall("bpmn:outgoing", NS)],
                 "incoming": [f.text for f in el.findall("bpmn:incoming", NS)],
                 # a waiting event that waits on a message carries the envelope marker, which is
-                # how the diagram says what it is waiting for
+                # how the diagram says what it is waiting for; a boundary event carries the marker
+                # of what it catches
                 "message": el.find("bpmn:messageEventDefinition", NS) is not None,
+                "error": el.find("bpmn:errorEventDefinition", NS) is not None,
+                "timer": el.find("bpmn:timerEventDefinition", NS) is not None,
             }
 
         self.flows = {}           # id -> dict(kind, src, tgt, condition, name, waypoints, label)
@@ -320,6 +329,19 @@ def render(path, png_path, scale=2.5, pad=14):
         if kind == "task":
             draw.rounded_rectangle(box, radius=10 * scale, fill="white", outline=INK,
                                    width=max(1, int(round(1.5 * scale))))
+        elif kind == "call":
+            draw.rounded_rectangle(box, radius=10 * scale, fill="white", outline=INK,
+                                   width=max(1, int(round(2.6 * scale))))
+        elif kind == "boundary":
+            _ring(draw, box, 1.5 * scale, 0)
+            _ring(draw, (x + 3.5 * scale, y + 3.5 * scale,
+                         x + w - 3.5 * scale, y + h - 3.5 * scale), 1.0 * scale, 0)
+            if s.get("message"):
+                _envelope(draw, box, scale)
+            elif s.get("error"):
+                _lightning(draw, box, scale)
+            elif s.get("timer"):
+                _clock(draw, box, scale)
         elif kind == "start":
             _ring(draw, box, 1.5 * scale, 0)
         elif kind == "end":
@@ -383,6 +405,29 @@ def _envelope(draw, box, scale):
     # the flap: both top corners meeting in the middle, which is what makes it read as an envelope
     draw.line([(left, top), (cx, cy)], fill=INK, width=lw)
     draw.line([(right, top), (cx, cy)], fill=INK, width=lw)
+
+
+def _lightning(draw, box, scale):
+    """The error marker a boundary error event displays: a bolt in the middle of the double ring."""
+    x0, y0, x1, y1 = box
+    cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+    w, h = (x1 - x0) * 0.16, (y1 - y0) * 0.26
+    lw = max(1, int(round(1.1 * scale)))
+    draw.line([(cx + w * 0.4, cy - h), (cx - w * 0.5, cy + h * 0.1)], fill=INK, width=lw)
+    draw.line([(cx - w * 0.5, cy + h * 0.1), (cx + w * 0.5, cy + h * 0.1)], fill=INK, width=lw)
+    draw.line([(cx + w * 0.5, cy + h * 0.1), (cx - w * 0.4, cy + h)], fill=INK, width=lw)
+
+
+def _clock(draw, box, scale):
+    """The timer marker a boundary timer event displays: a clock in the middle of the double ring."""
+    import math
+    x0, y0, x1, y1 = box
+    cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+    r = min(x1 - x0, y1 - y0) * 0.24
+    lw = max(1, int(round(1.1 * scale)))
+    draw.ellipse((cx - r, cy - r, cx + r, cy + r), outline=INK, width=lw)
+    draw.line([(cx, cy), (cx, cy - r * 0.75)], fill=INK, width=lw)
+    draw.line([(cx, cy), (cx + r * 0.6, cy + r * 0.35)], fill=INK, width=lw)
 
 
 def _gateway_marker(draw, kind, cx, cy, r, scale):

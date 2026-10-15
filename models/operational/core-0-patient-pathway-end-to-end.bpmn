@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_core-0-patient-pathway-end-to-end" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.51.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_Hospital" name="Hospital Trust - patient pathway" processRef="core-0-patient-pathway-end-to-end" />
+  </bpmn:collaboration>
+  <bpmn:process id="core-0-patient-pathway-end-to-end" name="Core 0 - Patient pathway, end to end" isExecutable="true">
+    <bpmn:documentation>The whole pathway as one run: the five executable processes are invoked in the order the case describes them, and the variables each one leaves behind are what the next stage is gated on. Registering the referral decides whether the documentation first has to be obtained from the referring organisation through the message exchange (core-5); the referral is then checked, decided on and booked (core-1); treatment is authorised, funded and paid for and each cycle is reviewed (core-2); the clinic letter follows the consultation (core-3); and the follow-up appointment, with the cancellation, enquiry and refund work around it, closes the episode (core-4). Each stage runs as its own process instance under the call activity that names it, so a stage can be opened, inspected and demonstrated on its own - Operate shows the call hierarchy - while the journey as a whole is one instance started from the Tasklist Processes page with the referral's start form. A stage the case would stop at ends this instance at the end event that says why: rejected, redirected, queried or escalated, or a consultation the patient did not proceed from. A stage the case would continue from continues, and the gate that decides reads only what the called process returned. What this process deliberately does not do is decide anything itself: it holds no clinical or administrative task, every check inside a stage stays with the teams, forms and workers that stage binds, and the parties outside the hospital are drawn in the process that exchanges with them rather than here. core-4 is invoked for its follow-up path; its two message start events - a cancellation arriving and a patient enquiry arriving - are started by those messages, because neither is a stage the hospital asks for.</bpmn:documentation>
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Pathway" name="Patient pathway (the five stages)">
+        <bpmn:flowNodeRef>N_CO_ReferralReceived</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_DocumentsExpected</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_ObtainDocuments</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_MergeReferralStage</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_ReferralAndAppointment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_ReferralAccepted</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_TreatmentAndPayment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_TreatmentProceeding</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_ClinicLetter</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_FollowUp</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_ReferralClosed</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_TreatmentNotProceeding</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CO_PathwayComplete</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="N_CO_ReferralReceived" name="Referral received">
+      <bpmn:documentation>The referral as it arrives, recorded once at the front door: the identifiers it carries, the organisation that sent it, and whether the supporting information came with it (FR-001, BR-01). The form is this process's start form, so the instance is started with the referral it belongs to.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:formDefinition formId="referral-start" />
+      </bpmn:extensionElements>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="N_CO_DocumentsExpected" name="Is the supporting information complete?" default="F3">
+      <bpmn:documentation>Reads documentsComplete from the start form. Where the information is incomplete the referring organisation is asked for it through the message exchange before the hospital's own process starts, so the referral reaches the clinical review complete (EX-01, FR-003). Where it is complete the referral goes straight on.</bpmn:documentation>
+    </bpmn:exclusiveGateway>
+    <bpmn:callActivity id="N_CO_ObtainDocuments" name="Obtain the missing information (core-5)">
+      <bpmn:documentation>Runs core-5-missing-information-message-exchange: the missing items are recorded, requested by message and waited for by the referral identifier, and the reply is recorded against the request before the documents are checked (FR-003, EX-01).</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:calledElement processId="core-5-missing-information-message-exchange" propagateAllChildVariables="true" />
+      </bpmn:extensionElements>
+    </bpmn:callActivity>
+    <bpmn:exclusiveGateway id="N_CO_MergeReferralStage" name="Referral ready for the hospital's process">
+      <bpmn:documentation>Merges the referral that arrived complete and the one that was completed by the exchange. Whether the documentation had to be obtained first is not something the next stage has to know (BR-01, FR-003).</bpmn:documentation>
+    </bpmn:exclusiveGateway>
+    <bpmn:callActivity id="N_CO_ReferralAndAppointment" name="Referral, decision and first appointment (core-1)">
+      <bpmn:documentation>Runs core-1-referral-and-new-patient-appointment: the referral is checked, decided on by a consultant, and the first appointment is found, confirmed and told to the patient (FR-001 - FR-016). What the gateway after it reads - decision and slotAvailable - is what this instance returns on completion.</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:calledElement processId="core-1-referral-and-new-patient-appointment" propagateAllChildVariables="true" />
+      </bpmn:extensionElements>
+    </bpmn:callActivity>
+    <bpmn:exclusiveGateway id="N_CO_ReferralAccepted" name="Accepted, with an appointment arranged?" default="F8">
+      <bpmn:documentation>Reads decision and slotAvailable, which core-1 returns. Accepted and arranged continues to treatment; anything else - a referral rejected, redirected or queried, or one with no slot in the period asked for, which ends in an escalation - ends the pathway here rather than carrying a referral no one accepted into treatment (BR-03, BR-04, EX-02, EX-05, EX-06).</bpmn:documentation>
+    </bpmn:exclusiveGateway>
+    <bpmn:callActivity id="N_CO_TreatmentAndPayment" name="Treatment authorisation, funding and payment (core-2)">
+      <bpmn:documentation>Runs core-2-treatment-authorisation-funding-and-payment: the patient is assessed and consents, the treatment request is authorised, the funding route is determined, the payment is taken where one is due, the treatment appointment is booked and each cycle is reviewed (BR-11, BR-13 - BR-19, BR-25).</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:calledElement processId="core-2-treatment-authorisation-funding-and-payment" propagateAllChildVariables="true" />
+      </bpmn:extensionElements>
+    </bpmn:callActivity>
+    <bpmn:exclusiveGateway id="N_CO_TreatmentProceeding" name="Is the treatment proceeding?" default="F11">
+      <bpmn:documentation>Reads consentGiven, which core-2 returns. A patient who consented goes on to the letter that follows the consultation; a consultation the patient did not proceed from ends the pathway, because there is no treatment to document and no follow-up to arrange (BR-41).</bpmn:documentation>
+    </bpmn:exclusiveGateway>
+    <bpmn:callActivity id="N_CO_ClinicLetter" name="Clinic letter and pathway monitoring (core-3)">
+      <bpmn:documentation>Runs core-3-clinic-letter-and-pathway-escalation: the clinic letter is prepared, approved, checked and dispatched to the confirmed recipients, and the pathway team monitors it against the seven-day target and escalates a delay (BR-26 - BR-33).</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:calledElement processId="core-3-clinic-letter-and-pathway-escalation" propagateAllChildVariables="true" />
+      </bpmn:extensionElements>
+    </bpmn:callActivity>
+    <bpmn:callActivity id="N_CO_FollowUp" name="Follow-up, cancellation, enquiry and refund (core-4)">
+      <bpmn:documentation>Runs core-4-follow-up-cancellation-enquiry-and-refund for its follow-up path: the appointment the clinician asked for is arranged and confirmed, and the episode closes when it is booked, when no appointment can be found and the pathway team has the case, or when the patient declines it and the decisions that follow are recorded (BR-34, BR-39, BR-40, EX-19, EX-20).</bpmn:documentation>
+      <bpmn:extensionElements>
+        <zeebe:calledElement processId="core-4-follow-up-cancellation-enquiry-and-refund" propagateAllChildVariables="true" />
+      </bpmn:extensionElements>
+    </bpmn:callActivity>
+    <bpmn:endEvent id="N_CO_ReferralClosed" name="Pathway ended at the decision or the booking" />
+    <bpmn:endEvent id="N_CO_TreatmentNotProceeding" name="Treatment did not proceed" />
+    <bpmn:endEvent id="N_CO_PathwayComplete" name="Patient pathway episode complete" />
+    <bpmn:sequenceFlow id="F1" sourceRef="N_CO_ReferralReceived" targetRef="N_CO_DocumentsExpected" />
+    <bpmn:sequenceFlow id="F2" name="incomplete" sourceRef="N_CO_DocumentsExpected" targetRef="N_CO_ObtainDocuments">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= documentsComplete = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F3" name="complete" sourceRef="N_CO_DocumentsExpected" targetRef="N_CO_MergeReferralStage" />
+    <bpmn:sequenceFlow id="F4" sourceRef="N_CO_ObtainDocuments" targetRef="N_CO_MergeReferralStage" />
+    <bpmn:sequenceFlow id="F5" sourceRef="N_CO_MergeReferralStage" targetRef="N_CO_ReferralAndAppointment" />
+    <bpmn:sequenceFlow id="F6" sourceRef="N_CO_ReferralAndAppointment" targetRef="N_CO_ReferralAccepted" />
+    <bpmn:sequenceFlow id="F7" name="accepted and arranged" sourceRef="N_CO_ReferralAccepted" targetRef="N_CO_TreatmentAndPayment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= decision = "accepted" and slotAvailable = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F8" name="not accepted or not booked" sourceRef="N_CO_ReferralAccepted" targetRef="N_CO_ReferralClosed" />
+    <bpmn:sequenceFlow id="F9" sourceRef="N_CO_TreatmentAndPayment" targetRef="N_CO_TreatmentProceeding" />
+    <bpmn:sequenceFlow id="F10" name="consented" sourceRef="N_CO_TreatmentProceeding" targetRef="N_CO_ClinicLetter">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= consentGiven = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F11" name="did not proceed" sourceRef="N_CO_TreatmentProceeding" targetRef="N_CO_TreatmentNotProceeding" />
+    <bpmn:sequenceFlow id="F12" sourceRef="N_CO_ClinicLetter" targetRef="N_CO_FollowUp" />
+    <bpmn:sequenceFlow id="F13" sourceRef="N_CO_FollowUp" targetRef="N_CO_PathwayComplete" />
+  </bpmn:process>
+          <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_Hospital_di" bpmnElement="Participant_Hospital" isHorizontal="true">
+        <dc:Bounds x="100" y="120" width="2388" height="513" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="487" width="20" height="140" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Pathway_di" bpmnElement="Lane_Pathway" isHorizontal="true">
+        <dc:Bounds x="100" y="150" width="2388" height="437" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="156" width="240" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_ClinicLetter_di" bpmnElement="N_CO_ClinicLetter">
+        <dc:Bounds x="1740" y="250" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1741" y="334" width="147" height="62" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_DocumentsExpected_di" bpmnElement="N_CO_DocumentsExpected" isMarkerVisible="true">
+        <dc:Bounds x="280" y="330" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="221" y="384" width="167" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_FollowUp_di" bpmnElement="N_CO_FollowUp">
+        <dc:Bounds x="1990" y="300" width="180" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1977" y="384" width="206" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_MergeReferralStage_di" bpmnElement="N_CO_MergeReferralStage" isMarkerVisible="true">
+        <dc:Bounds x="700" y="330" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="645" y="384" width="161" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_ObtainDocuments_di" bpmnElement="N_CO_ObtainDocuments">
+        <dc:Bounds x="440" y="310" width="150" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="441" y="394" width="148" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_PathwayComplete_di" bpmnElement="N_CO_PathwayComplete">
+        <dc:Bounds x="2280" y="330" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2205" y="370" width="185" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_ReferralAccepted_di" bpmnElement="N_CO_ReferralAccepted" isMarkerVisible="true">
+        <dc:Bounds x="1140" y="330" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1077" y="384" width="176" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_ReferralAndAppointment_di" bpmnElement="N_CO_ReferralAndAppointment">
+        <dc:Bounds x="850" y="300" width="180" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="841" y="384" width="197" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_ReferralClosed_di" bpmnElement="N_CO_ReferralClosed">
+        <dc:Bounds x="1370" y="420" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1301" y="460" width="175" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_ReferralReceived_di" bpmnElement="N_CO_ReferralReceived">
+        <dc:Bounds x="130" y="350" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="83" y="390" width="129" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_TreatmentAndPayment_di" bpmnElement="N_CO_TreatmentAndPayment">
+        <dc:Bounds x="1300" y="250" width="180" height="80" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1298" y="334" width="184" height="62" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_TreatmentNotProceeding_di" bpmnElement="N_CO_TreatmentNotProceeding">
+        <dc:Bounds x="1800" y="420" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1751" y="460" width="133" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CO_TreatmentProceeding_di" bpmnElement="N_CO_TreatmentProceeding" isMarkerVisible="true">
+        <dc:Bounds x="1580" y="330" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1546" y="384" width="118" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F1_di" bpmnElement="F1">
+        <di:waypoint x="166" y="370" />
+        <di:waypoint x="200" y="370" />
+        <di:waypoint x="200" y="360" />
+        <di:waypoint x="280" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F2_di" bpmnElement="F2">
+        <di:waypoint x="330" y="360" />
+        <di:waypoint x="420" y="360" />
+        <di:waypoint x="420" y="350" />
+        <di:waypoint x="440" y="350" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="341" y="337" width="68" height="17" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F3_di" bpmnElement="F3">
+        <di:waypoint x="300" y="330" />
+        <di:waypoint x="300" y="290" />
+        <di:waypoint x="720" y="290" />
+        <di:waypoint x="720" y="330" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="308" y="302" width="57" height="17" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F4_di" bpmnElement="F4">
+        <di:waypoint x="590" y="350" />
+        <di:waypoint x="680" y="350" />
+        <di:waypoint x="680" y="360" />
+        <di:waypoint x="700" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F5_di" bpmnElement="F5">
+        <di:waypoint x="750" y="360" />
+        <di:waypoint x="830" y="360" />
+        <di:waypoint x="830" y="340" />
+        <di:waypoint x="850" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F6_di" bpmnElement="F6">
+        <di:waypoint x="1030" y="340" />
+        <di:waypoint x="1120" y="340" />
+        <di:waypoint x="1120" y="360" />
+        <di:waypoint x="1140" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F7_di" bpmnElement="F7">
+        <di:waypoint x="1190" y="360" />
+        <di:waypoint x="1280" y="360" />
+        <di:waypoint x="1280" y="290" />
+        <di:waypoint x="1300" y="290" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1163" y="430" width="144" height="17" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F8_di" bpmnElement="F8">
+        <di:waypoint x="1160" y="330" />
+        <di:waypoint x="1160" y="230" />
+        <di:waypoint x="1490" y="230" />
+        <di:waypoint x="1490" y="440" />
+        <di:waypoint x="1406" y="440" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="982" y="272" width="170" height="17" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F9_di" bpmnElement="F9">
+        <di:waypoint x="1480" y="290" />
+        <di:waypoint x="1600" y="290" />
+        <di:waypoint x="1600" y="330" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F10_di" bpmnElement="F10">
+        <di:waypoint x="1630" y="360" />
+        <di:waypoint x="1720" y="360" />
+        <di:waypoint x="1720" y="290" />
+        <di:waypoint x="1740" y="290" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1643" y="337" width="65" height="17" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F11_di" bpmnElement="F11">
+        <di:waypoint x="1580" y="360" />
+        <di:waypoint x="1530" y="360" />
+        <di:waypoint x="1530" y="440" />
+        <di:waypoint x="1800" y="440" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1507" y="303" width="96" height="17" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F12_di" bpmnElement="F12">
+        <di:waypoint x="1890" y="290" />
+        <di:waypoint x="1970" y="290" />
+        <di:waypoint x="1970" y="340" />
+        <di:waypoint x="1990" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F13_di" bpmnElement="F13">
+        <di:waypoint x="2170" y="340" />
+        <di:waypoint x="2260" y="340" />
+        <di:waypoint x="2260" y="350" />
+        <di:waypoint x="2280" y="350" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

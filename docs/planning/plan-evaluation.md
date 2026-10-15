@@ -29,6 +29,14 @@ record store the workers keep the hospital's records in**. A count read here is 
 not at `main`; the pass's own results are in
 `../../tests/evidence/workers-and-models_working-tree_2026-10-13.txt` and are judged in section 6
 below.
+
+**This edition judges both releases.** Every verdict on this page is the one the *initial release*
+earns, and the verdicts are kept as they stand - a result belongs to the version it was produced on.
+What the second release moves is written where it belongs: section 6 carries the verdicts at the
+revised version beside the initial ones, section 3's notes name the rows the pass moved with the
+commit that moved them, and the runs that carry them are the three records of 2026-10-15 at
+`378b319`, the tree the tag `submission-2026-10-22` names. The criteria themselves were not
+rewritten; this record says that rather than presenting a second criteria set as if one existed.
 The evidence was the half that had not kept up, and it has now been re-run twice: once at `76a7fdc`
 after the Java rewrite, and again at `57b3c1d` on 2026-09-28, where all three levels and the
 bindings, layout, export and engine-form checks pass. Those two records are
@@ -288,6 +296,30 @@ signed-in user before it can be exercised (`DEF-07`, `DEF-08`). `DEF-12` and `DE
 at `9138bcc` and the forms at `a62e783` - and each needs its scenario re-run before the criterion it
 blocked can be called demonstrated, because both were found by checking rather than by running.
 
+### At the revised version
+
+The same ten criteria, judged at `378b319` after the runs of 2026-10-15 (the suite at all three
+levels, `TC-13` and `TC-16` driven). The criteria text is unchanged; what moved is the basis.
+
+| Criterion | Initial release | Revised version | What moved it, and what still limits it |
+|---|---|---|---|
+| AC-01 normal pathway, referral completeness and patient contact | Met at worker level | **Met**, and the telephone-contact half now has a run | `TC-13` drives all three non-contact outcomes - attempt recorded, contact sought again, appointment kept; the form half remains `DEF-08` |
+| AC-02 clinical decisions and the gates that depend on them | Met | **Met** | All three referral decisions are driven in the 2026-10-15 run of the suite (scenario 7 and its neighbours), where `TC-02` had two of three |
+| AC-03 funding, payment and the confirmation gate | Met | **Met** | Re-run at `378b319`, no change |
+| AC-04 exception routing and the investigation flag | Met | **Met** | Re-run at `378b319`, no change |
+| AC-05 no suitable slot, and urgent referrals | Met (moved at the `DEF-11` fix) | **Met** | Inside `release-2.0`; re-run at `378b319`, scenario 8 |
+| AC-06 clinic letter, seven-day target and escalation | Partially met - the timer's path had never been run | **Partially met, on a better basis**: the `P7D` timer fires without a worker, the reminder and both escalation ends are driven (`TC-16`) | What remains is not an unrun branch but recorded data: `overdueDuration` is supplied by the reminder form, so a month and three months are data, not measured periods |
+| AC-07 follow-up, cancellation and enquiries | Partially met | **Partially met** | The follow-up and cancellation halves pass; the enquiry routing is driven (`TC-20`) and the record `BR-37` requires still comes from the API rather than a signed-in user (`DEF-08`) |
+| AC-08 refund and separation of duties | Met with a caveat | **Met** with the same caveat | The separation is structural, not enforced (`DEF-07`) |
+| AC-09 data minimisation | Met | **Met** | Re-run at `378b319`, no change |
+| AC-10 controlled failure and no duplicates | Met | **Met** | Re-run at `378b319`, no change |
+
+**At the revised version: eight of ten met, AC-06 and AC-07 partial.** Neither partial criterion is
+waiting on an artefact or an unrun branch any more - `TC-13` and `TC-16` closed the last two - and
+what limits them is recorded and named: the escalation thresholds are data rather than measured
+periods, and no form has been submitted by a signed-in user (`DEF-07`, `DEF-08`). Twenty-five of the
+twenty-five scenarios now have a result; eighteen pass and seven pass in part.
+
 ## 7. Conclusions and actions
 
 1. **The delivery is further ahead than the plan and weaker than the evidence suggests.** The
@@ -302,10 +334,12 @@ blocked can be called demonstrated, because both were found by checking rather t
    forms at `a62e783`, where 40 forms came to cover all 55 user tasks. Both are inside
    `release-1.0`. Neither is *demonstrated* yet, because the scenario behind each has not been re-run
    since it was fixed, and that is the work item that replaces them here.
-3. **The unrun scenarios are the cheapest remaining work.** TC-02, TC-13, TC-16 and TC-20 need no
-   code, only a run - except that TC-13 and TC-20 need a signed-in user, which makes them depend on
-   `DEF-07`. `DEF-13` used to stand in front of them as well; with the forms written, the signed-in
-   user is the only thing still missing.
+3. **The unrun scenarios were the cheapest remaining work, and they are done.** **Done:** `TC-02`
+   (all three decisions, in the 2026-10-15 suite run), `TC-13` and `TC-16` (driven on 2026-10-15,
+   with the clock moved for the timer and the limit stated in each record) and `TC-20`'s routing.
+   Every scenario now has a result. What still needs a signed-in user is the form half of several
+   results, which is `DEF-07`/`DEF-08` and not a missing run. `DEF-13` used to stand in front of them
+   as well; with the forms written, the signed-in user is the only thing still missing.
 4. **The plan process has to start now, not at the review.** The backlog, the task breakdown, the
    sprint backlogs and the contribution matrix are the project's own record of what was planned and
    who did what, and none of them can be reconstructed afterwards. **Partly done:** the product
@@ -320,4 +354,6 @@ blocked can be called demonstrated, because both were found by checking rather t
    inside it, and `git log release-1.0..HEAD` is empty. `DEF-11` was the one defect still open at the
    tag; it is fixed at `57b3c1d`, and the tree carrying that fix is tagged `release-2.0` and
    `submission-2026-09-29`, so the tag and the fix have been brought together without moving
-   `release-1.0`.
+   `release-1.0`. **The revised version for the 22 October submission is tagged
+   `submission-2026-10-22`** - made on `378b319`, the feedback pass, and re-pointed onto the sprint's
+   later commits if any of them change the tree; the two releases can be compared by tag now.

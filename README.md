@@ -10,15 +10,20 @@ that talk to systems outside the hospital.
 The repository holds the models, the forms the staff use, the workers, the documentation and the
 test evidence for that system.
 
-## The version this describes
+## The versions, and which to read
 
-The submitted version is tagged twice on one commit, and this file is committed in it:
-**`submission-2026-09-29`**, for the submission, and **`release-2.0`**, for the second release.
-`git rev-parse --short submission-2026-09-29` prints the commit. `release-1.0` names the
-first release, which is an earlier version - it resolves to `69e01a1`, four models and 40 forms - and
-it is left where it is, because the results recorded against it are only readable there. Every result
-in `tests/evidence/` names the commit it was produced at, so a claim can be traced to the version it
-belongs to rather than to the tree as it stands.
+For the 22 October submission the repository is read at **`submission-2026-10-22`**, the revised
+version: the review's feedback folded in - `core-0` calling the five stages, the record store the
+workers keep, the 43 forms and the corrected models - with the evaluations, the response to the
+feedback and the runs of 2026-10-15 that go with it. `git rev-parse --short submission-2026-10-22`
+prints the commit.
+
+The initial release is **`submission-2026-09-29`**, which **`release-2.0`** also names: the same
+system before the review's feedback, with the results recorded against it. **`release-1.0`** names
+the first tagged release - `69e01a1`, four models and 40 forms - and it is left where it is, because
+the results recorded against it are only readable there. Every result in `tests/evidence/` names the
+commit it was produced at, so a claim can be traced to the version it belongs to rather than to the
+tree as it stands.
 
 ## What is in the repository
 
@@ -55,9 +60,13 @@ than taken on trust. `tools/README.md` says what each one does and what it needs
 `Enterprise Architecture/` holds the portfolio deliverable describing the enterprise and its
 information systems, and the Zachman Framework view of them.
 
-`HPRTAS - Five Executable Processes.pptx` is the presentation deck for the second release: the five
-executable processes one to a slide, and the ten acceptance criteria with the scenario and the
-result recorded for each. Its footers name the version its claims belong to.
+Two decks are committed at the root. `HPRTAS - Five Executable Processes.pptx` is the deck of the
+initial release: the five executable processes one to a slide, and the ten acceptance criteria with
+the scenario and the result recorded for each. `HPRTAS - Second Release.pptx` is the deck of the
+revised version: what moved since the initial release, the developments that answer the review's
+feedback, the response record and the plan evaluation, with the acceptance criteria at the revised
+version and a reference list on the last slide. Every slide's footer names the artefact its claims
+come from, and `tools/build_second_release_deck.py` builds the deck.
 
 ## Running it
 

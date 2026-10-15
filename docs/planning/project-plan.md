@@ -145,23 +145,34 @@ failure path, with test evidence against an identified version.
 
 ### Sprint 3
 
+**Actual completed 15 October 2026** - the sprint window in section 5 is 28 September to
+15 October; the note on dates in `../backlog/sprint-backlogs.md` says the two readings need
+reconciling, and the milestone dates are the ones the deliverables are dated against.
+
 | Dimension | Planned | Actual | Variance and cause |
 |---|---|---|---|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| The i\* models | The Strategic Dependency and Strategic Rationale models alongside the strategic BPMN, with the requirement traceability extended to them | Delivered: `sd-hprtas.json` (four actors, seven dependencies) and `sr-hprtas.json` (one page per actor, 24 elements), the nine piStar files, the drawings in `models/exports/`, and two checks that keep the sources, the piStar files and the drawings from drifting apart. Rebuilt on 13 October against the workshop goal model | On plan for the models. **The traceability extension was not made as planned**: the i\* model carries no requirement ids, because rebuilding it against the workshop model made it a redrawing of that model rather than a layer over the requirements. The change and its reason are recorded in the evaluation, section 3.2 |
+| The strategic BPMN | (carried from Sprint 2) extended and connected to the operational process | Simplified instead: one activity per stage of the pathway, ten flow objects, lane per owning team; the strategic cell of the traceability table re-pointed to the stage that now carries each requirement | A simplification rather than an extension. Recorded in the evaluation, section 3, with the reason (a strategic view that the operational models are read against, not a second process) |
+| The defects the first release left | Close `DEF-11` (the urgent no-slot loop), `DEF-12` (the refund catch) and re-run what they blocked | `DEF-11` fixed at `57b3c1d` and driven in scenario 8; `DEF-12` fixed at `9138bcc` and driven in scenario 5; `DEF-13` had closed earlier at `a62e783`. The late pass then closed `DEF-10` (the record store) and fixed a fault found by driving the reschedule, recorded as `DEF-15` | **Met, and exceeded**: two further defects were found and closed. The defect count is the clearest evidence that the re-runs were real rather than confirmatory |
+| The unrun scenarios | `TC-02`, `TC-13`, `TC-16` and `TC-20` each given a result | `TC-02` and `TC-20` gained partial results at `57b3c1d`; `TC-13` and `TC-16` were not run inside the sprint - they were driven on 15 October, at the sprint boundary, with the clock moved for the timer and the limit stated in each record | **Missed inside the sprint, closed at the boundary rather than absorbed.** The cause is on record: both waited on work (the forms and the signed-in user) that arrived late |
+| The review's feedback | Folded into the model, the workers and the forms, with each point recorded against its decision, action and outcome | The pass at `378b319` - the record store, the input-validation policy, the merging gateways, the confirmation outcomes, the reschedule, the end-to-end process - and the response record `../agile/response-to-feedback.md`, which answers all 21 sheets point by point | **Exceeded in scope.** The pass landed at the end of the sprint, so the i\* models and the feedback were being built in the same window; that is one cause of the two unrun scenarios |
+| Estimates | The rows estimated at planning | Carried "to be estimated" through the sprint and never estimated | **Not assessable**, the same cause as Sprints 1 and 2: the record was to be filled in as the work happened, and it was not |
+| Evidence | Every result names the version it was produced at | The pass's two records, the static checks they cite, and the three records of 15 October at `378b319` | On plan |
 
 ### Sprint 4
 
+**Actual written 15-16 October 2026** - the sprint window in section 5 is 16 to 21 October, so these
+rows describe the validation and evaluation work done at the sprint boundary; the row that is still
+open is the demonstration.
+
 | Dimension | Planned | Actual | Variance and cause |
 |---|---|---|---|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| Validation | Re-run the worker suite, the smoke run and the end-to-end run against the second release, at an identified version | Done on 15 October at `378b319`: 52 unit tests and 14 engine tests, 0 failures, 0 errors, recorded in `../../tests/evidence/workers-and-models_378b319_2026-10-15.txt`, and the two scenarios the suite holds no scenario for driven on the same tree (`TC-13`, `TC-16`) | On plan. The re-run also drove the third referral decision, which `TC-02` had never covered |
+| The acceptance-criteria evaluation | The initial and revised criteria, the actual results, the failures and a reasoned evaluation of both | The verdicts at the revised version are in `plan-evaluation.md` section 6, beside the initial ones; the criteria text is unchanged and the record says so; every scenario now has a result, 18 pass and seven in part | On plan. The evaluation states the criteria were not rewritten rather than presenting a second set |
+| The plan evaluation | A critical comparison of the original and the revised plan against actual progress, covering scope, priorities, estimates, allocation, dependencies, risks, integration and the sprint outcomes | `plan-evaluation.md` section 5 and this section, including where the plan was wrong | On plan. Three of the four lessons in section 5.4 are about the plan process itself, which is why the estimate rows stay "not assessable" instead of being back-filled |
+| The demonstration | The updated and integrated system, with anything simulated or not implemented labelled as such | `../agile/demonstration-script.md` is written and rehearsed, states the commit it demonstrates and what it does not demonstrate, and the two scenarios that had no result are now driven | **In progress: the demonstration has not been given.** It is the sprint review's, and the script is its record |
+| The tag | Tag the second release so the two releases can be compared | `submission-2026-10-22` made on `378b319`, the pass's commit; re-pointed onto the sprint's later commits if any change the tree | Done |
+| The requirements update | `../requirements/requirements.md` carries the verdicts the evaluations reach, including what is still not evidenced | The status block of 15 October records the four rows the second release moved and leaves the rest standing | On plan |
 
 ## 7. Plan revisions
 

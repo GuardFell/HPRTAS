@@ -14,6 +14,26 @@
 > The models carry these IDs in their own element documentation, so every reference below can be
 > checked inside the model.
 >
+> ### Status after the second-release evaluation (15 Oct 2026)
+>
+> The runs of 15 October 2026 at `378b319` - the tree the tag `submission-2026-10-22` names - moved
+> four rows. Only the rows that moved are rewritten; the rest stand as the feedback pass left them:
+>
+> - **FR-014** - the telephone-contact outcomes now have a run: all three cases the scenario names
+>   (`TC-13`), each attempt recorded, the process asking again where the call did not connect, and no
+>   attempt losing the appointment. The signed-in-user half remains (`DEF-08`).
+> - **FR-038** - the seven-day rule now has a run behind it: the `P7D` boundary timer on the letter
+>   approval fires without a worker, the delayed letter enters monitoring, the reminder and the
+>   escalation are taken to `N_AM_Escalated`, and the in-target letter ends at `N_PC_LetterOnTrack`
+>   (`TC-16`). The escalation thresholds remain recorded data rather than measured periods.
+> - **FR-005** - all three referral decisions (rejected, further information, redirected) are driven
+>   in the 15 October run of the suite; `TC-02` had two of the three.
+> - **FR-045's assignment half, FR-048, NFR-007, FR-030 and FR-033** - unchanged from the feedback
+>   pass and re-run at the same commit; the block below still describes them.
+>
+> The evidence is the three records of 2026-10-15 in `../../tests/evidence/`, and the criteria
+> verdicts at this version are in `../planning/plan-evaluation.md` section 6.
+>
 > ### Status after the feedback pass (13 Oct 2026)
 >
 > Five things moved, and only the rows that moved are rewritten:

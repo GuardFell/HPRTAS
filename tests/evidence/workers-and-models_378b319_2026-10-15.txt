@@ -6,11 +6,11 @@ Version under test
 Commit `378b319`, the feedback pass: `core-0` calling the five stages, the record store
 the workers keep the hospital's records in, the input-validation policy, the
 appointment-confirmation outcomes, the merging gateways and the end-to-end process.
-This is the commit the tag `submission-2026-10-22` names; the models, the forms and the
-workers are unchanged by any later commit in that tag, and
-`git diff --stat 378b319 HEAD -- models forms workers` is the check. The record store
-was a throwaway in-memory database for the engine run (`hprtas.dbUrl`), so none of the
-runs below left records behind.
+The tag `submission-2026-10-22` names this tree. The commits that follow it in that tag
+change documents and records only: no model, no form and no worker source differs between
+this commit and the tagged tree, and the check is `git diff --stat 378b319 submission-2026-10-22 -- '*.bpmn' '*.form' workers/src workers/pom.xml workers/config`,
+which is empty. The record store was a throwaway in-memory database for the engine run
+(`hprtas.dbUrl`), so none of the runs below left records behind.
 
 Date: 2026-10-15.  Tester: automated, `cd workers && mvn test` and
 `cd workers && mvn test -Pengine` against Camunda 8 Run 8.9.19 on this machine.

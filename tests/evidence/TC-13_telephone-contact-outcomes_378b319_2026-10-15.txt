@@ -3,8 +3,10 @@ TC-13 - the patient is telephoned and the call is not a plain contact
 
 Version under test
 ------------------
-Commit `378b319`, the feedback pass; the models, the forms and the workers are
-unchanged by any later commit the tag `submission-2026-10-22` names.
+Commit `378b319`, the feedback pass; the tag `submission-2026-10-22` names this
+tree, and the commits that follow it in the tag change documents and records only - no
+model, no form and no worker source differs, `git diff --stat 378b319 submission-2026-10-22 -- '*.bpmn' '*.form' workers/src workers/pom.xml workers/config`
+being empty.
 
 Date: 2026-10-15.  Tester: automated, `python tools/drive_tc13_contact_outcomes.py`
 against Camunda 8 Run 8.9.19 on this machine, with the external workers running

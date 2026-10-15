@@ -22,8 +22,9 @@ With the feedback pass of 2026-10-13 the tree has **six operational models - the
 `core-0`, which calls them - 61 `userTask` elements over 59 distinct ids, one start form on the
 end-to-end process, 43 forms and eight workers**, and the record store the workers now keep their
 records in. The scenarios below that were driven at this tree - `TC-22` to `TC-25` - name it as the
-working tree rather than a commit, because the pass is uncommitted: `aba6b29` is the commit the
-changes sit on and `git status` says which files differ from it.
+working tree on `aba6b29` rather than a commit, because the pass was uncommitted when they were
+driven; it is committed at `378b319`, which the tag `submission-2026-10-22` names, and the runs of
+2026-10-15 name that commit.
 
 The first-release tag has been re-pointed twice. It was made at `9ef26df` against the Node.js
 version, then moved to `bdcc0e1` after the workers were rewritten in `4eb3fee`, and then moved
@@ -95,7 +96,10 @@ worker source cite, so `TC-06` in a test name and `TC-06` here are the same scen
 
 The criteria were agreed as an empty template with the second owner in Sprint 1 (`TB-016`) and
 completed, with the scenarios below, in Sprint 2 (`TB-014`, at `6fa61c7`); **the text of the ten
-criteria has not been rewritten since.** What has moved is the *verdict* on three of them - AC-05,
+criteria has not been rewritten since.** The second release revises the *verdict* on them and the
+scenarios that measure them - `TC-22` to `TC-25` were added by the feedback pass and `TC-13` and
+`TC-16` were driven on 2026-10-15 - and this record says so rather than presenting a rewritten
+criteria set as if one existed. What has moved is the *verdict* on three of them - AC-05,
 AC-07 and AC-09 - each because the defect behind it was fixed, and each movement is recorded with
 the commit that caused it in `../docs/planning/plan-evaluation.md` section 6. A criterion is met or
 not against the version its evidence names, which is why the section that judges them is written
@@ -176,10 +180,10 @@ version by version and not once.
 | TC-10 | 2026-09-21 | automated, `npm test` | `c8556ba` ; `76a7fdc` (Java, all three levels) | Partial - the duplicate guards pass at worker level; a repeated request has not been driven through a model as its own scenario | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt` | - |
 | TC-11 | 2026-09-21 | automated, `npm test` | `c8556ba`; `813fea6` ; `76a7fdc` (Java, all three levels) | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; `evidence/TC-11_worker-invalid-input_813fea6_2026-09-21.txt` | - |
 | TC-12 | 2026-09-21 | automated, `npm test` | `c8556ba`; `813fea6` ; `76a7fdc` (Java, all three levels) | Pass | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; `evidence/TC-12_external-service-unavailable_813fea6_2026-09-21.txt` | - |
-| TC-13 | - | - | - | Not run - the contact outcomes are user tasks, and no scenario has completed one through Tasklist | - | `DEF-08` |
+| TC-13 | 2026-10-15 | automated, `python tools/drive_tc13_contact_outcomes.py` | `378b319` | Pass - three instances, one per outcome. `unanswered` and `wrong_number` take the default flow into `N_OB_RecordAttempt`, put the contact back and are completed again as `contacted`; `alternative_requested` takes `F33` back into the booking (`N_OB_PrepareRequest` reached a second time) and the second contact confirms. Every instance ended at `N_OB_AppointmentArranged` with no attempt losing the appointment. **Limit:** the tasks were completed through the API with the variables a validated form would supply; no task was claimed by a signed-in user (`DEF-08`) | `evidence/TC-13_telephone-contact-outcomes_378b319_2026-10-15.txt` | `DEF-08` |
 | TC-14 | 2026-09-21 | automated, `npm run test:e2e` | `a7f0dd6` ; `76a7fdc` (Java, all three levels) | Partial - the between-cycle review, the modification and the financial referral ran; the informal-request and not-fit-to-continue refusals did not | `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (scenario 2) | - |
 | TC-15 | 2026-09-21 | automated, `npm run test:e2e` | `a7f0dd6` ; `76a7fdc` (Java, all three levels) | Partial - preparation, approval, processing and distribution ran; the suspected-clinical-error return path did not | `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (scenario 3) | - |
-| TC-16 | - | - | - | Not run - needs a letter left outstanding past seven days so the timer fires | - | `DEF-08` |
+| TC-16 | 2026-10-15 | automated, `python tools/drive_tc16_letter_overdue_timer.py` | `378b319` | Pass - two instances. The `P7D` boundary timer on `N_C_ApproveLetter` fired with no worker involved (`B_C_LetterOverdue` completed, `N_C_ApproveLetter` terminated), the outstanding letter entered monitoring and took `N_PC_IssueReminder` and `N_PC_OverdueDuration` (`over_three_months`) to `N_AM_Escalated`; the in-target letter ended at `N_PC_LetterOnTrack` with no reminder. **Limits:** the engine clock was advanced eight days for the run - the method, and what the alternative operations do on this build, are in the record - and the escalation thresholds are recorded data rather than measured periods | `evidence/TC-16_letter-overdue-timer_378b319_2026-10-15.txt` | `DEF-08` |
 | TC-17 | 2026-09-21 | automated, `npm run test:e2e` and `npm test` | `a7f0dd6` ; `76a7fdc` (Java, all three levels) | Partial - the follow-up booked as expected; the no-slot-in-period case is covered at worker level only | `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (scenario 4); `evidence/workers_unit-suite_c8556ba_2026-09-21.txt` | - |
 | TC-18 | 2026-09-28 | automated, `cd workers && mvn test -Pengine` | `c8556ba` (worker level) ; `57b3c1d` (model level) | Pass - a slot outside the requested period is not silently accepted, and the model-level branch that `DEF-11` had blocked is now driven: `N_OB_SlotAvailable` took its default to `N_OB_RecordNoSlot`, `N_OB_UrgentReferral` escalated to `N_PC_EscalateUrgent`, and the instance completed at `N_PC_UrgentEscalated`. The availability check appears **once** in the path and the routine delay review is not taken. | `evidence/workers_unit-suite_c8556ba_2026-09-21.txt`; `evidence/operational-models-and-forms_end-to-end_57b3c1d_2026-09-28.txt` (scenario 8) | `DEF-11` (fixed at `57b3c1d`) |
 | TC-19 | 2026-09-21 | automated, `npm run test:e2e` | `a7f0dd6` ; `76a7fdc` (Java, all three levels) | Partial - the cancellation was received and recorded with its decisions; the another-appointment and pathway-review branches did not run | `evidence/operational-models_end-to-end_a7f0dd6_2026-09-21.txt` (scenario 5) | - |
@@ -218,14 +222,21 @@ in that directory and are accounted for there: `referral-to-appointment_normal-p
 models, which the `core-N` models replaced.
 
 Summary at `c8556ba`, re-run at `76a7fdc`, re-run again at `57b3c1d`, re-run once more at
-`2c3c2eb`, and extended at the working tree of 2026-10-13: **23 of the 25 scenarios have a recorded
-result - 16 pass, 7 pass only in part. Two have never been run: `TC-13` and `TC-16`.** The four
+`2c3c2eb`, extended at the working tree of 2026-10-13, and completed at `378b319` on 2026-10-15:
+**every scenario now has a recorded result - 25 of 25, 18 pass and 7 pass only in part.** `TC-13`
+and `TC-16`, the two the plan had never run, are driven by
+`tools/drive_tc13_contact_outcomes.py` and `tools/drive_tc16_letter_overdue_timer.py`, each a pass
+with the limit stated in its row, and the suite itself was re-run at the same commit
+(`evidence/workers-and-models_378b319_2026-10-15.txt`). The four
 added by the feedback pass - `TC-22` to `TC-25` - pass, which is what makes the confirmation
 outcomes, the reschedule, the end-to-end pathway and the record store results rather than claims. `TC-02` and `TC-20` were on that list until the `57b3c1d` run:
 `TC-02` gained two of its three decisions and `TC-20` gained its routing and its urgent branch, each as
 a partial result rather than a pass, for the reason stated in its row. `2c3c2eb` then added the
 `core-5` exchange, which is `TC-03`'s missing-documentation half. Eight of the ten acceptance criteria
-have a fully passing result: AC-01, AC-02, AC-03, AC-04, AC-05, AC-08, AC-09 and AC-10.
+have a fully passing result: AC-01, AC-02, AC-03, AC-04, AC-05, AC-08, AC-09 and AC-10, and with
+`TC-13` and `TC-16` driven on 2026-10-15 the two criteria that were partial for want of a run have
+that run: AC-06's timer half and AC-01's telephone-contact half. What the runs still do not show
+is a form submitted by a signed-in user (`DEF-08`).
 
 **AC-05** moved when `DEF-11` was fixed: it passes at worker level, and the urgent half that used to
 loop for ever in `core-1` now escalates out of the booking process instead of re-checking, driven in

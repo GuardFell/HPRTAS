@@ -1,0 +1,64 @@
+TC-13 - the patient is telephoned and the call is not a plain contact
+=====================================================================
+
+Version under test
+------------------
+Commit `378b319`, the feedback pass; the models, the forms and the workers are
+unchanged by any later commit the tag `submission-2026-10-22` names.
+
+Date: 2026-10-15.  Tester: automated, `python tools/drive_tc13_contact_outcomes.py`
+against Camunda 8 Run 8.9.19 on this machine, with the external workers running
+(`cd workers && mvn compile exec:java`, a throwaway record store).
+
+What the scenario asks
+----------------------
+`tests/test-plan.md` TC-13: the patient is telephoned and the call is unanswered, the
+number is wrong, or the patient asks for an alternative appointment. Each attempt and
+its outcome is recorded and the pathway continues; the patient has already been
+informed by letter. Pass condition: each outcome is recorded and the process records
+the attempt without losing the appointment. Linked criterion: AC-01.
+
+What was run
+------------
+Three instances of `core-1`, one per outcome. `unanswered` and `wrong_number` take the
+default flow out of `N_OB_ContactOutcome` into `N_OB_RecordAttempt` and back to
+`N_OB_TelephonePatient`, which is completed a second time with `contacted`;
+`alternative_requested` takes `F33` back into the booking and the second contact
+confirms. The driver is in `../../tools/drive_tc13_contact_outcomes.py`, so the run can
+be repeated rather than taken on trust.
+
+Result
+------
+    PASS. All three instances completed and each ended at `N_OB_AppointmentArranged`:
+    the attempt is recorded for `unanswered` and `wrong_number` (`N_OB_RecordAttempt`
+    reached, then the contact task again), and `alternative_requested` books again
+    (`N_OB_PrepareRequest` reached a second time) before the second contact confirms.
+    No attempt lost the appointment.
+
+What this run does not cover
+----------------------------
+- **The Tasklist half.** The tasks are completed through the API with the variables a
+  validated form would supply, which is how every scenario in this repository is
+  driven; no task is claimed by a signed-in user, so the record `BR-37` requires is
+  still not shown being captured from a form (`DEF-08`).
+- The result is a model-level one: the telephone call itself is outside the system, and
+  the outcome is recorded data.
+
+Transcript
+----------
+== unanswered
+   instance 2251799813835122
+   final state: COMPLETED
+   contact outcomes: ['N_OB_TelephonePatient', 'N_OB_ContactOutcome', 'N_OB_RecordAttempt', 'N_OB_TelephonePatient', 'N_OB_ContactOutcome']
+   ended at: ['N_OB_MergeAppointmentArranged', 'N_OB_AppointmentArranged']
+== wrong_number
+   instance 2251799813835250
+   final state: COMPLETED
+   contact outcomes: ['N_OB_TelephonePatient', 'N_OB_ContactOutcome', 'N_OB_RecordAttempt', 'N_OB_TelephonePatient', 'N_OB_ContactOutcome']
+   ended at: ['N_OB_MergeAppointmentArranged', 'N_OB_AppointmentArranged']
+== alternative_requested
+   instance 2251799813835375
+   final state: COMPLETED
+   contact outcomes: ['N_OB_TelephonePatient', 'N_OB_ContactOutcome', 'N_OB_TelephonePatient', 'N_OB_ContactOutcome']
+   ended at: ['N_OB_MergeAppointmentArranged', 'N_OB_AppointmentArranged']
+TC-13: PASS

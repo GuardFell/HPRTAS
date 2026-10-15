@@ -38,6 +38,23 @@ Files are kept small: text logs are preferred over recordings or screenshots.
 
 ## The runs recorded here
 
+**The revised version, at `378b319`, 2026-10-15.** The current records: the suite re-run at the
+commit the tag `submission-2026-10-22` names, and the two scenarios the plan had never run, driven
+on the same tree. They supersede the `2c3c2eb` records as the current ones, which are kept below as
+the record of what the tree did before the feedback pass.
+
+- `workers-and-models_378b319_2026-10-15.txt` - pass at all three levels: 52 unit tests (43 in
+  `WorkersTest`, 9 in `PersistenceTest`) and 14 engine tests (2 smoke, 12 operational-model
+  scenarios), 0 failures, 0 errors. The transcript is the tests' own report.
+- `TC-13_telephone-contact-outcomes_378b319_2026-10-15.txt` - pass: three instances of `core-1`, one
+  per telephone outcome the scenario names; each attempt recorded and no appointment lost. Driven by
+  `tools/drive_tc13_contact_outcomes.py` with the workers running.
+- `TC-16_letter-overdue-timer_378b319_2026-10-15.txt` - pass: the `P7D` boundary timer fired with no
+  worker involved, the reminder and the escalation were taken, and the in-target letter ended on
+  track with no reminder. The engine's clock was advanced for the run; the record says how, and what
+  the alternative operations do on this build. Driven by
+  `tools/drive_tc16_letter_overdue_timer.py`.
+
 **The message exchange and the drawing repairs, at `2c3c2eb`.** The current worker-level and
 model-level evidence, one commit past `57b3c1d`. It adds the fifth model and the worker that
 publishes a message, so the engine run is 11 tests rather than 10 (2 the smoke fixture, 9 the

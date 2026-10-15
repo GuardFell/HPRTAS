@@ -1,0 +1,85 @@
+TC-16 - a clinic letter left outstanding past the seven-day target
+==================================================================
+
+Version under test
+------------------
+Commit `378b319`, the feedback pass; the models, the forms and the workers are
+unchanged by any later commit the tag `submission-2026-10-22` names.
+
+Date: 2026-10-15.  Tester: automated, `python tools/drive_tc16_letter_overdue_timer.py`
+against Camunda 8 Run 8.9.19 on this machine, started with the clock controllable
+(`set CAMUNDA_SYSTEMCLOCKCONTROLLED=true` before
+`camunda-runtime\start-camunda.bat`). No worker was running: the delayed path the timer
+enters has no service task on it, which is the point the scenario makes.
+
+What the scenario asks
+----------------------
+`tests/test-plan.md` TC-16: a letter is not completed and approved within seven days of
+the appointment. The timer boundary event on the approval task has to fire without a
+worker being involved, the delayed letter enters pathway monitoring, a reminder is
+issued, escalation reaches higher management after more than three months, and the
+reminders stop once the letter is complete. Linked criterion: AC-06.
+
+What was run
+------------
+Two instances of `core-3`. The clock is advanced rather than waited out, because the
+`P7D` timer cannot be waited for; on this engine the observation is:
+
+  * `POST /actuator/clock/add {"offsetMilli": 691200000}` fires the timer within
+    seconds and the instance walks `N_C_ApproveLetter -> B_C_LetterOverdue ->
+    N_PC_MergeMonitoring -> N_PC_MonitorCorrespondence`;
+  * `POST /actuator/clock/pin` (an absolute instant) was tried first and did not fire
+    the timer within three minutes;
+  * `DELETE /actuator/clock`, which moves the clock back, left the secondary-storage
+    view stale on this build - instances created afterwards answered `404` from the
+    process-instance endpoints until the engine was restarted - so the run leaves the
+    clock advanced and the engine is stopped afterwards, which restores the system
+    clock.
+
+The driver is `../../tools/drive_tc16_letter_overdue_timer.py`.
+
+Result
+------
+    PASS. Instance A, the letter still outstanding: the boundary timer fired with no
+    worker involved (`B_C_LetterOverdue` completed, `N_C_ApproveLetter` terminated),
+    the letter entered monitoring, the seven-days decision sent it to
+    `N_PC_IssueReminder`, `N_PC_OverdueDuration` read `over_three_months` and the
+    instance ended at `N_AM_Escalated`. Instance B, the letter recorded within the
+    target: the delayed path ended at `N_PC_LetterOnTrack` and no reminder was issued.
+
+What this run does not cover
+----------------------------
+- **The escalation thresholds are recorded data, not measured periods.**
+  `N_PC_OverdueDuration` branches on the `overdueDuration` value the reminder form
+  supplies (`one_to_three_months` / `over_three_months`); the run drives both ends but
+  the engine does not measure a month or three months. The evaluation says so where it
+  judges AC-06.
+- **The clock was moved for the run**, and the engine was restarted afterwards. A
+  seven-day wait on an untouched clock would be the same path, and nobody has run it.
+- **The Tasklist half**: the monitor, reminder and escalation tasks are completed
+  through the API with the variables a validated form would supply (`DEF-08`).
+
+Transcript
+----------
+== A - the letter is still outstanding
+   instance 2251799813837480
+   N_C_ApproveLetter is open with the seven-day boundary timer armed
+   clock advanced by eight days: 2026-10-23T03:13:01.792Z
+   the boundary timer fired and the delayed path is entered
+   final state: COMPLETED
+   path: N_C_ConsultationDone -> N_C_PrepareLetter -> N_C_ApproveLetter -> B_C_LetterOverdue -> N_PC_MonitorCorrespondence -> N_PC_SevenDays -> N_PC_IssueReminder -> N_PC_OverdueDuration -> N_AM_EscalateHigher -> N_AM_Escalated
+     N_C_ApproveLetter          TERMINATED
+     B_C_LetterOverdue          COMPLETED
+     N_PC_IssueReminder         COMPLETED
+     N_AM_Escalated             COMPLETED
+== B - the letter was completed within the target
+   instance 2251799813837599
+   N_C_ApproveLetter is open with the seven-day boundary timer armed
+   clock advanced by eight days: 2026-10-31T03:13:14.194Z
+   the boundary timer fired and the delayed path is entered
+   final state: COMPLETED
+   path: N_C_ConsultationDone -> N_C_PrepareLetter -> N_C_ApproveLetter -> B_C_LetterOverdue -> N_PC_MonitorCorrespondence -> N_PC_SevenDays -> N_PC_LetterOnTrack
+     N_C_ApproveLetter          TERMINATED
+     B_C_LetterOverdue          COMPLETED
+     N_PC_LetterOnTrack         COMPLETED
+TC-16: PASS

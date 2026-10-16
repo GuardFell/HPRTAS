@@ -207,6 +207,12 @@ def check_model(path, problems, warnings):
     for nid, node in m["nodes"].items():
         if nid not in boxes and node["tag"] != "boundaryEvent":
             add("%s %s has no shape in the diagram" % (node["tag"], nid))
+    # a text annotation with no shape is invisible to the export and to the
+    # export check, which both read their notes from the diagram interchange, so
+    # it would be declared in the model and never drawn
+    for note in m["root"].iter(BPMN + "textAnnotation"):
+        if note.get("id") not in boxes:
+            add("text annotation %s has no shape in the diagram" % note.get("id"))
     for eid in boxes:
         if eid not in known:
             add("diagram shape %s names no element" % eid)

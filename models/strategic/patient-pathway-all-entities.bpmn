@@ -6,7 +6,7 @@
       <bpmn:text>Customer: the patient, referred by a GP or another hospital.</bpmn:text>
     </bpmn:textAnnotation>
     <bpmn:textAnnotation id="TextAnnotation_Systems">
-      <bpmn:text>Systems involved: the scheduling, correspondence, treatment and payment services.</bpmn:text>
+      <bpmn:text>Systems involved: the scheduling, correspondence, treatment and payment services, and the funding organisation. What crosses the hospital boundary: the appointment and the treatment booking, the letters, the treatment itself, the payment and the refund, the funding approval, the missing-information request and its reply, and the patient's contact, cancellation and enquiry.</bpmn:text>
     </bpmn:textAnnotation>
   </bpmn:collaboration>
   <bpmn:process id="patient-pathway-all-entities" name="Patient pathway across all hospital entities (strategic overview)" isExecutable="false">
@@ -94,10 +94,17 @@
     <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
       <bpmndi:BPMNShape id="Participant_Hospital_di" bpmnElement="Participant_Hospital" isHorizontal="true">
-        <dc:Bounds x="100" y="120" width="3028" height="1590" />
+        <dc:Bounds x="100" y="120" width="3028" height="1689" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="106" y="1599" width="20" height="105" />
+          <dc:Bounds x="106" y="1698" width="20" height="105" />
         </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TextAnnotation_Customer_di" bpmnElement="TextAnnotation_Customer">
+        <dc:Bounds x="148" y="1675" width="1400" height="31" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_Systems_di" bpmnElement="TextAnnotation_Systems">
+        <dc:Bounds x="148" y="1718" width="1400" height="45" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Lane_CallHandling_di" bpmnElement="Lane_CallHandling" isHorizontal="true">
         <dc:Bounds x="100" y="150" width="3028" height="216" />

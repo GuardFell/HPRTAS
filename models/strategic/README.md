@@ -49,10 +49,11 @@ lecture allows up to eight):
 | Note | Why it is there |
 |---|---|
 | *Customer: the patient, referred by a GP or another hospital.* | The strategic-model requirements ask that it be clear who the customer of the process is. |
-| *Systems involved: the scheduling, correspondence, treatment and payment services.* | The same requirements ask a strategic model to carry information about computer systems and/or human tasks. Every activity here is a human task; this note names the systems those tasks exchange information with, each of which is a black-box pool with its own message flows in `../operational/`. |
+| *Systems involved: the scheduling, correspondence, treatment and payment services, and the funding organisation. What crosses the hospital boundary: the appointment and the treatment booking, the letters, the treatment itself, the payment and the refund, the funding approval, the missing-information request and its reply, and the patient's contact, cancellation and enquiry.* | The same requirements ask a strategic model to carry information about computer systems and/or human tasks, and the brief asks these models to show the external interactions. Every activity here is a human task; this note names the systems and the interactions, so what crosses the hospital boundary is visible on the diagram rather than only in element documentation a reader of the drawing cannot see. Each party named is a black-box pool with its own message flows in `../operational/`, which is the level at which the boundary is implemented. |
 
 They are drawn inside the pool, under the last lane, rather than attached to one activity, because
 they describe the process as a whole; the layout works out the band and the pool grows to hold it.
+A note is an artifact the lecture allows (up to eight) and these two are the models' only ones.
 
 ## The level these models are drawn at
 

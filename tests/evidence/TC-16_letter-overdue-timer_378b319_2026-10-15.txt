@@ -3,10 +3,13 @@ TC-16 - a clinic letter left outstanding past the seven-day target
 
 Version under test
 ------------------
-Commit `378b319`, the feedback pass; the tag `submission-2026-10-22` names this
-tree, and the commits that follow it in the tag change documents and records only - no
-model, no form and no worker source differs, `git diff --stat 378b319 submission-2026-10-22 -- '*.bpmn' '*.form' workers/src workers/pom.xml workers/config`
-being empty.
+Commit `378b319`, the feedback pass - the commit the tag `submission-2026-10-22` was made
+on. The tag was later re-pointed onto the commits it now names, and what those change is
+models - three of the operational ones and both strategic views - and nothing else: no form
+and no worker source differs between this commit and the tagged tree, `git diff --stat 378b319 submission-2026-10-22 -- '*.form' workers/src workers/pom.xml workers/config`
+being empty. This run describes the tree at `378b319`; the escalation path it walks now
+carries `N_AM_MergeEscalation`, and the re-drive on the changed tree is recorded in
+`merge-gateways-and-the-verification-chain_working-tree_2026-10-15.txt`.
 
 Date: 2026-10-15.  Tester: automated, `python tools/drive_tc16_letter_overdue_timer.py`
 against Camunda 8 Run 8.9.19 on this machine, started with the clock controllable

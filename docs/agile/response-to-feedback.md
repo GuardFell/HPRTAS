@@ -10,8 +10,8 @@
 > rows below are the distinct points, deduplicated - several groups raised the same point in
 > different words - and each row names the sheets that raised it, so no sheet is unaccounted for.
 >
-> **The work that answers it.** The feedback pass, committed at `378b319`, which the tag
-> `submission-2026-10-22` names. Every row cites its own evidence: a path, a scenario (`TC-##`),
+> **The work that answers it.** The feedback pass, committed at `378b319`, the commit the tag
+> `submission-2026-10-22` was made on. Every row cites its own evidence: a path, a scenario (`TC-##`),
 > a defect (`DEF-##`) or a commit. Where a point was not adopted, the decision and the reason are
 > the answer, and they are recorded here rather than left implicit.
 

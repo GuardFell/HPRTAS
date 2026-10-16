@@ -6,10 +6,15 @@ Version under test
 Commit `378b319`, the feedback pass: `core-0` calling the five stages, the record store
 the workers keep the hospital's records in, the input-validation policy, the
 appointment-confirmation outcomes, the merging gateways and the end-to-end process.
-The tag `submission-2026-10-22` names this tree. The commits that follow it in that tag
-change documents and records only: no model, no form and no worker source differs between
-this commit and the tagged tree, and the check is `git diff --stat 378b319 submission-2026-10-22 -- '*.bpmn' '*.form' workers/src workers/pom.xml workers/config`,
-which is empty. The record store was a throwaway in-memory database for the engine run
+The tag `submission-2026-10-22` was made on this commit and later re-pointed onto the commits
+it now names. Those commits change three of the operational models and both strategic views -
+the converging gateways in `core-2` and `core-3`, the re-laid-out `core-5` diagram, and the
+strategic views' notes, which now have their shape in the diagrams - but no form and no worker
+source: the check is `git diff --stat 378b319 submission-2026-10-22 -- '*.form' workers/src workers/pom.xml workers/config`,
+which is empty. The runs below describe the tree at `378b319`; the tree the tag now names is
+the one `merge-gateways-and-the-verification-chain_working-tree_2026-10-15.txt` describes, with
+the two gateways driven on the engine and `TC-16` re-driven on the path that carries
+`N_AM_MergeEscalation`. The record store was a throwaway in-memory database for the engine run
 (`hprtas.dbUrl`), so none of the runs below left records behind.
 
 Date: 2026-10-15.  Tester: automated, `cd workers && mvn test` and

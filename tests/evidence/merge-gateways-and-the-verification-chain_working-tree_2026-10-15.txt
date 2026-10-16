@@ -3,8 +3,8 @@ The last two convergences, and the chain that checks them
 
 Version under test
 ------------------
-The working tree on top of commit `8d6f3ce`, which the tag `submission-2026-10-22`
-names, with two model changes not yet committed:
+The working tree on top of commit `8d6f3ce` - which the tag `submission-2026-10-22`
+named when this record was made - with two model changes not yet committed:
 
   * `core-3`: `N_AM_MergeEscalation` merges the two paths that reach
     `N_AM_EscalateHigher` - the letter more than three months overdue, and the one that

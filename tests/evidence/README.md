@@ -50,10 +50,12 @@ that describes the tree as it stands: two merging gateways were added to `core-2
   (`camunda.system.clock-controlled`) rather than through the `CAMUNDA_SYSTEMCLOCKCONTROLLED`
   environment variable, which did not take effect on this machine.
 
-**The revised version, at `378b319`, 2026-10-15.** The current records: the suite re-run at the
-commit the tag `submission-2026-10-22` names, and the two scenarios the plan had never run, driven
-on the same tree. They supersede the `2c3c2eb` records as the current ones, which are kept below as
-the record of what the tree did before the feedback pass.
+**The revised version, at `378b319`, 2026-10-15.** The records of the feedback pass: the suite
+re-run at the commit the tag `submission-2026-10-22` was made on, and the two scenarios the plan
+had never run, driven on the same tree. The tag was later re-pointed onto the sprint's later
+commits, which change models but no form and no worker source. They supersede the `2c3c2eb` records
+as the current ones, which are kept below as the record of what the tree did before the feedback
+pass.
 
 - `workers-and-models_378b319_2026-10-15.txt` - pass at all three levels: 52 unit tests (43 in
   `WorkersTest`, 9 in `PersistenceTest`) and 14 engine tests (2 smoke, 12 operational-model

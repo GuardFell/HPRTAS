@@ -23,8 +23,9 @@ With the feedback pass of 2026-10-13 the tree has **six operational models - the
 end-to-end process, 43 forms and eight workers**, and the record store the workers now keep their
 records in. The scenarios below that were driven at this tree - `TC-22` to `TC-25` - name it as the
 working tree on `aba6b29` rather than a commit, because the pass was uncommitted when they were
-driven; it is committed at `378b319`, which the tag `submission-2026-10-22` names, and the runs of
-2026-10-15 name that commit.
+driven; it is committed at `378b319`, the commit the tag `submission-2026-10-22` was made on, and
+the runs of 2026-10-15 name that commit. The tag was later re-pointed onto the sprint's later
+commits, which change models but no form and no worker source.
 
 The first-release tag has been re-pointed twice. It was made at `9ef26df` against the Node.js
 version, then moved to `bdcc0e1` after the workers were rewritten in `4eb3fee`, and then moved

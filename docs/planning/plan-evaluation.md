@@ -35,7 +35,7 @@ earns, and the verdicts are kept as they stand - a result belongs to the version
 What the second release moves is written where it belongs: section 6 carries the verdicts at the
 revised version beside the initial ones, section 3's notes name the rows the pass moved with the
 commit that moved them, and the runs that carry them are the three records of 2026-10-15 at
-`378b319`, the tree the tag `submission-2026-10-22` names. The criteria themselves were not
+`378b319`, the commit the tag `submission-2026-10-22` was made on. The criteria themselves were not
 rewritten; this record says that rather than presenting a second criteria set as if one existed.
 The evidence was the half that had not kept up, and it has now been re-run twice: once at `76a7fdc`
 after the Java rewrite, and again at `57b3c1d` on 2026-09-28, where all three levels and the

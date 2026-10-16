@@ -16,8 +16,9 @@
 >
 > ### Status after the second-release evaluation (15 Oct 2026)
 >
-> The runs of 15 October 2026 at `378b319` - the tree the tag `submission-2026-10-22` names - moved
-> four rows. Only the rows that moved are rewritten; the rest stand as the feedback pass left them:
+> The runs of 15 October 2026 at `378b319`, the commit the tag `submission-2026-10-22` was made on,
+> moved four rows. Only the rows that moved are rewritten; the rest stand as the feedback pass left
+> them:
 >
 > - **FR-014** - the telephone-contact outcomes now have a run: all three cases the scenario names
 >   (`TC-13`), each attempt recorded, the process asking again where the call did not connect, and no

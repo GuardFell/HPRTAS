@@ -42,6 +42,7 @@
       </bpmn:lane>
       <bpmn:lane id="Lane_AdminManagement" name="Administrative Management Team">
         <bpmn:flowNodeRef>N_AM_ContactConsultant</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_AM_MergeEscalation</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_AM_EscalateHigher</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_AM_Escalated</bpmn:flowNodeRef>
       </bpmn:lane>
@@ -157,6 +158,9 @@
       <zeebe:assignmentDefinition candidateGroups="administrative-management" />
     </bpmn:extensionElements>
   </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_AM_MergeEscalation" name="Contacted or three months overdue">
+    <bpmn:documentation>Merges the two paths that reach Escalate to higher management: the letter more than three months overdue, which escalates without the consultant having been contacted, and the one that has been through Contact the responsible consultant. The merge is exclusive - each token that arrives continues on its own - and it is drawn rather than left implicit at the activity (BR-32, EX-17, FR-040).</bpmn:documentation>
+  </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_AM_EscalateHigher" name="Escalate to higher management">
     <bpmn:documentation>More than three months outstanding: escalation to the appropriate higher management team; the team is not named in the case (AM-05, BR-32, FR-040).</bpmn:documentation>
     <bpmn:extensionElements>
@@ -190,11 +194,12 @@
   <bpmn:sequenceFlow id="F18" name="one to three months" sourceRef="N_PC_OverdueDuration" targetRef="N_AM_ContactConsultant">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= overdueDuration = &quot;one_to_three_months&quot;</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F19" name="over three months" sourceRef="N_PC_OverdueDuration" targetRef="N_AM_EscalateHigher">
+  <bpmn:sequenceFlow id="F19" name="over three months" sourceRef="N_PC_OverdueDuration" targetRef="N_AM_MergeEscalation">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= overdueDuration = &quot;over_three_months&quot;</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F20" sourceRef="N_AM_ContactConsultant" targetRef="N_AM_EscalateHigher" />
+  <bpmn:sequenceFlow id="F20" sourceRef="N_AM_ContactConsultant" targetRef="N_AM_MergeEscalation" />
   <bpmn:sequenceFlow id="F21" sourceRef="N_AM_EscalateHigher" targetRef="N_AM_Escalated" />
+  <bpmn:sequenceFlow id="MF4" sourceRef="N_AM_MergeEscalation" targetRef="N_AM_EscalateHigher" />
     <bpmn:sequenceFlow id="MF1" sourceRef="N_C_MergeApproval" targetRef="N_C_ApproveLetter" />
   <bpmn:sequenceFlow id="MF2" sourceRef="N_MS_MergeRecipients" targetRef="N_MS_ConfirmRecipients" />
   <bpmn:sequenceFlow id="MF3" sourceRef="N_PC_MergeMonitoring" targetRef="N_PC_MonitorCorrespondence" />
@@ -367,15 +372,21 @@
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_AM_EscalateHigher_di" bpmnElement="N_AM_EscalateHigher">
-        <dc:Bounds x="2820" y="1420" width="150" height="80" />
+        <dc:Bounds x="2930" y="1420" width="150" height="80" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2827" y="1504" width="136" height="41" />
+          <dc:Bounds x="2937" y="1504" width="136" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_AM_Escalated_di" bpmnElement="N_AM_Escalated">
-        <dc:Bounds x="3080" y="1450" width="36" height="36" />
+        <dc:Bounds x="3190" y="1450" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="3038" y="1490" width="121" height="21" />
+          <dc:Bounds x="3148" y="1490" width="121" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_AM_MergeEscalation_di" bpmnElement="N_AM_MergeEscalation" isMarkerVisible="true">
+        <dc:Bounds x="2790" y="1470" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2745" y="1524" width="141" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="F1_di" bpmnElement="F1">
@@ -506,23 +517,29 @@
         <di:waypoint x="2340" y="1080" />
         <di:waypoint x="2350" y="1080" />
         <di:waypoint x="2350" y="1060" />
-        <di:waypoint x="2900" y="1060" />
-        <di:waypoint x="2900" y="1420" />
+        <di:waypoint x="2815" y="1060" />
+        <di:waypoint x="2815" y="1470" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="2352" y="1035" width="113" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F20_di" bpmnElement="F20">
         <di:waypoint x="2720" y="1450" />
-        <di:waypoint x="2800" y="1450" />
-        <di:waypoint x="2800" y="1460" />
-        <di:waypoint x="2820" y="1460" />
+        <di:waypoint x="2755" y="1450" />
+        <di:waypoint x="2755" y="1495" />
+        <di:waypoint x="2790" y="1495" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F21_di" bpmnElement="F21">
-        <di:waypoint x="2970" y="1460" />
-        <di:waypoint x="3060" y="1460" />
-        <di:waypoint x="3060" y="1470" />
-        <di:waypoint x="3080" y="1470" />
+        <di:waypoint x="3080" y="1460" />
+        <di:waypoint x="3170" y="1460" />
+        <di:waypoint x="3170" y="1470" />
+        <di:waypoint x="3190" y="1470" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF4_di" bpmnElement="MF4">
+        <di:waypoint x="2840" y="1495" />
+        <di:waypoint x="2885" y="1495" />
+        <di:waypoint x="2885" y="1460" />
+        <di:waypoint x="2930" y="1460" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="MF1_di" bpmnElement="MF1">
         <di:waypoint x="590" y="300" />

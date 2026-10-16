@@ -63,6 +63,7 @@
         <bpmn:flowNodeRef>N_F_CalculateCharge</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_ProcessPayment</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_PaymentStatus</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_F_MergePaymentCorrection</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_CorrectPaymentRequest</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_InvestigatePayment</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_InvestigationComplete</bpmn:flowNodeRef>
@@ -268,8 +269,11 @@
     <bpmn:exclusiveGateway id="N_F_PaymentStatus" name="Payment completed?" default="F27">
       <bpmn:documentation>Reads paymentStatus, confirmationReceived and requiresInvestigation (BR-17, BR-18, EX-11, EX-12, FR-030, FR-031).</bpmn:documentation>
     </bpmn:exclusiveGateway>
+    <bpmn:exclusiveGateway id="N_F_MergePaymentCorrection" name="Payment input refused">
+      <bpmn:documentation>Merges the paths that reach Correct the payment request (prohibited financial data, invalid payment variables). The merge is exclusive - each token that arrives continues on its own - and it is drawn rather than left implicit at the activity. A request carrying card or security details and one whose variables are unusable need the same correction before anything is sent to the provider (BR-16, NFR-007).</bpmn:documentation>
+    </bpmn:exclusiveGateway>
     <bpmn:userTask id="N_F_CorrectPaymentRequest" name="Correct the payment request">
-      <bpmn:documentation>Handles PROHIBITED_FINANCIAL_DATA (card or security details must never reach the system, BR-16, NFR-007) and INVALID_VARIABLE (the request variables are unusable). In both cases the provider is not called again until the request is correct, and no second charge is created (BR-17, FR-028, FR-030). This is the one convergence where the merge is left at the task rather than drawn: it is a repair path returning to the task that owns the request, and the drawing tools cannot route a boundary event's return across the payment task's column without the line crossing it.</bpmn:documentation>
+      <bpmn:documentation>Handles PROHIBITED_FINANCIAL_DATA (card or security details must never reach the system, BR-16, NFR-007) and INVALID_VARIABLE (the request variables are unusable). In both cases the provider is not called again until the request is correct, and no second charge is created (BR-17, FR-028, FR-030). The two repair paths arrive through Merge payment correction rather than at the task, so this convergence is drawn as a gateway like the others.</bpmn:documentation>
       <bpmn:extensionElements>
         <zeebe:userTask />
         <zeebe:formDefinition formId="payment" />
@@ -383,8 +387,9 @@
     <bpmn:sequenceFlow id="F28" name="taken but unconfirmed" sourceRef="N_F_PaymentStatus" targetRef="N_F_InvestigatePayment">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= requiresInvestigation = true</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="F22" sourceRef="B_F_ProhibitedData" targetRef="N_F_CorrectPaymentRequest" />
-    <bpmn:sequenceFlow id="F23" sourceRef="B_F_InvalidVariables" targetRef="N_F_CorrectPaymentRequest" />
+    <bpmn:sequenceFlow id="F22" sourceRef="B_F_ProhibitedData" targetRef="N_F_MergePaymentCorrection" />
+    <bpmn:sequenceFlow id="F23" sourceRef="B_F_InvalidVariables" targetRef="N_F_MergePaymentCorrection" />
+    <bpmn:sequenceFlow id="MF6" sourceRef="N_F_MergePaymentCorrection" targetRef="N_F_CorrectPaymentRequest" />
     <bpmn:sequenceFlow id="F29" sourceRef="N_F_InvestigatePayment" targetRef="N_F_InvestigationComplete" />
     <bpmn:sequenceFlow id="F32" sourceRef="N_F_NotifyPatient" targetRef="N_F_RetryDecision" />
     <bpmn:sequenceFlow id="F44" name="no further attempt" sourceRef="N_F_RetryDecision" targetRef="N_F_PaymentNotPursued" />
@@ -650,6 +655,12 @@
         <dc:Bounds x="4140" y="1610" width="150" height="80" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="4138" y="1694" width="154" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_MergePaymentCorrection_di" bpmnElement="N_F_MergePaymentCorrection" isMarkerVisible="true">
+        <dc:Bounds x="4014" y="1625" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="3954" y="1679" width="170" height="21" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_F_DetermineFunding_di" bpmnElement="N_F_DetermineFunding">
@@ -1076,20 +1087,20 @@
         <di:waypoint x="3880" y="1640" />
         <di:waypoint x="3880" y="1650" />
         <di:waypoint x="3920" y="1650" />
-        <di:waypoint x="3920" y="1640" />
-        <di:waypoint x="4120" y="1640" />
-        <di:waypoint x="4120" y="1650" />
-        <di:waypoint x="4140" y="1650" />
+        <di:waypoint x="4014" y="1650" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F23_di" bpmnElement="F23">
         <di:waypoint x="3876" y="1640" />
         <di:waypoint x="3890" y="1640" />
         <di:waypoint x="3890" y="1690" />
         <di:waypoint x="3950" y="1690" />
-        <di:waypoint x="3950" y="1660" />
-        <di:waypoint x="4120" y="1660" />
-        <di:waypoint x="4120" y="1650" />
-        <di:waypoint x="4140" y="1650" />
+        <di:waypoint x="4014" y="1660" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MF6_di" bpmnElement="MF6">
+        <di:waypoint x="4064" y="1650" />
+        <di:waypoint x="4100" y="1650" />
+        <di:waypoint x="4100" y="1660" />
+        <di:waypoint x="4140" y="1660" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F29_di" bpmnElement="F29">
         <di:waypoint x="4650" y="1600" />

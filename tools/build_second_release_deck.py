@@ -215,8 +215,8 @@ table_slide(
       "(embedded H2), read back and used; DEF-10 closed"],
      ["Validation", "Required fields only", "One input-validation policy, applied by a script and "
       "enforced by a check: references, NHS numbers, names, bounds, no past dates"],
-     ["Gateways", "Alternative paths merged at tasks", "Named merging gateways, with one exception "
-      "recorded in the model itself"],
+     ["Gateways", "Alternative paths merged at tasks", "A named merging gateway at every "
+      "convergence - none is left at a task"],
      ["Evidence", "Results recorded against the 29 September tree", "The suite re-run and the two "
       "scenarios that had no result driven at 378b319, 2026-10-15"]],
     col_widths=[1.5, 4.2, 6.4], row_height=0.62, size=10, header_size=10)
@@ -294,8 +294,9 @@ bullet_slide(
     "HPRTAS · models/operational/; tools/verify_hprtas_bpmn_bindings.py; "
     "tools/verify_hprtas_bpmn_layout.py; tests/test-plan.md section 6",
     [("Merging gateways, named for the convergence they represent — N_OB_MergeContactPath, "
-      "N_F_MergeRefundRequest, the N_MS_Merge set and the rest — with the one exception recorded "
-      "in the model itself, where no routing kept a boundary event's return off the payment column.", 0),
+      "N_F_MergeRefundRequest, the N_MS_Merge set and the rest — at every convergence. The two the "
+      "first edition left at a task, the payment-error repair paths and the escalation paths, now "
+      "merge through N_F_MergePaymentCorrection and N_AM_MergeEscalation.", 0),
      ("Three drawing faults fixed: labels were written over the decision diamonds. The layout now "
       "prefers the routing that keeps lines off the boxes, and the layout check passes on all "
       "eight models; the crossings that remain are the ones the process leaves no other way round.", 0),
@@ -329,7 +330,7 @@ table_slide(
       "forms/README.md; check_forms_formjs.mjs",
       "A field cannot lose its rule quietly; cross-field rules are stated and refused by the worker"],
      ["Merging gateways where alternative paths come together (12)",
-      "Every convergence is a named merging gateway, one exception recorded",
+      "Every convergence is a named merging gateway - none left at a task",
       "models/operational/; the layout check",
       "A reader sees where paths join, and the check keeps it true"]],
     col_widths=[3.3, 3.5, 2.5, 3.4], row_height=0.95, size=9, header_size=9.5)

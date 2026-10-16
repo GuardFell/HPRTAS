@@ -159,10 +159,10 @@ value the process acts on is produced by the component that can actually know it
 **Every exclusive gateway declares a default flow, and the default is the branch that keeps a human
 in the loop.** Camunda does not treat a conditionless sequence flow as a fallback: a gateway falls
 back only to the flow named in its `default` attribute, and raises an incident when no condition
-matches. All 24 exclusive gateways in the five processes therefore declare one, and the flow each
+matches. All 26 exclusive gateways in the five processes therefore declare one, and the flow each
 names carries no condition of its own.
 
-**Where paths come together, a merging gateway says so.** Twenty-six convergence points across the
+**Where paths come together, a merging gateway says so.** Twenty-eight convergence points across the
 five stage processes - the places where a repair path returns to the task that owns the request, an
 alternative decision re-joins, or a boundary event's outcome lands - are drawn as an explicit
 **exclusive merge gateway** rather than as several arrows arriving at one activity. In Camunda the two
@@ -171,12 +171,16 @@ the feedback asked for it. Each gateway carries the documentation of what it mer
 gateways are named for the convergence they represent (`N_OB_MergeContactPath`, `N_F_MergeRefundRequest`),
 so a reader of the model or of a run's element path can see them.
 
-**One convergence is left at the task, and the model says why.** The two payment-error repair paths
-into `N_F_CorrectPaymentRequest` in `core-2` keep their direct merge. Both come from boundary events
-on `N_F_ProcessPayment`, and no candidate layout routed a repair path back across the payment task's
-column without the line crossing the task's own box, which the layout check refuses. Rather than ship
-a diagram with a line through an activity for the sake of symmetry, that one merge is left at the
-task and the task's documentation records the exception.
+**Every convergence is drawn, and none is left at the task.** Two were left at the task in the
+previous edition, and each now merges through a gateway. The first is the pair of payment-error
+repair paths into `N_F_CorrectPaymentRequest` in `core-2`, which that edition recorded as its one
+exception with a layout reason: the corridor under `N_F_ProcessPayment` carries the task's label and
+the two boundary events' labels, and a return path routed across the payment column crossed the
+task's own box. The merge gateway needs no such crossing - `N_F_MergePaymentCorrection` sits between
+the boundary events and the task they feed, in the one free band the corridor leaves - so the
+exception was retired rather than kept. The second is the pair of paths into `N_AM_EscalateHigher`
+in `core-3`, which was not recorded as an exception anywhere; `N_AM_MergeEscalation` merges it. No
+convergence in the six models is left at a task now, and the layout check passes on both.
 
 Which branch is the default is a deliberate choice, and it is always the conservative one: an
 unrecognised referral decision becomes "further information" rather than an automatic rejection; a
@@ -242,7 +246,7 @@ the same appointment twice.
 ## 6. Exception handling
 
 **A business rule that stops the work is thrown as a BPMN error, and every service task that can
-raise one catches it.** Fifteen boundary error events across the five processes, one per error code
+raise one catches it.** Sixteen boundary error events across the five processes, one per error code
 per activity. Each error path returns the token to the task that owns the request, so the request is
 corrected and the step retried rather than the process being abandoned: the referral exceptions
 return to the Medical Secretaries, the booking and dispatch failures to the Outpatient Bookings

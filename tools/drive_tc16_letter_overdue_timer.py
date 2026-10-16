@@ -8,8 +8,8 @@ escalation, and stops when the letter is in target. Two instances of `core-3` ar
 driven:
 
   A. the monitor records the letter as still outstanding -> `N_PC_IssueReminder`,
-     `N_PC_OverdueDuration` (`over_three_months`), `N_AM_EscalateHigher`,
-     `N_AM_Escalated`;
+     `N_PC_OverdueDuration` (`over_three_months`), `N_AM_MergeEscalation`,
+     `N_AM_EscalateHigher`, `N_AM_Escalated`;
   B. the monitor records it within the target -> `N_PC_LetterOnTrack`, and no reminder.
 
 No worker is needed: the delayed path the timer enters has no service task on it.
@@ -134,8 +134,8 @@ def drive(label, letter_within_seven_days):
     reached = [(e["elementId"], e["state"]) for e in elements(pik)]
     interesting = ("N_C_ConsultationDone", "N_C_PrepareLetter", "N_C_ApproveLetter",
                    "B_C_LetterOverdue", "N_PC_MonitorCorrespondence", "N_PC_SevenDays",
-                   "N_PC_IssueReminder", "N_PC_OverdueDuration", "N_AM_EscalateHigher",
-                   "N_AM_Escalated", "N_PC_LetterOnTrack")
+                   "N_PC_IssueReminder", "N_PC_OverdueDuration", "N_AM_MergeEscalation",
+                   "N_AM_EscalateHigher", "N_AM_Escalated", "N_PC_LetterOnTrack")
     print(f"   final state: {state}")
     print(f"   path: {' -> '.join(e for e, s in reached if e in interesting)}")
     for e, s in reached:

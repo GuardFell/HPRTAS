@@ -38,6 +38,18 @@ Files are kept small: text logs are preferred over recordings or screenshots.
 
 ## The runs recorded here
 
+**The last two convergences, on the working tree, 2026-10-15.** The newest record, and the only one
+that describes the tree as it stands: two merging gateways were added to `core-2` and `core-3` after
+`8d6f3ce`, so it names the working tree rather than a commit.
+
+- `merge-gateways-and-the-verification-chain_working-tree_2026-10-15.txt` - the static checks, the
+  engine deployment check, `mvn test -Pengine` (14 tests, 0 failures) and `TC-16` re-driven on the
+  changed path. It also records two faults found in the check chain on the way: the engine-forms
+  check could not follow `core-0`'s call activities and had been failing since `378b319`, and the
+  engine's clock was made controllable through the runtime's `application.yaml`
+  (`camunda.system.clock-controlled`) rather than through the `CAMUNDA_SYSTEMCLOCKCONTROLLED`
+  environment variable, which did not take effect on this machine.
+
 **The revised version, at `378b319`, 2026-10-15.** The current records: the suite re-run at the
 commit the tag `submission-2026-10-22` names, and the two scenarios the plan had never run, driven
 on the same tree. They supersede the `2c3c2eb` records as the current ones, which are kept below as

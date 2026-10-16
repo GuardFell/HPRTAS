@@ -1,0 +1,106 @@
+The last two convergences, and the chain that checks them
+=========================================================
+
+Version under test
+------------------
+The working tree on top of commit `8d6f3ce`, which the tag `submission-2026-10-22`
+names, with two model changes not yet committed:
+
+  * `core-3`: `N_AM_MergeEscalation` merges the two paths that reach
+    `N_AM_EscalateHigher` - the letter more than three months overdue, and the one that
+    has been through `N_AM_ContactConsultant`.
+  * `core-2`: `N_F_MergePaymentCorrection` merges the two boundary-error repair paths
+    into `N_F_CorrectPaymentRequest` (`B_F_ProhibitedData`, `B_F_InvalidVariables`).
+
+They were the only convergences in the six operational models with no merging gateway.
+The first was recorded as the one exception in `docs/justification-of-decisions.md`
+section 4 and in the model itself; the second was recorded nowhere, and was found by
+counting the incoming flows of every task rather than by reading the record.
+
+Date: 2026-10-15.  Tester: automated, the commands below, against Camunda 8 Run 8.9.19
+on this machine.
+
+How to run
+----------
+  cd HPRTAS
+  python tools/export_hprtas_bpmn_pdf.py           # after a model change, before the OCR check
+  python tools/verify_hprtas_bpmn_bindings.py
+  python tools/verify_hprtas_bpmn_layout.py
+  python tools/verify_hprtas_bpmn_export.py
+  camunda-runtime\start-camunda.bat
+  python tools/verify_hprtas_engine_forms.py
+  cd workers && mvn test -Pengine                  # 2 smoke + 12 operational-model scenarios
+  python tools/drive_tc16_letter_overdue_timer.py  # engine with the clock controllable, see below
+  camunda-runtime\stop-camunda.bat
+
+Result
+------
+  static   bindings PASS - 6 models, 43 forms, 8 workers agree.
+           layout PASS - 8 models, 0 problems. 100 crossings, the same before and after
+           the change: the two gateways added no crossing.
+           export PASS - word coverage 82-96% on the eight committed drawings; core-2
+           87% and core-3 93% after the re-export.
+  engine   `verify_hprtas_engine_forms.py` PASS - 43 forms and all six models deploy,
+           start, and reach a user task that binds a deployed form.
+  engine   `mvn test -Pengine`: 14 tests, 0 failures, 0 errors (SmokeTest 2,
+           OperationalModelsTest 12).
+  TC-16    PASS, re-driven on the changed path. Instance A took
+           `N_PC_OverdueDuration -> N_AM_MergeEscalation -> N_AM_EscalateHigher ->
+           N_AM_Escalated` and completed; instance B ended on track with no reminder.
+           This is what makes the re-run worth recording: the element path TC-16 walks
+           now carries the merge gateway, so the record of 2026-10-15 at `378b319` no
+           longer describes the path this tree takes.
+
+Two faults in the check chain, found while doing this
+-----------------------------------------------------
+Both are pre-existing and neither is caused by the model change.
+
+1. `tools/verify_hprtas_engine_forms.py` searched the user tasks of the instance it
+   started, and `core-0` holds no user task of its own - its first task is in the stage
+   process its call activity starts. So the check reported
+
+     - core-0-patient-pathway-end-to-end.bpmn started but reached no user task
+     FAIL: 1 problems
+
+   and had been reporting it since `core-0` was added at `378b319`. It was not fixed by
+   the feedback pass and no record said the check was failing; the last recorded PASS is
+   at `57b3c1d`, before `core-0` existed. The check now follows the call activities -
+   `child_instances()` and `instance_tree()` walk `parentProcessInstanceKey` - and
+   reaches `N_MS_CheckReferral` in the `core-1` instance `core-0` started. It passes on
+   all six models. The model was checked against the unmodified tree as well, and it
+   failed there too, which is how the fault was attributed to the check and not to the
+   models.
+
+2. The engine's clock is not controllable through the environment variable in this
+   shell. `CAMUNDA_SYSTEMCLOCKCONTROLLED=true` was set for the launcher twice - once as
+   an exported variable, once with `set` inside the `cmd` invocation that runs
+   `start-camunda.bat` - and in both cases `POST /actuator/clock/add` answered
+
+     403: Expected to add time to the clock, but it is immutable
+
+   `AGENTS.md` records the variable as the method. What works here is the property in
+   the runtime's own Spring configuration: with
+
+     camunda:
+       system:
+         clock-controlled: true
+
+   added to `camunda-runtime\c8run-8.9.19\configuration\application.yaml`, the actuator
+   accepts the offset and the `P7D` timer fires within seconds. The file was restored
+   from a copy byte for byte after the run, and the engine stopped, so nothing of the
+   run is left behind except the deployments and instances a demonstration would leave.
+
+Not covered
+-----------
+  * No form was submitted by a signed-in user: every task was completed through the API
+    with the variables a validated form would supply (`DEF-08`). The form keys are
+    proved by the engine-forms check, not by a person filling one in.
+  * Role-based access is still not enforced anywhere (`DEF-07`); the candidate groups
+    are assignment, not authorisation.
+  * `TC-13` was not re-driven. Its path is in `core-1`, which this change does not touch.
+  * The `DEF-14` residual is unchanged and still open: `= affectsCharge = true` sits on
+    the only outgoing flow of `N_CL_ModifyTreatment`, where the engine does not evaluate
+    it. The scenario 2 path in this run shows it - a modification recorded with
+    `affectsCharge=false` still reached `N_F_ReviewFinancialImpact`.
+  * These results name a working tree, not a commit. When the change is committed the
+    record describes the tree it was produced on only if nothing else moves in it.

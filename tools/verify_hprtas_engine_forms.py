@@ -11,7 +11,8 @@ every form - and then starts each model and looks at the user task it reaches.
   * every `.bpmn` in `models/operational/` deploys, with its process definition
     created
   * an instance of each model starts, and the user task it lands on carries a
-    form key that is one of the deployed forms
+    form key that is one of the deployed forms - a task in a process the model
+    called counts, which is how the end-to-end process is reached
 
 The models are started and then cancelled, so the engine is left as it was found
 apart from the deployments, which is what a demonstration would leave behind.
@@ -86,6 +87,29 @@ def process_id(model_path):
     return ET.parse(model_path).getroot().find(bpmn + "process").get("id")
 
 
+def child_instances(key):
+    """The process instances an instance called, one level down."""
+    _, body = api("/process-instances/search",
+                  {"filter": {"parentProcessInstanceKey": str(key)}})
+    return [item.get("processInstanceKey") for item in (body or {}).get("items", [])]
+
+
+def instance_tree(root_key, depth=4):
+    """The instance started and everything it called, the started one first."""
+    keys, pending = [root_key], [root_key]
+    for _ in range(depth):
+        children = []
+        for key in pending:
+            for child in child_instances(key):
+                if child and child not in keys:
+                    keys.append(child)
+                    children.append(child)
+        pending = children
+        if not pending:
+            break
+    return keys
+
+
 def main():
     if not engine_up():
         print("SKIP: no engine is answering on %s - start it with "
@@ -138,11 +162,18 @@ def main():
             continue
         instance = body.get("processInstanceKey")
 
+        # the user task a model reaches may be in a process it called rather than
+        # in itself - core-0 holds no task of its own - so the instances the start
+        # opened are searched as well as the one that was started
         task = None
         for _ in range(20):
-            status, body = api("/user-tasks/search", {"filter": {"processInstanceKey": str(instance)}})
-            items = (body or {}).get("items", [])
-            task = next((i for i in items if i.get("state") == "CREATED"), None)
+            for key in instance_tree(instance):
+                status, body = api("/user-tasks/search",
+                                   {"filter": {"processInstanceKey": str(key)}})
+                items = (body or {}).get("items", [])
+                task = next((i for i in items if i.get("state") == "CREATED"), None)
+                if task:
+                    break
             if task:
                 break
             time.sleep(0.5)

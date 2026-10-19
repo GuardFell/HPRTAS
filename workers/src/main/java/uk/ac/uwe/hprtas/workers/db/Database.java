@@ -663,11 +663,10 @@ public final class Database implements AutoCloseable {
   }
 
   /**
-   * An amount as the caller sent it.
-   *
-   * A whole number comes back whole - the amounts in this system are pounds, and a worker that
-   * returned 250 as an integer should read back as 250 rather than 250.0 - and a fractional one comes
-   * back as a decimal.
+   An amount as the caller sent it.
+   A whole number comes back whole - the amounts in this system are pounds, and a worker that
+   returned 250 as an integer should read back as 250 rather than 250.0 - and a fractional one comes
+   back as a decimal.
    */
   private static Number fromDecimal(BigDecimal value) {
     if (value == null) {

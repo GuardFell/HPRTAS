@@ -1,0 +1,106 @@
+{
+  "model": "sd-hprtas",
+  "title": "HPRTAS i* Strategic Dependency model",
+  "baseline": "the workshop goal model of the referral pathway (材料/goalModel.txt and goalDiagram (1).png, 12 Oct 2026)",
+  "note": "Four actors: the patient, the reception desk, the doctor, and the specialist the doctor consults. Six dependencies, all read off the workshop goal model: four run from the patient to the reception desk (registration, appointment booking, quick booking, payment) and two run from the patient to the doctor (diagnosis, and the determination of the cancer type and site), with the doctor's request for a specialist test review crossing from the doctor to the specialist. One entry per dependency: `from` depends on `to` for `dependum`. The model is drawn as one canvas - four actors and six dependums are readable at once. What the workshop model leaves unstated, and why, is in `modelling-choices.md` section 3.",
+  "actorKinds": {
+    "agent": "a concrete person the pathway runs between",
+    "role": "a professional role, whose holder answers the dependency"
+  },
+  "actors": [
+    {
+      "id": "patient",
+      "name": "Patient",
+      "kind": "agent",
+      "ring": "core",
+      "note": "The person the pathway exists for. Every dependency the workshop model states runs from this actor and none runs back to it: the patient cannot be made to attend, pay or supply anything, so what the hospital needs from the patient can only be asked for."
+    },
+    {
+      "id": "receptionist",
+      "name": "Receptionst",
+      "kind": "agent",
+      "ring": "outer",
+      "note": "The front desk: registration, appointments and payment. Named as the workshop model spells it."
+    },
+    {
+      "id": "doctor",
+      "name": "Doctor",
+      "kind": "role",
+      "ring": "outer",
+      "note": "The clinician who holds the diagnostic work: reviewing the patient's history, appraising the case clinically, assessing whether admission is needed, diagnosing the patient, and determining the cancer type and site. Consults the specialist for the review of test results."
+    },
+    {
+      "id": "specialist",
+      "name": "Specialist",
+      "kind": "role",
+      "ring": "outer",
+      "note": "The expert the doctor consults for the review of test results that the doctor does not settle alone."
+    }
+  ],
+  "views": [
+    {
+      "id": "pathway",
+      "title": "The referral pathway and its interfaces",
+      "hub": "patient",
+      "note": "The whole model on one canvas: the patient, the reception desk, the doctor and the specialist, with every dependency the workshop model states. The patient sits at the centre, as in the workshop drawing, because every dependency the model states runs from that actor."
+    }
+  ],
+  "dependencies": [
+    {
+      "id": "SD-01",
+      "from": "patient",
+      "to": "receptionist",
+      "type": "goal",
+      "dependum": "registration",
+      "note": "The patient needs to be registered before anything else in the pathway can happen, and cannot register themselves."
+    },
+    {
+      "id": "SD-02",
+      "from": "patient",
+      "to": "receptionist",
+      "type": "task",
+      "dependum": "appointment booking",
+      "note": "Booking the appointment is work the reception desk carries out for the patient."
+    },
+    {
+      "id": "SD-03",
+      "from": "patient",
+      "to": "receptionist",
+      "type": "softgoal",
+      "dependum": "quick booking",
+      "note": "Drawn as a soft goal in the workshop model: how quickly the desk answers is a quality of the booking service, met to a degree rather than met or not met."
+    },
+    {
+      "id": "SD-04",
+      "from": "patient",
+      "to": "receptionist",
+      "type": "resource",
+      "dependum": "payment",
+      "note": "The payment the desk takes, and the receipt it gives, are what the patient receives in return for the fee."
+    },
+    {
+      "id": "SD-05",
+      "from": "patient",
+      "to": "doctor",
+      "type": "goal",
+      "dependum": "diagnosis",
+      "note": "The diagnosis is the doctor's to reach; the patient depends on the doctor for it."
+    },
+    {
+      "id": "SD-06",
+      "from": "patient",
+      "to": "doctor",
+      "type": "goal",
+      "dependum": "determine the cancer type and site",
+      "note": "Named as the goal behind the diagnosis in the workshop model; the patient depends on the doctor for it."
+    },
+    {
+      "id": "SD-07",
+      "from": "doctor",
+      "to": "specialist",
+      "type": "task",
+      "dependum": "review the test results",
+      "note": "The doctor requests the specialist's review of the test results and receives it back; drawn as a task because the review is work the specialist performs."
+    }
+  ]
+}

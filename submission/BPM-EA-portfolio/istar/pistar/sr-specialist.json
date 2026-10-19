@@ -1,0 +1,104 @@
+{
+ "actors": [
+  {
+   "id": "specialist",
+   "text": "Specialist",
+   "type": "istar.Role",
+   "x": 60.0,
+   "y": 60.0,
+   "nodes": [
+    {
+     "id": "specialist-S1",
+     "text": "The review is timely and unambiguous",
+     "type": "istar.Quality",
+     "x": 120.0,
+     "y": 300.0,
+     "customProperties": {
+      "Evidence": ""
+     }
+    },
+    {
+     "id": "specialist-G1",
+     "text": "The test results are reviewed when the doctor requests it",
+     "type": "istar.Goal",
+     "x": 117.5,
+     "y": 564.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-07"
+     }
+    },
+    {
+     "id": "specialist-T1",
+     "text": "Review the test results against the clinical question",
+     "type": "istar.Task",
+     "x": 100.0,
+     "y": 820.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-07"
+     }
+    }
+   ],
+   "customProperties": {
+    "Intent": "Review the test results the doctor sends, against the clinical question asked.",
+    "Evidence": ""
+   }
+  }
+ ],
+ "orphans": [],
+ "dependencies": [],
+ "links": [
+  {
+   "id": "specialist-T1-G1",
+   "type": "istar.OrRefinementLink",
+   "source": "specialist-T1",
+   "target": "specialist-G1"
+  },
+  {
+   "id": "specialist-T1-S1",
+   "type": "istar.ContributionLink",
+   "source": "specialist-T1",
+   "target": "specialist-S1",
+   "label": "help"
+  }
+ ],
+ "display": {
+  "specialist-S1": {
+   "width": 135.0,
+   "height": 104.0
+  },
+  "specialist-G1": {
+   "width": 140.0,
+   "height": 96.0
+  },
+  "specialist-T1": {
+   "width": 175.0,
+   "height": 88.0
+  },
+  "specialist-T1-S1": {
+   "vertices": [
+    {
+     "x": 91.5,
+     "y": 864.0
+    },
+    {
+     "x": 91.5,
+     "y": 538.0
+    }
+   ]
+  }
+ },
+ "tool": "pistar.2.1.0",
+ "istar": "2.0",
+ "saveDate": "Tue, 13 Oct 2026 03:10:25 GMT",
+ "diagram": {
+  "width": 900.0,
+  "height": 968.0,
+  "name": "HPRTAS SR - Specialist",
+  "customProperties": {
+   "Source": "HPRTAS/models/socio-technical/sr-hprtas.json",
+   "Note": "Review the test results the doctor sends, against the clinical question asked."
+  }
+ }
+}

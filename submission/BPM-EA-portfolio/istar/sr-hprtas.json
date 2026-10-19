@@ -1,0 +1,60 @@
+{
+  "model": "sr-hprtas",
+  "title": "HPRTAS i* Strategic Rationale models",
+  "baseline": "the workshop goal model of the referral pathway (材料/goalModel.txt and goalDiagram (1).png, 12 Oct 2026)",
+  "note": "One page per actor - four pages, one for each actor of the workshop goal model. An element's `deps` list names the SD dependencies it accounts for, so every dependency in sd-hprtas.json has a rationale here and every reference resolves back. Link types are the i* ones: `means-end` (a means to an end, including the alternative routes to the same goal), `decomposition` (with `and` / `or`, the parts of a task or goal), `neededby` (a resource a task needs), and the contribution links `make`, `help`, `some+`, `unknown`, `some-`, `hurt`, `break`. The diagnostic decomposition is the one the workshop goal model draws: the doctor's diagnosis breaks into reviewing the patient's history, performing clinical appraisal, and assessing whether admission is needed, all AND; the determination of the cancer type and site is reached with the doctor's own expertise or by the specialist's review of the test results, both means-end alternatives.",
+  "actors": [
+    {
+      "actor": "patient",
+      "name": "Patient",
+      "intent": "Get registered, be given an appointment quickly, pay the fee, and reach a diagnosis.",
+      "elements": [
+        { "id": "S1", "kind": "softgoal", "name": "Registration and booking are quick", "deps": ["SD-03"] },
+        { "id": "S2", "kind": "softgoal", "name": "The cost is clear before payment", "deps": ["SD-04"] },
+        { "id": "G1", "kind": "goal", "name": "Registered and given an appointment", "deps": ["SD-01", "SD-02"], "links": [{ "to": "S1", "type": "help" }] },
+        { "id": "T1", "kind": "task", "name": "Give personal and insurance details at the desk", "deps": ["SD-01"], "links": [{ "to": "G1", "type": "means-end" }] },
+        { "id": "T2", "kind": "task", "name": "Request an appointment and make the payment", "deps": ["SD-02", "SD-04"], "links": [{ "to": "G1", "type": "means-end" }, { "to": "S2", "type": "help" }] }
+      ]
+    },
+    {
+      "actor": "receptionist",
+      "name": "Receptionst",
+      "intent": "Serve the patient at the front desk: register, book, and take the payment without keeping anyone waiting.",
+      "elements": [
+        { "id": "S1", "kind": "softgoal", "name": "Every patient is served without friction", "deps": [] },
+        { "id": "G1", "kind": "goal", "name": "The patient's details are recorded correctly", "deps": ["SD-01"] },
+        { "id": "G2", "kind": "goal", "name": "The registration and booking service is delivered", "deps": [] },
+        { "id": "T1", "kind": "task", "name": "Record the patient's details", "deps": ["SD-01"], "links": [{ "to": "G1", "type": "means-end" }, { "to": "G2", "type": "means-end" }] },
+        { "id": "T2", "kind": "task", "name": "Arrange the appointment with the doctor", "deps": ["SD-02"], "links": [{ "to": "G2", "type": "means-end" }, { "to": "S1", "type": "help" }] },
+        { "id": "T3", "kind": "task", "name": "Take the payment and issue the receipt", "deps": ["SD-04"], "links": [{ "to": "G2", "type": "means-end" }] }
+      ]
+    },
+    {
+      "actor": "doctor",
+      "name": "Doctor",
+      "intent": "Diagnose the patient, determine the cancer type and site, and bring in the specialist where the test results need that expertise.",
+      "elements": [
+        { "id": "S1", "kind": "softgoal", "name": "The diagnosis is accurate and reached without delay", "deps": [] },
+        { "id": "S2", "kind": "softgoal", "name": "The diagnosis follows the pathway's rules", "deps": [] },
+        { "id": "S3", "kind": "softgoal", "name": "The test review comes back promptly", "deps": ["SD-07"] },
+        { "id": "G1", "kind": "goal", "name": "Diagnose the patient", "deps": ["SD-05"], "links": [{ "to": "S1", "type": "help" }, { "to": "S2", "type": "help" }] },
+        { "id": "G2", "kind": "goal", "name": "Determine the cancer type and site", "deps": ["SD-06"], "links": [{ "to": "G1", "type": "means-end" }] },
+        { "id": "T1", "kind": "task", "name": "Review the patient's history", "deps": [], "links": [{ "to": "G1", "type": "decomposition", "mode": "and" }, { "to": "S1", "type": "help" }] },
+        { "id": "T2", "kind": "task", "name": "Perform clinical appraisal", "deps": [], "links": [{ "to": "G1", "type": "decomposition", "mode": "and" }, { "to": "S1", "type": "help" }, { "to": "S2", "type": "help" }] },
+        { "id": "T3", "kind": "task", "name": "Assess whether admission is needed", "deps": [], "links": [{ "to": "G1", "type": "decomposition", "mode": "and" }, { "to": "S2", "type": "help" }] },
+        { "id": "T4", "kind": "task", "name": "Determine the cancer type and site from the clinical picture", "deps": ["SD-06"], "links": [{ "to": "G2", "type": "means-end" }] },
+        { "id": "T5", "kind": "task", "name": "Bring in the specialist to review the test results", "deps": ["SD-07"], "links": [{ "to": "G2", "type": "means-end" }, { "to": "S3", "type": "help" }] }
+      ]
+    },
+    {
+      "actor": "specialist",
+      "name": "Specialist",
+      "intent": "Review the test results the doctor sends, against the clinical question asked.",
+      "elements": [
+        { "id": "S1", "kind": "softgoal", "name": "The review is timely and unambiguous", "deps": [] },
+        { "id": "G1", "kind": "goal", "name": "The test results are reviewed when the doctor requests it", "deps": ["SD-07"] },
+        { "id": "T1", "kind": "task", "name": "Review the test results against the clinical question", "deps": ["SD-07"], "links": [{ "to": "G1", "type": "means-end" }, { "to": "S1", "type": "help" }] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_patient-pathway-all-entities" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.51.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_Hospital" name="Hospital Trust" processRef="patient-pathway-all-entities" />
+    <bpmn:textAnnotation id="TextAnnotation_Customer">
+      <bpmn:text>Customer: the patient, referred by a GP or another hospital.</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:textAnnotation id="TextAnnotation_Systems">
+      <bpmn:text>Systems involved: the scheduling, correspondence, treatment and payment services, and the funding organisation. What crosses the hospital boundary: the appointment and the treatment booking, the letters, the treatment itself, the payment and the refund, the funding approval, the missing-information request and its reply, and the patient's contact, cancellation and enquiry.</bpmn:text>
+    </bpmn:textAnnotation>
+  </bpmn:collaboration>
+  <bpmn:process id="patient-pathway-all-entities" name="Patient pathway across all hospital entities (strategic overview)" isExecutable="false">
+    <bpmn:documentation>Strategic view of the whole pathway at one activity per stage: ten flow objects in all - a message start event, the eight stages and one end event - which is the level the W02 strategic-model requirements ask for (ten or fewer flow objects, one sheet, responsibilities assigned). The model is the hospital's own process: every internal entity of the case study has a lane, and the parties outside the hospital are not drawn as pools, so that the picture stays at one pool as the lecture advises for a strategic model. Each exchange with an outside party is named in the documentation of the activity it belongs to, and the same exchange is carried as a dependency in the i* models (models/socio-technical/); the pools and message flows themselves are in the operational models, where the boundary is implemented. Each activity merges the operational tasks named in its own documentation, and every team that takes part in an activity is named in that activity's own documentation - including the teams whose work sits inside a merged stage and which therefore carry no lane here: Other Clinical Professionals, the Clinical Nurse Specialist Team, the Patient Pathway Coordinators and the Administrative Management Team. A lane is drawn for each team that owns a stage, six in all; the Clinical Nurse Specialist Administrative Support Team carries no lane, here or in any operational process, because no activity in the five processes is exclusively its own. The per-team tasks are in models/operational/. Non-executable: do not deploy (models/README.md). This is where the enquiry requirements FR-041 to FR-044 and the end-to-end view behind FR-005, FR-014, FR-020, FR-024, FR-028 and FR-038 sit at strategic level. Two notes at the foot of the pool say who the customer of the process is and which systems it exchanges information with; they are the model's only artifacts.</bpmn:documentation>
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_CallHandling" name="Call Handling Team">
+        <bpmn:flowNodeRef>N_CH_AftercareAndEnquiries</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_PathwayOutcomeRecorded</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_TreatmentBookings" name="Treatment and Chemotherapy Bookings Team">
+        <bpmn:flowNodeRef>N_TB_BookAndDeliverTreatment</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Finance" name="Finance Team">
+        <bpmn:flowNodeRef>N_F_FundingAndPayment</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_OutpatientBookings" name="Outpatient Bookings Team">
+        <bpmn:flowNodeRef>N_OB_BookAndInformPatient</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Consultants" name="Consultants">
+        <bpmn:flowNodeRef>N_C_ReviewReferralClinically</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_C_AssessAndAuthoriseTreatment</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_MedicalSecretaries" name="Medical Secretaries">
+        <bpmn:flowNodeRef>N_MS_LetterAndDelayEscalation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_MS_RegisterAndCheckReferral</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>StartEvent_ReferralReceived</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:task id="N_C_ReviewReferralClinically" name="Review the referral and decide">
+      <bpmn:documentation>Stage 2. The Consultant reviews the referral and accepts, rejects, queries or redirects it, recording the reason and the decision maker. Merges core-1's N_C_ClinicalReview, N_C_ReferralDecision and the outcomes N_C_Rejected and N_C_Redirected (BR-03, FR-005; exceptions EX-02 to EX-04).</bpmn:documentation>
+      <bpmn:incoming>F02</bpmn:incoming>
+      <bpmn:outgoing>F03</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="N_OB_BookAndInformPatient" name="Book the appointment and inform the patient">
+      <bpmn:documentation>Stage 3. An appropriate appointment is found through the scheduling service and confirmed in the hospital system, the patient is informed by letter and - where the appointment is within two weeks - also by telephone, every contact attempt and its outcome are recorded, and a referral that cannot wait or has no slot is escalated. Merges core-1's N_OB_PrepareRequest, N_OB_CheckAvailability, N_OB_SlotAvailable, N_OB_SendNotification, N_OB_WithinTwoWeeks, N_OB_TelephonePatient, N_OB_ContactOutcome, N_OB_RecordAttempt, N_OB_AppointmentArranged, N_OB_RecordNoSlot, N_OB_CorrectRequest, N_OB_RecordDispatchFailure, N_OB_UrgentReferral, N_PC_ReviewDelay and N_PC_EscalateUrgent. Outpatient Bookings Team (BR-05 to BR-09, FR-010 to FR-016; exceptions EX-05 to EX-09).</bpmn:documentation>
+      <bpmn:incoming>F03</bpmn:incoming>
+      <bpmn:outgoing>F04</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="N_C_AssessAndAuthoriseTreatment" name="Assess and authorise the treatment">
+      <bpmn:documentation>Stage 4. The patient is assessed at the New Patient Appointment, the diagnosis and the treatment options are discussed, consent is recorded and the Treatment Booking Request is completed and authorised - or the patient does not proceed. Carried out by the Consultant with the clinical team (core-2's Consultant and clinical team lane). Merges core-2's N_CL_PatientAttends, N_CL_AssessPatient, N_CL_ConsentDecision, N_CL_NotProceeding and N_CL_AuthoriseTreatment. The decision is clinical: administrative and financial roles take no part in it (BR-10, BR-11, BR-41, FR-007, FR-008, FR-019).</bpmn:documentation>
+      <bpmn:incoming>F04</bpmn:incoming>
+      <bpmn:outgoing>F05</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="N_F_FundingAndPayment" name="Determine funding and take payment">
+      <bpmn:documentation>Stage 5. The funding route is determined (hospital, approved insurer or funding organisation, or the patient), an approval is recorded with its reference, amount and limitations, the charge is obtained and the payment requested and recorded - with the declined, incomplete and unconfirmed cases notified, investigated and never charged twice. Merges core-2's N_F_DetermineFunding, N_F_FundingApprovalRequired, N_F_RecordApproval, N_F_PaymentRequired, N_F_CalculateCharge, N_F_ProcessPayment, N_F_PaymentStatus, N_F_CorrectPaymentRequest, N_F_InvestigatePayment, N_F_NotifyPatient, N_F_RetryDecision and N_F_ReviewFinancialImpact. Finance Team only: no clinical judgement is made here, and no complete card data is stored (BR-13 to BR-21, FR-025 to FR-032; exceptions EX-11 to EX-14).</bpmn:documentation>
+      <bpmn:incoming>F05</bpmn:incoming>
+      <bpmn:outgoing>F06</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="N_TB_BookAndDeliverTreatment" name="Book, deliver and review the treatment">
+      <bpmn:documentation>Stage 6. The authorised request is verified, the treatment, laboratory and imaging appointments are coordinated and confirmed - kept pending without duplicates where a service is unavailable - the treatment is delivered, and before each further cycle the patient and the blood test are reviewed and fitness to continue, a delay or a change of plan is decided. Merges core-2's N_TB_VerifyAuthorisation, N_TB_CheckAvailability, N_TB_AvailabilityDecision, N_TB_ConfirmAppointment, N_TB_NotifyPatient, N_TB_ReturnRequest, N_TB_KeepPending and the clinical steps N_OC_PreCycleReview, N_OC_FitToContinue, N_CL_ModifyTreatment, N_CL_ClinicalRisk and N_CL_UrgentAuthorise. The review and the modification decision are clinical - the Other Clinical Professionals lane of core-2 - and are not available to administrative roles (BR-12, BR-22 to BR-25, BR-41, FR-017, FR-018, FR-020 to FR-022; exceptions EX-10, EX-15, EX-16).</bpmn:documentation>
+      <bpmn:incoming>F06</bpmn:incoming>
+      <bpmn:outgoing>F07</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="N_MS_LetterAndDelayEscalation" name="Send the clinic letter and escalate delay">
+      <bpmn:documentation>Stage 7. The Consultant prepares and approves the clinical content and identifies the recipients, the Medical Secretaries check it, confirm the recipients and distribute it - returning a suspected clinical error to the Consultant - and its progress is monitored against the seven-day target by the Patient Pathway Coordinators, with weekly reminders to the Consultant and escalation to the Administrative Management Team after one month and to higher management after three months. Merges core-3's N_C_ConsultationDone, N_C_PrepareLetter, N_C_ApproveLetter, N_C_ReviewClinicalError, B_C_LetterOverdue, N_MS_ProcessLetter, N_MS_ErrorDecision, N_MS_ConfirmRecipients, N_MS_SendLetter, N_MS_HandleDispatchFailure, N_PC_MonitorCorrespondence, N_PC_SevenDays, N_PC_IssueReminder, N_PC_OverdueDuration, N_AM_ContactConsultant and N_AM_EscalateHigher (BR-26 to BR-33, FR-036 to FR-040, FR-052; exceptions EX-17, EX-18).</bpmn:documentation>
+      <bpmn:incoming>F07</bpmn:incoming>
+      <bpmn:outgoing>F08</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="N_CH_AftercareAndEnquiries" name="Handle follow-up, cancellation and refund">
+      <bpmn:documentation>Stage 8. Everything after the appointment: a follow-up is arranged within the period asked for and referred on where no slot exists, a cancellation, decline or non-attendance is recorded and decided, every enquiry is recorded, classified, prioritised and routed - clinical enquiries to the Clinical Nurse Specialist Team with an urgent concern highlighted immediately, payment and funding enquiries to the Finance Team - and a paid appointment that was cancelled is decided and refunded where appropriate. Merges core-4's N_OB_FollowUpRequested, N_OB_ArrangeFollowUp, N_OB_WithinPeriod, N_OB_ConfirmFollowUp, N_OB_CancellationReceived, N_OB_RecordCancellation, N_OB_AnotherAppointment, N_OB_NotifyReferrer, N_PC_ReviewUnbooked, N_CNS_PathwayReview, N_CNS_ClinicalAdvice, N_CNS_Urgency, N_CNS_HighlightUrgent, N_CH_ContactReceived, N_CH_ClassifyEnquiry, N_CH_EnquiryType, N_CH_AnswerAdmin, N_F_RetentionDecision, N_F_RefundDecision, N_F_ProcessRefund and N_F_AnswerFinance. Call Handling Team owns the entry point and records and routes every enquiry; the follow-up appointments are the Outpatient Bookings Team's, a case that could not be booked is the Patient Pathway Coordinators', the clinical answers are the Clinical Nurse Specialist Team's, and the retention and refund decisions are the Finance Team's (BR-34 to BR-41, FR-023, FR-024, FR-033, FR-034, FR-041 to FR-044; exceptions EX-19 to EX-21).</bpmn:documentation>
+      <bpmn:incoming>F08</bpmn:incoming>
+      <bpmn:outgoing>F09</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="N_MS_RegisterAndCheckReferral" name="Register and check the referral">
+      <bpmn:documentation>Stage 1. The referral is registered and its supporting documents are checked against the checklist, and any missing information is requested from the referring organisation and checked when it arrives. Merges, from core-1: N_MS_ReferralReceived, N_MS_CheckReferral, N_MS_ValidateReferral, N_MS_DocumentsComplete, N_MS_RequestMissing, N_MS_ReviewException, N_MS_CorrectReferralInput; from core-5: N_MS_RecordMissingItems, N_MS_RequestDocuments, N_MS_DocumentsSupplied, N_MS_CheckSuppliedDocuments, N_MS_ReadyForReview. Medical Secretaries only: no clinical decision is reachable from this lane (BR-01, BR-02, FR-001 to FR-003).</bpmn:documentation>
+      <bpmn:incoming>F01</bpmn:incoming>
+      <bpmn:outgoing>F02</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="EndEvent_PathwayOutcomeRecorded" name="Pathway outcome recorded">
+      <bpmn:incoming>F09</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:startEvent id="StartEvent_ReferralReceived" name="Referral received">
+      <bpmn:outgoing>F01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="F02" sourceRef="N_MS_RegisterAndCheckReferral" targetRef="N_C_ReviewReferralClinically" />
+    <bpmn:sequenceFlow id="F03" sourceRef="N_C_ReviewReferralClinically" targetRef="N_OB_BookAndInformPatient" />
+    <bpmn:sequenceFlow id="F04" sourceRef="N_OB_BookAndInformPatient" targetRef="N_C_AssessAndAuthoriseTreatment" />
+    <bpmn:sequenceFlow id="F05" sourceRef="N_C_AssessAndAuthoriseTreatment" targetRef="N_F_FundingAndPayment" />
+    <bpmn:sequenceFlow id="F06" sourceRef="N_F_FundingAndPayment" targetRef="N_TB_BookAndDeliverTreatment" />
+    <bpmn:sequenceFlow id="F07" sourceRef="N_TB_BookAndDeliverTreatment" targetRef="N_MS_LetterAndDelayEscalation" />
+    <bpmn:sequenceFlow id="F08" sourceRef="N_MS_LetterAndDelayEscalation" targetRef="N_CH_AftercareAndEnquiries" />
+    <bpmn:sequenceFlow id="F09" sourceRef="N_CH_AftercareAndEnquiries" targetRef="EndEvent_PathwayOutcomeRecorded" />
+    <bpmn:sequenceFlow id="F01" sourceRef="StartEvent_ReferralReceived" targetRef="N_MS_RegisterAndCheckReferral" />
+  </bpmn:process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_Hospital_di" bpmnElement="Participant_Hospital" isHorizontal="true">
+        <dc:Bounds x="100" y="120" width="3028" height="1689" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="1698" width="20" height="105" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="TextAnnotation_Customer_di" bpmnElement="TextAnnotation_Customer">
+        <dc:Bounds x="148" y="1675" width="1400" height="31" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_Systems_di" bpmnElement="TextAnnotation_Systems">
+        <dc:Bounds x="148" y="1718" width="1400" height="45" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_CallHandling_di" bpmnElement="Lane_CallHandling" isHorizontal="true">
+        <dc:Bounds x="100" y="150" width="3028" height="216" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="156" width="149" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_TreatmentBookings_di" bpmnElement="Lane_TreatmentBookings" isHorizontal="true">
+        <dc:Bounds x="100" y="366" width="3028" height="242" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="372" width="240" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Finance_di" bpmnElement="Lane_Finance" isHorizontal="true">
+        <dc:Bounds x="100" y="608" width="3028" height="264" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="614" width="109" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_OutpatientBookings_di" bpmnElement="Lane_OutpatientBookings" isHorizontal="true">
+        <dc:Bounds x="100" y="872" width="3028" height="264" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="878" width="201" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Consultants_di" bpmnElement="Lane_Consultants" isHorizontal="true">
+        <dc:Bounds x="100" y="1136" width="3028" height="264" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="1142" width="90" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_MedicalSecretaries_di" bpmnElement="Lane_MedicalSecretaries" isHorizontal="true">
+        <dc:Bounds x="100" y="1400" width="3028" height="264" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="106" y="1406" width="149" height="20" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_PathwayOutcomeRecorded_di" bpmnElement="EndEvent_PathwayOutcomeRecorded">
+        <dc:Bounds x="2920" y="220" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2870" y="260" width="135" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CH_AftercareAndEnquiries_di" bpmnElement="N_CH_AftercareAndEnquiries">
+        <dc:Bounds x="2560" y="220" width="250" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_TB_BookAndDeliverTreatment_di" bpmnElement="N_TB_BookAndDeliverTreatment">
+        <dc:Bounds x="1880" y="450" width="235" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_F_FundingAndPayment_di" bpmnElement="N_F_FundingAndPayment">
+        <dc:Bounds x="1550" y="700" width="227" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_OB_BookAndInformPatient_di" bpmnElement="N_OB_BookAndInformPatient">
+        <dc:Bounds x="870" y="970" width="267" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_C_AssessAndAuthoriseTreatment_di" bpmnElement="N_C_AssessAndAuthoriseTreatment">
+        <dc:Bounds x="1240" y="1230" width="219" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_C_ReviewReferralClinically_di" bpmnElement="N_C_ReviewReferralClinically">
+        <dc:Bounds x="580" y="1230" width="193" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_MS_LetterAndDelayEscalation_di" bpmnElement="N_MS_LetterAndDelayEscalation">
+        <dc:Bounds x="2220" y="1500" width="242" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_MS_RegisterAndCheckReferral_di" bpmnElement="N_MS_RegisterAndCheckReferral">
+        <dc:Bounds x="280" y="1500" width="195" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_ReferralReceived_di" bpmnElement="StartEvent_ReferralReceived">
+        <dc:Bounds x="130" y="1510" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="83" y="1550" width="129" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="F02_di" bpmnElement="F02">
+        <di:waypoint x="475" y="1540" />
+        <di:waypoint x="680" y="1540" />
+        <di:waypoint x="680" y="1310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F03_di" bpmnElement="F03">
+        <di:waypoint x="680" y="1230" />
+        <di:waypoint x="680" y="1010" />
+        <di:waypoint x="870" y="1010" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F04_di" bpmnElement="F04">
+        <di:waypoint x="1137" y="1010" />
+        <di:waypoint x="1350" y="1010" />
+        <di:waypoint x="1350" y="1230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F05_di" bpmnElement="F05">
+        <di:waypoint x="1459" y="1270" />
+        <di:waypoint x="1660" y="1270" />
+        <di:waypoint x="1660" y="780" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F06_di" bpmnElement="F06">
+        <di:waypoint x="1777" y="740" />
+        <di:waypoint x="2000" y="740" />
+        <di:waypoint x="2000" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F07_di" bpmnElement="F07">
+        <di:waypoint x="2115" y="490" />
+        <di:waypoint x="2340" y="490" />
+        <di:waypoint x="2340" y="1500" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F08_di" bpmnElement="F08">
+        <di:waypoint x="2460" y="1580" />
+        <di:waypoint x="2460" y="1540" />
+        <di:waypoint x="2680" y="1540" />
+        <di:waypoint x="2680" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F09_di" bpmnElement="F09">
+        <di:waypoint x="2810" y="260" />
+        <di:waypoint x="2850" y="260" />
+        <di:waypoint x="2850" y="240" />
+        <di:waypoint x="2920" y="240" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F01_di" bpmnElement="F01">
+        <di:waypoint x="166" y="1530" />
+        <di:waypoint x="260" y="1530" />
+        <di:waypoint x="260" y="1540" />
+        <di:waypoint x="280" y="1540" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

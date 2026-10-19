@@ -1,0 +1,403 @@
+{
+ "actors": [
+  {
+   "id": "patient",
+   "text": "Patient",
+   "type": "istar.Agent",
+   "x": 60.0,
+   "y": 60.0,
+   "nodes": [
+    {
+     "id": "patient-G1",
+     "text": "Registered and given an appointment",
+     "type": "istar.Goal",
+     "x": 233.0,
+     "y": 300.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-01, SD-02"
+     }
+    },
+    {
+     "id": "patient-T1",
+     "text": "Give personal and insurance details at the desk",
+     "type": "istar.Task",
+     "x": 100.0,
+     "y": 540.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-01"
+     }
+    },
+    {
+     "id": "patient-T2",
+     "text": "Request an appointment and make the payment",
+     "type": "istar.Task",
+     "x": 336.0,
+     "y": 540.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-02, SD-04"
+     }
+    }
+   ],
+   "customProperties": {
+    "Intent": "Get registered, be given an appointment quickly, pay the fee, and reach a diagnosis.",
+    "Evidence": ""
+   }
+  },
+  {
+   "id": "doctor",
+   "text": "Doctor",
+   "type": "istar.Role",
+   "x": 716.0,
+   "y": 60.0,
+   "nodes": [
+    {
+     "id": "doctor-G1",
+     "text": "Diagnose the patient",
+     "type": "istar.Goal",
+     "x": 1130.0,
+     "y": 300.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-05"
+     }
+    },
+    {
+     "id": "doctor-G2",
+     "text": "Determine the cancer type and site",
+     "type": "istar.Goal",
+     "x": 1326.0,
+     "y": 300.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-06"
+     }
+    },
+    {
+     "id": "doctor-T1",
+     "text": "Review the patient's history",
+     "type": "istar.Task",
+     "x": 756.0,
+     "y": 540.0,
+     "customProperties": {
+      "Evidence": ""
+     }
+    },
+    {
+     "id": "doctor-T2",
+     "text": "Perform clinical appraisal",
+     "type": "istar.Task",
+     "x": 972.0,
+     "y": 540.0,
+     "customProperties": {
+      "Evidence": ""
+     }
+    },
+    {
+     "id": "doctor-T3",
+     "text": "Assess whether admission is needed",
+     "type": "istar.Task",
+     "x": 1188.0,
+     "y": 540.0,
+     "customProperties": {
+      "Evidence": ""
+     }
+    },
+    {
+     "id": "doctor-T4",
+     "text": "Determine the cancer type and site from the clinical picture",
+     "type": "istar.Task",
+     "x": 1404.0,
+     "y": 540.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-06"
+     }
+    },
+    {
+     "id": "doctor-T5",
+     "text": "Bring in the specialist to review the test results",
+     "type": "istar.Task",
+     "x": 1660.0,
+     "y": 540.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-07"
+     }
+    }
+   ],
+   "customProperties": {
+    "Intent": "Diagnose the patient, determine the cancer type and site, and bring in the specialist where the test results need that expertise.",
+    "Evidence": ""
+   }
+  },
+  {
+   "id": "receptionist",
+   "text": "Receptionst",
+   "type": "istar.Agent",
+   "x": 60.0,
+   "y": 918.0,
+   "nodes": [
+    {
+     "id": "receptionist-G1",
+     "text": "The patient's details are recorded correctly",
+     "type": "istar.Goal",
+     "x": 228.0,
+     "y": 1158.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-01"
+     }
+    },
+    {
+     "id": "receptionist-G2",
+     "text": "The registration and booking service is delivered",
+     "type": "istar.Goal",
+     "x": 424.0,
+     "y": 1158.0,
+     "customProperties": {
+      "Evidence": ""
+     }
+    },
+    {
+     "id": "receptionist-T1",
+     "text": "Record the patient's details",
+     "type": "istar.Task",
+     "x": 100.0,
+     "y": 1414.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-01"
+     }
+    },
+    {
+     "id": "receptionist-T2",
+     "text": "Arrange the appointment with the doctor",
+     "type": "istar.Task",
+     "x": 316.0,
+     "y": 1414.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-02"
+     }
+    },
+    {
+     "id": "receptionist-T3",
+     "text": "Take the payment and issue the receipt",
+     "type": "istar.Task",
+     "x": 542.0,
+     "y": 1414.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-04"
+     }
+    }
+   ],
+   "customProperties": {
+    "Intent": "Serve the patient at the front desk: register, book, and take the payment without keeping anyone waiting.",
+    "Evidence": ""
+   }
+  },
+  {
+   "id": "specialist",
+   "text": "Specialist",
+   "type": "istar.Role",
+   "x": 922.0,
+   "y": 918.0,
+   "nodes": [
+    {
+     "id": "specialist-G1",
+     "text": "The test results are reviewed when the doctor requests it",
+     "type": "istar.Goal",
+     "x": 979.5,
+     "y": 1158.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-07"
+     }
+    },
+    {
+     "id": "specialist-T1",
+     "text": "Review the test results against the clinical question",
+     "type": "istar.Task",
+     "x": 962.0,
+     "y": 1414.0,
+     "customProperties": {
+      "Evidence": "",
+      "AccountsFor": "SD-07"
+     }
+    }
+   ],
+   "customProperties": {
+    "Intent": "Review the test results the doctor sends, against the clinical question asked.",
+    "Evidence": ""
+   }
+  }
+ ],
+ "orphans": [],
+ "dependencies": [],
+ "links": [
+  {
+   "id": "patient-T1-G1",
+   "type": "istar.OrRefinementLink",
+   "source": "patient-T1",
+   "target": "patient-G1"
+  },
+  {
+   "id": "patient-T2-G1",
+   "type": "istar.OrRefinementLink",
+   "source": "patient-T2",
+   "target": "patient-G1"
+  },
+  {
+   "id": "doctor-G2-G1",
+   "type": "istar.OrRefinementLink",
+   "source": "doctor-G2",
+   "target": "doctor-G1"
+  },
+  {
+   "id": "doctor-G1-T1",
+   "type": "istar.AndRefinementLink",
+   "source": "doctor-G1",
+   "target": "doctor-T1"
+  },
+  {
+   "id": "doctor-G1-T2",
+   "type": "istar.AndRefinementLink",
+   "source": "doctor-G1",
+   "target": "doctor-T2"
+  },
+  {
+   "id": "doctor-G1-T3",
+   "type": "istar.AndRefinementLink",
+   "source": "doctor-G1",
+   "target": "doctor-T3"
+  },
+  {
+   "id": "doctor-T4-G2",
+   "type": "istar.OrRefinementLink",
+   "source": "doctor-T4",
+   "target": "doctor-G2"
+  },
+  {
+   "id": "doctor-T5-G2",
+   "type": "istar.OrRefinementLink",
+   "source": "doctor-T5",
+   "target": "doctor-G2"
+  },
+  {
+   "id": "receptionist-T1-G1",
+   "type": "istar.OrRefinementLink",
+   "source": "receptionist-T1",
+   "target": "receptionist-G1"
+  },
+  {
+   "id": "receptionist-T1-G2",
+   "type": "istar.OrRefinementLink",
+   "source": "receptionist-T1",
+   "target": "receptionist-G2"
+  },
+  {
+   "id": "receptionist-T2-G2",
+   "type": "istar.OrRefinementLink",
+   "source": "receptionist-T2",
+   "target": "receptionist-G2"
+  },
+  {
+   "id": "receptionist-T3-G2",
+   "type": "istar.OrRefinementLink",
+   "source": "receptionist-T3",
+   "target": "receptionist-G2"
+  },
+  {
+   "id": "specialist-T1-G1",
+   "type": "istar.OrRefinementLink",
+   "source": "specialist-T1",
+   "target": "specialist-G1"
+  }
+ ],
+ "display": {
+  "patient-G1": {
+   "width": 120,
+   "height": 80.0
+  },
+  "patient-T1": {
+   "width": 160.0,
+   "height": 88.0
+  },
+  "patient-T2": {
+   "width": 150.0,
+   "height": 88.0
+  },
+  "doctor-G1": {
+   "width": 120,
+   "height": 64.0
+  },
+  "doctor-G2": {
+   "width": 120,
+   "height": 80.0
+  },
+  "doctor-T1": {
+   "width": 140,
+   "height": 72.0
+  },
+  "doctor-T2": {
+   "width": 140,
+   "height": 72.0
+  },
+  "doctor-T3": {
+   "width": 140,
+   "height": 88.0
+  },
+  "doctor-T4": {
+   "width": 180.0,
+   "height": 88.0
+  },
+  "doctor-T5": {
+   "width": 160.0,
+   "height": 88.0
+  },
+  "receptionist-G1": {
+   "width": 120,
+   "height": 96.0
+  },
+  "receptionist-G2": {
+   "width": 140.0,
+   "height": 96.0
+  },
+  "receptionist-T1": {
+   "width": 140,
+   "height": 72.0
+  },
+  "receptionist-T2": {
+   "width": 150.0,
+   "height": 88.0
+  },
+  "receptionist-T3": {
+   "width": 150.0,
+   "height": 88.0
+  },
+  "specialist-G1": {
+   "width": 140.0,
+   "height": 96.0
+  },
+  "specialist-T1": {
+   "width": 175.0,
+   "height": 88.0
+  }
+ },
+ "tool": "pistar.2.1.0",
+ "istar": "2.0",
+ "saveDate": "Tue, 13 Oct 2026 03:10:25 GMT",
+ "diagram": {
+  "width": 1880.0,
+  "height": 1562.0,
+  "name": "HPRTAS SR - every actor's goals and tasks (overview)",
+  "customProperties": {
+   "Source": "HPRTAS/models/socio-technical/sr-hprtas.json",
+   "Note": "Each actor's goals and the tasks it carries out about them, with the links between them. The complete rationale is the per-actor pages and the combined page."
+  }
+ }
+}

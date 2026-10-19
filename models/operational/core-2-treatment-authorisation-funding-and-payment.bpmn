@@ -27,6 +27,7 @@
         <bpmn:flowNodeRef>N_CL_AuthoriseTreatment</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_CL_ClinicalRisk</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_CL_ModifyTreatment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CL_ChargeImpactDecision</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_CL_UrgentAuthorise</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_CL_MergeAuthorisation</bpmn:flowNodeRef>
       </bpmn:lane>
@@ -116,6 +117,12 @@
         <zeebe:assignmentDefinition candidateGroups="consultants" />
       </bpmn:extensionElements>
     </bpmn:userTask>
+    <bpmn:exclusiveGateway id="N_CL_ChargeImpactDecision" name="Does the modification affect the charge?" default="F56">
+      <bpmn:documentation>Where the modification affects an existing charge, funding approval or payment, the case is referred to the Finance Team before the change is applied; where it does not, the review is skipped (BR-22, FR-020). The condition is evaluated at a gateway, because Camunda does not evaluate a condition on an activity's only outgoing flow.</bpmn:documentation>
+      <bpmn:incoming>F55</bpmn:incoming>
+      <bpmn:outgoing>F41</bpmn:outgoing>
+      <bpmn:outgoing>F56</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
     <bpmn:userTask id="N_CL_UrgentAuthorise" name="Authorise urgent treatment">
       <bpmn:documentation>Records the reason for proceeding without confirmed payment and refers the case to the Finance Team for resolution (BR-19, EX-13, FR-032).</bpmn:documentation>
       <bpmn:extensionElements>
@@ -343,9 +350,11 @@
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="F31" name="no" sourceRef="N_CL_ClinicalRisk" targetRef="N_F_NotifyPatient" />
     <bpmn:sequenceFlow id="F40" name="not fit" sourceRef="N_OC_FitToContinue" targetRef="N_CL_ModifyTreatment" />
-    <bpmn:sequenceFlow id="F41" name="affects charge or payment" sourceRef="N_CL_ModifyTreatment" targetRef="N_F_ReviewFinancialImpact">
+    <bpmn:sequenceFlow id="F55" name="modification authorised" sourceRef="N_CL_ModifyTreatment" targetRef="N_CL_ChargeImpactDecision" />
+    <bpmn:sequenceFlow id="F41" name="affects charge or payment" sourceRef="N_CL_ChargeImpactDecision" targetRef="N_F_ReviewFinancialImpact">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= affectsCharge = true</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="F56" name="no charge impact" sourceRef="N_CL_ChargeImpactDecision" targetRef="N_F_ImpactReviewed" />
     <bpmn:sequenceFlow id="F33" sourceRef="N_CL_UrgentAuthorise" targetRef="N_TB_MergeConfirmation" />
     <bpmn:sequenceFlow id="F37" sourceRef="N_TB_NotifyPatient" targetRef="N_OC_PreCycleReview" />
     <bpmn:sequenceFlow id="F38" sourceRef="N_OC_PreCycleReview" targetRef="N_OC_FitToContinue" />
@@ -487,6 +496,12 @@
         <dc:Bounds x="8670" y="310" width="150" height="80" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="8671" y="394" width="148" height="41" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CL_ChargeImpactDecision_di" bpmnElement="N_CL_ChargeImpactDecision" isMarkerVisible="true">
+        <dc:Bounds x="8890" y="325" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="8840" y="295" width="190" height="21" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CL_NotProceeding_di" bpmnElement="N_CL_NotProceeding">
@@ -834,12 +849,25 @@
           <dc:Bounds x="8573" y="737" width="34" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="F41_di" bpmnElement="F41">
+      <bpmndi:BPMNEdge id="F55_di" bpmnElement="F55">
         <di:waypoint x="8820" y="350" />
+        <di:waypoint x="8890" y="350" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F41_di" bpmnElement="F41">
+        <di:waypoint x="8940" y="350" />
         <di:waypoint x="9040" y="350" />
         <di:waypoint x="9040" y="1840" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="8849" y="327" width="162" height="17" />
+          <dc:Bounds x="8945" y="327" width="162" height="17" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F56_di" bpmnElement="F56">
+        <di:waypoint x="8915" y="375" />
+        <di:waypoint x="8915" y="2000" />
+        <di:waypoint x="9278" y="2000" />
+        <di:waypoint x="9278" y="1896" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="8950" y="2005" width="120" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F33_di" bpmnElement="F33">

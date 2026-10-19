@@ -194,7 +194,8 @@ below for what the correlation key does and why the publication carries an id.
 
 **`appointment-availability`** (job type `check-appointment-availability`) asks the simulated
 scheduling service for a new patient appointment. It reads `speciality`, `priority`, `requestedWindow`
-and the `patientId` and `referralId` the appointment belongs to; it writes `slotAvailable`,
+and the `patientId` and `referralId` the appointment belongs to, plus the optional `slotLeadDays`
+scenario value that makes the simulated service answer with a slot further out; it writes `slotAvailable`,
 `appointmentDate`, `alternativeDate`, `withinRequestedWindow`, `appointmentWithinTwoWeeks`,
 `schedulingServiceOutcome` and `supersededAppointment`. It serves the new patient appointment in
 `core-1` and the follow-up appointment in `core-4`.

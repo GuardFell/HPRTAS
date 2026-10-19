@@ -34,6 +34,10 @@ public final class AppointmentAvailability implements WorkerModule {
           "speciality", FieldSpec.identifier().required(),
           "priority", FieldSpec.string().required().oneOf("urgent", "routine"),
           "requestedWindow", FieldSpec.days().required(),
+          // Scenario data: the lead time the simulated service answers with. Without it the service
+          // uses the configured routine/urgent lead, which is always inside the two-week period; a
+          // scenario sets this to exercise the safety-net branch for a slot that is further out.
+          "slotLeadDays", FieldSpec.days(),
           // Which patient and referral the appointment is for, so the register can record it against
           // them and a rebooking can supersede what it replaces. Optional: a fixture that drives the
           // worker without a pathway around it still works.
@@ -75,6 +79,7 @@ public final class AppointmentAvailability implements WorkerModule {
     final String patientId = (String) check.values().get("patientId");
     final String referralId = (String) check.values().get("referralId");
     final int requestedWindow = ((Number) check.values().get("requestedWindow")).intValue();
+    final Number slotLeadDays = (Number) check.values().get("slotLeadDays");
 
     // The key names the request: the instance and the window that was asked for. A retry of the same
     // request returns the appointment it made; a request for a different window is a different
@@ -91,6 +96,7 @@ public final class AppointmentAvailability implements WorkerModule {
                 (String) check.values().get("schedulingOutcome"),
                 (String) check.values().get("priority"),
                 requestedWindow,
+                slotLeadDays == null ? null : slotLeadDays.intValue(),
                 context.now(),
                 patientId,
                 referralId,

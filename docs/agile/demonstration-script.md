@@ -21,7 +21,7 @@ implemented is listed there, and it is part of the demonstration rather than an 
 | Commit to demonstrate | the commit this file is committed in; `git rev-parse --short HEAD` names it |
 | Release tag | `release-2.0` and `submission-2026-09-29`, the tags on the commit this file is committed in. `release-1.0` names the earlier first release |
 | Recorded run in this shape of the tree | `../../tests/evidence/core-5-message-exchange-and-layout-tidy_2c3c2eb_2026-09-28.txt` (the current one: five models, nine scenarios, seven workers, 42 unit and 11 engine tests) and `../../tests/evidence/operational-models-and-forms_end-to-end_57b3c1d_2026-09-28.txt` (the same engine run written out per task, before `core-5` existed) |
-| Defects open at this version | `DEF-07` (no authentication, no enforced role separation), `DEF-08` (no form submitted by a signed-in user), `DEF-14` (a condition on an activity's only outgoing flow is not evaluated) - `../../tests/test-plan.md` section 6. `DEF-10` was closed by the feedback pass: the ledgers are in the hospital's record store now. Open at the *tagged* version but not at the tree this script is read against: none - check the table before the demonstration |
+| Defects open at this version | `DEF-07` (no authentication, no enforced role separation), `DEF-08` (no form submitted by a signed-in user) - `../../tests/test-plan.md` section 6. `DEF-10` was closed by the feedback pass: the ledgers are in the hospital's record store now. `DEF-14` was closed on 2026-10-19: no executable model carries a condition on an activity's only outgoing flow. Open at the *tagged* version but not at the tree this script is read against: none - check the table before the demonstration |
 
 Say the commit out loud at the start. The test plan's rule is that a claim belongs to one version, and
 the same rule applies to a demonstration.
@@ -345,9 +345,11 @@ Say these out loud. They are the difference between a demonstration and a claim.
 6. **Management reporting and the downtime procedure are not implemented** (`FR-049`, `FR-050`).
 7. **The strategic and socio-technical models are not deployed and cannot be run.** They are views;
    Camunda rejects a deployment containing no executable process.
-8. **One known condition is documentation rather than a guard.** On `N_CL_ModifyTreatment` the
-   condition on its only outgoing flow is never evaluated by Camunda (`DEF-14`), so treat it as
-   intent. `N_F_NotifyPatient` had the same fault and was fixed by moving the decision to a gateway.
+8. **Conditions are enforced at gateways.** `N_CL_ModifyTreatment`'s charge-impact decision now sits
+   on `N_CL_ChargeImpactDecision` (`F41` review / `F56` no review), and `N_F_NotifyPatient`'s retry
+   decision on `N_F_RetryDecision`; both answers have been driven. `DEF-14` is closed for the
+   executable models; a condition on an activity's only outgoing flow in the strategic view remains
+   documentation, because that view is not executed.
 
 The list of every known defect, with what is fixed and what is not, is `../../tests/test-plan.md`
 section 6. Quote the count from there rather than from memory.
@@ -359,7 +361,7 @@ section 6. Quote the count from there rather than from memory.
 | A task never appears, no error | The workers are not running, or the job type is not registered | Check the workers terminal. The job stays queued and the process waits where it is |
 | A user task shows no form | The form was not deployed with the model, or the task is unassigned | Deploy `forms/*.form` as well; assign the task to yourself. A form is resolved when the task is **created**, so a form deployed after the task exists does not reach it - the task has to be created again |
 | The instance sits on a service task | Same as the first row | Same |
-| A condition seems ignored | It is on an activity's only outgoing flow (`DEF-14`) | Expect it, and say so. Conditions are enforced on gateways |
+| A condition seems ignored | It is on an activity's only outgoing flow, not a gateway | In the executable models all such conditions now sit on gateways (`DEF-14` closed); a condition in the strategic view is documentation, because that view is not executed |
 | The `core-5` instance will not resume | The correlation key is not the `referralId` the form wrote, or the message name is wrong | Re-send with the exact key. A publication that matches no subscription is accepted and does nothing |
 | Too many instances in Tasklist | Previous runs | Filter by process, or work in **Operate** where the diagram shows which instance is which |
 | The Processes page offers a process of nearly the right name that this script never mentions | The engine keeps every definition ever deployed to it, and the models the `core-N` set replaced are still there - `referral-to-appointment`, `treatment-authorisation-and-booking` and `clinic-letter-and-pathway-monitoring` sit beside `core-1`, `core-2` and `core-3` | Start the one whose name begins **`Core 1`** ... **`Core 5`**. Those five are the delivered models; everything else on that page is an earlier edition or another exercise, and none of it is demonstrated here |

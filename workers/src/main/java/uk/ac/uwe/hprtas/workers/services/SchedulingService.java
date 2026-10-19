@@ -74,6 +74,7 @@ public class SchedulingService extends SimulatedService {
    * @param bookingKey identifies the appointment being sought
    * @param requestedOutcome an explicit outcome from the scenario data, or null
    * @param priority urgent or routine
+   * @param slotLeadDays the lead time to answer with, from scenario data, or null for the config
    * @param patientId the patient the appointment is for, or null when the process does not say
    * @param referralId the referral it belongs to, or null
    * @param appointmentType new-patient or follow-up
@@ -83,6 +84,7 @@ public class SchedulingService extends SimulatedService {
       String requestedOutcome,
       String priority,
       int requestedWindowDays,
+      Integer slotLeadDays,
       Instant now,
       String patientId,
       String referralId,
@@ -106,9 +108,11 @@ public class SchedulingService extends SimulatedService {
 
       final String outcome = firstSet(requestedOutcome, config.outcome(), AVAILABLE);
       final int leadDays =
-          "urgent".equals(priority)
-              ? config.slotLeadDaysUrgent()
-              : Math.min(config.slotLeadDaysRoutine(), requestedWindowDays);
+          slotLeadDays != null
+              ? slotLeadDays
+              : "urgent".equals(priority)
+                  ? config.slotLeadDaysUrgent()
+                  : Math.min(config.slotLeadDaysRoutine(), requestedWindowDays);
 
       String appointmentDate = null;
       String alternativeDate = null;

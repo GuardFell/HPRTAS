@@ -54,6 +54,7 @@
       </bpmn:lane>
       <bpmn:lane id="Lane_CnsTeam" name="Clinical Nurse Specialist Team">
         <bpmn:flowNodeRef>N_CNS_PathwayReview</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>N_CNS_PathwayDecision</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_CNS_PathwayClosed</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_CNS_ClinicalAdvice</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_CNS_Urgency</bpmn:flowNodeRef>
@@ -69,7 +70,6 @@
         <bpmn:flowNodeRef>N_CH_EnquiryAnswered</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="Lane_Finance" name="Finance Team">
-        <bpmn:flowNodeRef>N_F_PaidAffected</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_RetentionDecision</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_RefundDecision</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>N_F_ProcessRefund</bpmn:flowNodeRef>
@@ -203,7 +203,7 @@
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:endEvent id="N_PC_PathwayReferred" name="Case referred to pathway team" />
-  <bpmn:userTask id="N_CNS_PathwayReview" name="Review the patient pathway" default="F20">
+  <bpmn:userTask id="N_CNS_PathwayReview" name="Review the patient pathway">
     <bpmn:documentation>BR-41: whether the patient can continue treatment, whether it should be delayed and whether the patient should be discharged are clinical decisions (FR-023).</bpmn:documentation>
     <bpmn:extensionElements>
       <zeebe:userTask />
@@ -211,6 +211,13 @@
       <zeebe:assignmentDefinition candidateGroups="clinical-nurse-specialists" />
     </bpmn:extensionElements>
   </bpmn:userTask>
+  <bpmn:exclusiveGateway id="N_CNS_PathwayDecision" name="Which outcome of the review?" default="F20">
+    <bpmn:documentation>The three outcomes of the clinical review are exclusive: continuing treatment, closing the pathway, or informing the referring organisation when neither applies. The choice is made at a gateway, not by conditions on the task's outgoing flows, because Camunda takes every outgoing flow of an activity as an implicit parallel split (BR-41, FR-023).</bpmn:documentation>
+    <bpmn:incoming>F64</bpmn:incoming>
+    <bpmn:outgoing>F19</bpmn:outgoing>
+    <bpmn:outgoing>F20</bpmn:outgoing>
+    <bpmn:outgoing>F21</bpmn:outgoing>
+  </bpmn:exclusiveGateway>
   <bpmn:endEvent id="N_CNS_PathwayClosed" name="Pathway closed by clinical decision" />
   <bpmn:userTask id="N_CNS_ClinicalAdvice" name="Provide clinical advice or support">
     <bpmn:documentation>BR-35, EX-21: clinical enquiries reach an appropriately qualified member of the Clinical Nurse Specialist Team (FR-042).</bpmn:documentation>
@@ -261,9 +268,6 @@
     </bpmn:extensionElements>
   </bpmn:userTask>
   <bpmn:endEvent id="N_CH_EnquiryAnswered" name="Administrative enquiry answered" />
-  <bpmn:exclusiveGateway id="N_F_PaidAffected" name="Paid appointment affected?" default="F24">
-    <bpmn:documentation>BR-40, EX-20: a paid appointment that is cancelled or rescheduled is referred to Finance (FR-024).</bpmn:documentation>
-  </bpmn:exclusiveGateway>
   <bpmn:userTask id="N_F_RetentionDecision" name="Decide retention, transfer or refund">
     <bpmn:documentation>BR-20, BR-40: only an authorised member of the Finance Team decides whether the payment is retained, transferred or refunded (FR-024, FR-033, FR-034).</bpmn:documentation>
     <bpmn:extensionElements>
@@ -338,22 +342,19 @@
   <bpmn:sequenceFlow id="F16" name="clinical review required" sourceRef="N_OB_AnotherAppointment" targetRef="N_CNS_PathwayReview">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= pathwayReviewRequired = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F17" name="paid appointment affected" sourceRef="N_OB_AnotherAppointment" targetRef="N_F_PaidAffected">
+  <bpmn:sequenceFlow id="F17" name="paid appointment affected" sourceRef="N_OB_AnotherAppointment" targetRef="N_F_RetentionDecision">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paidAppointment = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
   <bpmn:sequenceFlow id="F18" name="no further appointment" sourceRef="N_OB_AnotherAppointment" targetRef="N_OB_MergeReferrerNotification" />
-  <bpmn:sequenceFlow id="F19" name="continue treatment" sourceRef="N_CNS_PathwayReview" targetRef="N_OB_MergeFollowUpRequest">
+  <bpmn:sequenceFlow id="F64" name="review outcome recorded" sourceRef="N_CNS_PathwayReview" targetRef="N_CNS_PathwayDecision" />
+  <bpmn:sequenceFlow id="F19" name="continue treatment" sourceRef="N_CNS_PathwayDecision" targetRef="N_OB_MergeFollowUpRequest">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= continueTreatment = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F20" name="inform the referring organisation" sourceRef="N_CNS_PathwayReview" targetRef="N_OB_MergeReferrerNotification" />
-  <bpmn:sequenceFlow id="F21" name="pathway closed" sourceRef="N_CNS_PathwayReview" targetRef="N_CNS_PathwayClosed">
+  <bpmn:sequenceFlow id="F20" name="inform the referring organisation" sourceRef="N_CNS_PathwayDecision" targetRef="N_OB_MergeReferrerNotification" />
+  <bpmn:sequenceFlow id="F21" name="pathway closed" sourceRef="N_CNS_PathwayDecision" targetRef="N_CNS_PathwayClosed">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= pathwayClosed = true</bpmn:conditionExpression>
   </bpmn:sequenceFlow>
   <bpmn:sequenceFlow id="F22" sourceRef="N_OB_NotifyReferrer" targetRef="N_OB_MergeEpisodeClosed" />
-  <bpmn:sequenceFlow id="F23" name="yes" sourceRef="N_F_PaidAffected" targetRef="N_F_RetentionDecision">
-    <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= paidAppointment = true</bpmn:conditionExpression>
-  </bpmn:sequenceFlow>
-  <bpmn:sequenceFlow id="F24" name="no" sourceRef="N_F_PaidAffected" targetRef="N_OB_MergeEpisodeClosed" />
   <bpmn:sequenceFlow id="F25" sourceRef="N_F_RetentionDecision" targetRef="N_F_RefundDecision" />
   <bpmn:sequenceFlow id="F26" name="full or partial refund" sourceRef="N_F_RefundDecision" targetRef="N_F_MergeRefundRequest">
     <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">= refundDecision = &quot;full&quot; or refundDecision = &quot;partial&quot;</bpmn:conditionExpression>
@@ -644,6 +645,12 @@
           <dc:Bounds x="1755" y="1264" width="140" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="N_CNS_PathwayDecision_di" bpmnElement="N_CNS_PathwayDecision" isMarkerVisible="true">
+        <dc:Bounds x="1950" y="1195" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2010" y="1165" width="190" height="21" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_CNS_Urgency_di" bpmnElement="N_CNS_Urgency" isMarkerVisible="true">
         <dc:Bounds x="1800" y="1350" width="50" height="50" />
         <bpmndi:BPMNLabel>
@@ -726,12 +733,6 @@
         <dc:Bounds x="3440" y="2130" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="3397" y="2184" width="136" height="41" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="N_F_PaidAffected_di" bpmnElement="N_F_PaidAffected" isMarkerVisible="true">
-        <dc:Bounds x="1800" y="2070" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1759" y="2124" width="132" height="41" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="N_F_ProcessRefund_di" bpmnElement="N_F_ProcessRefund">
@@ -900,7 +901,9 @@
         <di:waypoint x="1160" y="1220" />
         <di:waypoint x="1710" y="1220" />
         <di:waypoint x="1710" y="2100" />
-        <di:waypoint x="1800" y="2100" />
+        <di:waypoint x="2360" y="2100" />
+        <di:waypoint x="2360" y="2150" />
+        <di:waypoint x="2380" y="2150" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="1139" y="355" width="161" height="17" />
         </bpmndi:BPMNLabel>
@@ -916,8 +919,12 @@
           <dc:Bounds x="1135" y="329" width="141" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="F19_di" bpmnElement="F19">
+      <bpmndi:BPMNEdge id="F64_di" bpmnElement="F64">
         <di:waypoint x="1900" y="1220" />
+        <di:waypoint x="1950" y="1220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="F19_di" bpmnElement="F19">
+        <di:waypoint x="2000" y="1220" />
         <di:waypoint x="2370" y="1220" />
         <di:waypoint x="2370" y="1270" />
         <di:waypoint x="2570" y="1270" />
@@ -925,26 +932,23 @@
         <di:waypoint x="2460" y="290" />
         <di:waypoint x="2460" y="310" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="2077" y="1197" width="116" height="17" />
+          <dc:Bounds x="2077" y="1224" width="116" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F20_di" bpmnElement="F20">
-        <di:waypoint x="1750" y="1220" />
-        <di:waypoint x="1730" y="1220" />
-        <di:waypoint x="1730" y="560" />
+        <di:waypoint x="1975" y="1195" />
+        <di:waypoint x="1975" y="560" />
         <di:waypoint x="2460" y="560" />
         <di:waypoint x="2460" y="500" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1641" y="1149" width="198" height="17" />
+          <dc:Bounds x="2100" y="535" width="198" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F21_di" bpmnElement="F21">
-        <di:waypoint x="1900" y="1220" />
-        <di:waypoint x="1910" y="1220" />
-        <di:waypoint x="1910" y="1200" />
+        <di:waypoint x="2000" y="1200" />
         <di:waypoint x="2440" y="1200" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1912" y="1187" width="96" height="17" />
+          <dc:Bounds x="2220" y="1172" width="96" height="17" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F22_di" bpmnElement="F22">
@@ -953,25 +957,6 @@
         <di:waypoint x="3330" y="430" />
         <di:waypoint x="3460" y="430" />
         <di:waypoint x="3460" y="450" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="F23_di" bpmnElement="F23">
-        <di:waypoint x="1850" y="2100" />
-        <di:waypoint x="2360" y="2100" />
-        <di:waypoint x="2360" y="2150" />
-        <di:waypoint x="2380" y="2150" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="2094" y="2077" width="22" height="17" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="F24_di" bpmnElement="F24">
-        <di:waypoint x="1820" y="2070" />
-        <di:waypoint x="1820" y="1790" />
-        <di:waypoint x="3350" y="1790" />
-        <di:waypoint x="3350" y="480" />
-        <di:waypoint x="3440" y="480" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1828" y="1922" width="16" height="17" />
-        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="F25_di" bpmnElement="F25">
         <di:waypoint x="2530" y="2150" />

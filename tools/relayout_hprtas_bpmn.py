@@ -15,7 +15,8 @@ What it lays out, following the W02 lectures:
     sequence flow may cross a lane boundary
   * every flow is routed on a lattice, avoiding the activities and the flows
     already routed, which is what removes the crossings a hand-drawn diagram is
-    full of
+    full of; a free cell is kept beside every line, so two parallel runs never
+    read as one line
   * labels are placed below their element and beside their flow, then nudged
     until they collide with nothing
 
@@ -62,20 +63,22 @@ FLOW_SIZE = R.FLOW_SIZE              # 14.0, a label beside a flow
 LINE = R.LINE_SPACING
 
 CELL = 10.0                          # the routing lattice
-POOL_PAD_X = 60.0
-POOL_PAD_Y = 46.0
+SHARED_MIN = 30.0                    # a shared run shorter than this is a port stub
+POOL_PAD_X = 80.0
+POOL_PAD_Y = 56.0
 POOL_HEADER = 30.0                   # the band the pool name sits in
 LANE_HEADER = 32.0                   # the band a lane name sits in
 LANE_PAD_BOTTOM = 18.0
-NODE_GAP = 30.0                      # between two activities stacked in a lane
+NODE_GAP = 44.0                      # between two activities stacked in a lane
 COL_PAD = 20.0
-MIN_GAP = 100.0                      # between two columns
-TRACK = 26.0                         # between two vertical runs in one gap
-CORRIDOR_MIN = 34.0                  # a clear band at the foot of every lane
+MIN_GAP = 140.0                      # between two columns
+TRACK = 38.0                         # between two vertical runs in one gap
+CORRIDOR_MIN = 52.0                  # a clear band at the foot of every lane
+HALO = 1                             # free lattice cells kept beside every routed line
 NOTE_SIZE = 12.0                     # a note is drawn at the size its box was cut for
 NOTE_MAX_WIDTH = 1400.0              # and wraps rather than crossing the pool
 NOTE_GAP = 12.0                      # between two notes, and above the first
-CORRIDOR_MAX = 130.0                 # past this a lane is mostly empty space
+CORRIDOR_MAX = 190.0                 # past this a lane is mostly empty space
 EXPANSION_LIMIT = 90000              # give up on a search that finds nothing
 OUTSIDE = 150.0                      # between the hospital pool and the others
 
@@ -297,7 +300,7 @@ def place(model, layer):
             demand[col] = demand.get(col, 0) + 1
 
     ordered = sorted(columns)
-    gap = {col: max(MIN_GAP, 50.0 + TRACK * demand.get(col, 0))
+    gap = {col: max(MIN_GAP, 70.0 + TRACK * demand.get(col, 0))
            for col in ordered[:-1]}
     x_of_col, x = {}, None
     for col in ordered:
@@ -339,7 +342,7 @@ def place(model, layer):
                 height += node_height(model, node) + NODE_GAP
             tallest = max(tallest, height - NODE_GAP)
         corridor = min(CORRIDOR_MAX,
-                       max(CORRIDOR_MIN, 30.0 + 26.0 * back_pressure.get(index, 0)))
+                       max(CORRIDOR_MIN, 44.0 + 32.0 * back_pressure.get(index, 0)))
         lane_heights[lane["id"]] = LANE_HEADER + tallest + corridor + LANE_PAD_BOTTOM
         lane_shapes[lane["id"]] = per_column
 
@@ -467,6 +470,9 @@ class Router(object):
         self.blocked = set()
         self.soft = set()
         self.used = {}
+        self.near = set()
+        self.halo = HALO
+        self.soft_penalty = 1500.0
         self.region = None
         self.exempt = set()
         self.hard = False
@@ -481,16 +487,6 @@ class Router(object):
 
     def block_rect(self, x, y, w, h, pad=CELL / 2.0):
         self.blocked.update(self.cells_of(x, y, w, h, pad))
-
-    def unblock_rect(self, x, y, w, h, pad=CELL / 2.0):
-        """Free the cells of an element that sits on top of another one.
-
-        A boundary event is drawn on the foot of the activity it is attached to,
-        so the activity's own rectangle covers it; without this the event would
-        have nowhere to start.
-        """
-        for cell in self.cells_of(x, y, w, h, pad):
-            self.blocked.discard(cell)
 
     def ring_rect(self, x, y, w, h):
         """The cells just outside a box, which a flow has to be able to reach."""
@@ -508,6 +504,8 @@ class Router(object):
             return None
         if self.hard and (x, y) in self.used:
             return None
+        if self.hard and self.halo and (x, y) in self.near and (x, y) not in self.halo_exempt:
+            return None
         if self.region is not None and not self.region(x * CELL, y * CELL):
             return None
         base = 1.0
@@ -517,7 +515,7 @@ class Router(object):
             # an activity's name is drawn under its box, which is exactly where a flow arrives from
             # below. So the penalty is above the one for crossing a line (600 a cell), and the
             # router goes round the words and comes in at an edge instead.
-            base += 1500.0
+            base += self.soft_penalty
         seen = self.used.get((x, y), 0)
         if seen:
             # a flow already goes through here: crossing it is a last resort, so
@@ -528,20 +526,23 @@ class Router(object):
                 base += 6.0              # and keep a lane between the lines
         return base
 
-    def route(self, src_box, tgt_box, region=None, hard=True, limit=None):
+    def route(self, src_box, tgt_box, region=None, hard=True, limit=None, halo=None):
         """Route from one box to another, entering and leaving on a border.
 
         With `hard` a cell another flow already uses cannot be entered at all, so
         the two do not cross; when the geometry leaves no such way the caller
         routes again with `hard=False` and the crossing costs instead of being
-        forbidden.
+        forbidden. With `halo` the cells just beside an existing line are kept
+        free as well, so parallel runs do not end up one lattice step apart.
         """
         self.region = region
         self.hard = hard
         self.limit = limit
+        self.halo = HALO if halo is None else halo
         # a port sits on a border, and the cells around the two elements have to
         # stay reachable however tightly the elements are packed
         self.exempt = set()
+        self.halo_exempt = set()
         for box in (src_box, tgt_box):
             x, y, w, h = box
             for point, step in (((x + w, y + h / 2.0), (1, 0)), ((x, y + h / 2.0), (-1, 0)),
@@ -549,6 +550,11 @@ class Router(object):
                 cell = (int(round(point[0] / CELL)), int(round(point[1] / CELL)))
                 self.exempt.add(cell)
                 self.exempt.add((cell[0] + step[0], cell[1] + step[1]))
+                # landings and departures may converge on the same edge, so the
+                # separation halo is waived around them; the used-cell rule is not
+                for dx in range(-2, 3):
+                    for dy in range(-2, 3):
+                        self.halo_exempt.add((cell[0] + dx, cell[1] + dy))
         ports = []
         sx, sy, sw, sh = src_box
         tx, ty, tw, th = tgt_box
@@ -562,10 +568,8 @@ class Router(object):
 
         # The same rule at the other end: a flow that leaves through a label leaves through the
         # words, and the first segment is drawn straight from the border. A departure port the
-        # label covers is dropped, and the flow leaves by an edge that is clear.
+        # label covers is tried last, and the flow leaves by an edge that is clear when one exists.
         clear_ports = [port for port in ports if port[2] not in self.soft]
-        if clear_ports:
-            ports = clear_ports
 
         goals = []
         for name, point, _ in (
@@ -578,24 +582,29 @@ class Router(object):
         # An activity's name is drawn under its box, so the middle of the bottom edge is where a
         # label usually sits: arriving there means arriving through the words, and the last segment
         # is drawn straight to the border however the search got there. An edge whose middle is
-        # covered is therefore not offered as an arrival, and the flow comes in at an edge that can
-        # be reached cleanly. If every edge is covered the full set is kept, because a flow with no
-        # way in at all would be a line missing from the diagram.
-        clear = [goal for goal in goals if goal[1] not in self.soft]
-        if clear:
-            goals = clear
+        # covered is tried last, but it is still tried: a boundary event's only usable edge can be
+        # covered by its own label, and dropping it left that flow with no route at all.
+        clear_goals = [goal for goal in goals if goal[1] not in self.soft]
 
-        goal_cells = {cell: name for name, cell in goals}
         best = None
-        for origin, name, cell, step in ports:
-            if not self.inside(*cell):
-                continue
-            path = self._search(cell, step, goal_cells)
-            if path is None:
-                continue
-            length = len(path)
-            if best is None or length < best[0]:
-                best = (length, path, name, cell)
+        port_sets = [clear_ports, ports] if clear_ports else [ports]
+        goal_sets = [clear_goals, goals] if clear_goals else [goals]
+        for port_set in port_sets:
+            for goal_set in goal_sets:
+                goal_cells = {cell: name for name, cell in goal_set}
+                for origin, name, cell, step in port_set:
+                    if not self.inside(*cell):
+                        continue
+                    path = self._search(cell, step, goal_cells)
+                    if path is None:
+                        continue
+                    length = len(path)
+                    if best is None or length < best[0]:
+                        best = (length, path, name, cell)
+                if best is not None:
+                    break
+            if best is not None:
+                break
         if best is None:
             return None
         _, path, src_name, _ = best
@@ -704,6 +713,15 @@ class Router(object):
                 y = p[1] + (q[1] - p[1]) * i / float(steps)
                 cell = (int(round(x / CELL)), int(round(y / CELL)))
                 self.used[cell] = self.used.get(cell, 0) + 1
+                for dx in range(-HALO, HALO + 1):
+                    for dy in range(-HALO, HALO + 1):
+                        if dx or dy:
+                            self.near.add((cell[0] + dx, cell[1] + dy))
+
+    def clear_used(self):
+        """Forget the routes this router has reserved, keeping what it must avoid."""
+        self.used.clear()
+        self.near.clear()
 
     def soft_reserve(self, points):
         """A line a later route may run along, but would rather not: another flow's route.
@@ -720,22 +738,40 @@ class Router(object):
             for i in range(steps + 1):
                 x = p[0] + (q[0] - p[0]) * i / float(steps)
                 y = p[1] + (q[1] - p[1]) * i / float(steps)
-                self.soft.add((int(round(x / CELL)), int(round(y / CELL))))
+                cell = (int(round(x / CELL)), int(round(y / CELL)))
+                self.soft.add(cell)
+                # and the cells beside it, so a dashed line keeps a visible gap
+                # rather than settling one lattice step from the solid line
+                for dx in (-1, 0, 1):
+                    for dy in (-1, 0, 1):
+                        self.soft.add((cell[0] + dx, cell[1] + dy))
 
 
 def route_one(router, flow, geometry, make_region, pool_region, strict):
-    """One flow, trying the lanes it has business with before the whole pool."""
+    """One flow, trying the lanes it has business with before the whole pool.
+
+    The first attempts keep a free cell either side of every line already laid,
+    which is what keeps two parallel runs visually apart. Only when the geometry
+    leaves no room for that is the halo given up, and only after that is a
+    shared cell (a crossing) allowed.
+    """
     src, tgt = geometry[flow["src"]], geometry[flow["tgt"]]
     src_box = (src["x"], src["y"], src["w"], src["h"])
     tgt_box = (tgt["x"], tgt["y"], tgt["w"], tgt["h"])
-    points = router.route(src_box, tgt_box, region=make_region(flow["src"], flow["tgt"]),
-                          hard=strict, limit=EXPANSION_LIMIT if strict else None)
-    if points is None and strict:
-        points = router.route(src_box, tgt_box, region=pool_region, hard=True,
-                              limit=EXPANSION_LIMIT)
-    if points is None:
-        points = router.route(src_box, tgt_box, region=pool_region, hard=False)
-    return points
+    if strict:
+        attempts = ((make_region(flow["src"], flow["tgt"]), True, HALO),
+                    (pool_region, True, HALO),
+                    (make_region(flow["src"], flow["tgt"]), True, 0),
+                    (pool_region, True, 0),
+                    (pool_region, False, 0))
+    else:
+        attempts = ((pool_region, False, 0),)
+    for region, hard, halo in attempts:
+        points = router.route(src_box, tgt_box, region=region, hard=hard, halo=halo,
+                              limit=EXPANSION_LIMIT if hard else None)
+        if points is not None:
+            return points
+    return None
 
 
 def shape_crossings(routes, geometry, flows, boundary_of, strict=False):
@@ -749,11 +785,12 @@ def shape_crossings(routes, geometry, flows, boundary_of, strict=False):
     preferred wherever one exists.
     """
     offenders = set()
+    boundary_events = set(boundary_of)
     for fid, points in routes.items():
         flow = flows[fid]
         for p, q in zip(points, points[1:]):
             for nid, box in geometry.items():
-                if nid in (flow["src"], flow["tgt"]):
+                if nid in (flow["src"], flow["tgt"]) or nid in boundary_events:
                     continue
                 if not strict and (boundary_of.get(flow["src"]) == nid
                                    or boundary_of.get(flow["tgt"]) == nid):
@@ -798,7 +835,7 @@ def rip_up_and_reroute(router, routes, routable, geometry, layer, make_region, v
                 continue
             keep = routes[fid]
             del routes[fid]
-            router.used.clear()
+            router.clear_used()
             for other in routes.values():
                 router.reserve(other)
             src, tgt = geometry[flow["src"]], geometry[flow["tgt"]]
@@ -811,7 +848,7 @@ def rip_up_and_reroute(router, routes, routable, geometry, layer, make_region, v
                                       limit=EXPANSION_LIMIT)
             if points is None:
                 routes[fid] = keep
-                router.used.clear()
+                router.clear_used()
                 for other in routes.values():
                     router.reserve(other)
                 continue
@@ -820,7 +857,7 @@ def rip_up_and_reroute(router, routes, routable, geometry, layer, make_region, v
             improved = True
         if not improved:
             break
-    router.used.clear()
+    router.clear_used()
     for other in routes.values():
         router.reserve(other)
     return routes
@@ -843,6 +880,107 @@ def count_crossings(routes):
             if hit:
                 crossings += 1
     return crossings
+
+
+def routes_share_line(a, b):
+    """True when two routes lie along each other for a stretch.
+
+    A crossing is one point, and the eye can follow it; two flows sharing a
+    segment read as one line that forks without a node, which is the thing this
+    layout must not produce. Only parallel, collinear stretches count.
+    """
+    for p, q in zip(a, a[1:]):
+        for r, t in zip(b, b[1:]):
+            if p[1] == q[1] and r[1] == t[1] and p[1] == r[1]:
+                lo = max(min(p[0], q[0]), min(r[0], t[0]))
+                hi = min(max(p[0], q[0]), max(r[0], t[0]))
+                if hi - lo > SHARED_MIN:
+                    return True
+            elif p[0] == q[0] and r[0] == t[0] and p[0] == r[0]:
+                lo = max(min(p[1], q[1]), min(r[1], t[1]))
+                hi = min(max(p[1], q[1]), max(r[1], t[1]))
+                if hi - lo > SHARED_MIN:
+                    return True
+    return False
+
+
+def collinear_pairs(routes):
+    """The pairs of routes that share a line, as (first, second) ids."""
+    ids = sorted(routes)
+    pairs = set()
+    for i, fid in enumerate(ids):
+        for gid in ids[i + 1:]:
+            if routes_share_line(routes[fid], routes[gid]):
+                pairs.add((fid, gid))
+    return pairs
+
+
+def route_score(routes, geometry, flows, boundary_of):
+    """How a whole set of routes reads: boxes first, then shared lines, then crossings."""
+    across_boxes = len(shape_crossings(routes, geometry, flows, boundary_of, strict=True))
+    return (across_boxes, len(collinear_pairs(routes)), count_crossings(routes), -len(routes))
+
+
+def repair_routes(router, routes, routable, geometry, make_region, pool_region,
+                  flows, boundary_of, offender_of, rounds=4, verbose=True):
+    """Lift the flows that spoil the picture and lay them again, one at a time.
+
+    Routing in a fixed order can leave a later flow with no way round an earlier
+    one: the fallback may lay it along another line, and when the geometry is
+    tight it may even cut a corner through an activity. Rerouting the offender
+    once the rest is fixed usually finds the lane it could not see. A reroute is
+    kept only when the whole diagram reads better, so a repair never trades a
+    line through a box for a shorter route.
+    """
+    by_id = {flow["id"]: flow for flow in routable}
+    current = route_score(routes, geometry, by_id, boundary_of)
+    for _ in range(rounds):
+        offenders = offender_of(routes)
+        if not offenders:
+            break
+        accepted = False
+        for fid in sorted(offenders):
+            flow = by_id.get(fid)
+            if flow is None or fid not in routes:
+                continue
+            keep = routes[fid]
+            del routes[fid]
+            router.clear_used()
+            for other in routes.values():
+                router.reserve(other)
+            points = route_one(router, flow, geometry, make_region, pool_region, True)
+            if points is None:
+                routes[fid] = keep
+                router.clear_used()
+                for other in routes.values():
+                    router.reserve(other)
+                continue
+            routes[fid] = points
+            router.reserve(points)
+            score = route_score(routes, geometry, by_id, boundary_of)
+            if score < current:
+                current = score
+                accepted = True
+                if verbose:
+                    print("      rerouted %s to tidy the layout" % fid)
+                break
+            del routes[fid]
+            routes[fid] = keep
+            router.clear_used()
+            for other in routes.values():
+                router.reserve(other)
+        if not accepted:
+            break
+    return routes
+
+
+def layout_offenders(routes, geometry, flows, boundary_of):
+    """The flows worth another route: one through a box, or one sharing a line."""
+    offenders = set(shape_crossings(routes, geometry, flows, boundary_of, strict=True))
+    for first, second in collinear_pairs(routes):
+        offenders.add(first)
+        offenders.add(second)
+    return offenders
 
 
 # --------------------------------------------------------------------- labels
@@ -1003,7 +1141,18 @@ def replace_diagram(text, diagram):
     if start < 0 or end < 0:
         raise SystemExit("no diagram interchange to replace")
     end += len("</bpmndi:BPMNDiagram>")
-    return text[:start] + diagram.rstrip("\n") + text[end:]
+    # The writer emits its own indentation for the block. Drop whatever the old
+    # block carried before the tag, or every run pushes the block two columns
+    # further right. The same applies at the other end: the old block's line
+    # ending is replaced with exactly one, so a run over a CRLF file does not
+    # leave a growing run of carriage returns behind the closing tag.
+    newline = "\r\n" if "\r\n" in text else "\n"
+    line_start = text.rfind("\n", 0, start) + 1
+    if not text[line_start:start].strip():
+        start = line_start
+    while end < len(text) and text[end] in "\r\n":
+        end += 1
+    return text[:start] + diagram.rstrip("\r\n") + newline + text[end:]
 
 
 def relayout(path, verbose=True):
@@ -1106,10 +1255,6 @@ def relayout(path, verbose=True):
             box = geometry.get(node["id"])
             if box is not None:
                 fresh.block_rect(box["x"], box["y"], box["w"], box["h"])
-        for node in model.boundary_nodes():
-            box = geometry.get(node["id"])
-            if box is not None:
-                fresh.unblock_rect(box["x"], box["y"], box["w"], box["h"])
         for label in placer.boxes:
             fresh.soft_block_rect(*label)
         return fresh
@@ -1129,51 +1274,58 @@ def relayout(path, verbose=True):
     def left_of(flow):
         return geometry[flow["src"]]["x"]
 
-    orders = [("longest first", lambda f: -span(f)),
-              ("left to right", lambda f: left_of(f))]
+    boundary_src = {node["id"] for node in model.boundary_nodes()}
+    orders = [("longest first", lambda f: (0 if f["src"] in boundary_src else 1, -span(f))),
+              ("left to right", lambda f: (0 if f["src"] in boundary_src else 1, left_of(f)))]
     if "--fast" in sys.argv:
         # one order, one pass: for a diagram this wide, trying every combination
         # costs far more than the crossings it saves
         orders = orders[:1]
     best = None
     for name, key in orders:
-        for strict in (True, False):
+        router = arms()
+        routes = {}
+        for flow in sorted(routable, key=key):
+            points = route_one(router, flow, geometry, make_region, pool_region, True)
+            if points is None:
+                if verbose:
+                    print("      no route for %s (%s -> %s)"
+                          % (flow["id"], flow["src"], flow["tgt"]))
+                continue
+            routes[flow["id"]] = points
+            router.reserve(points)
+        offenders = shape_crossings(routes, geometry, by_id, boundary_of)
+        if offenders:
+            # a line through an activity is a fault, not a tidiness problem:
+            # the flow that does it is one the earlier ones boxed in, so it
+            # is routed first this time
+            ahead = [f for f in sorted(routable, key=key) if f["id"] in offenders]
+            rest = [f for f in sorted(routable, key=key) if f["id"] not in offenders]
             router = arms()
             routes = {}
-            for flow in sorted(routable, key=key):
-                points = route_one(router, flow, geometry, make_region, pool_region, strict)
+            for flow in ahead + rest:
+                points = route_one(router, flow, geometry, make_region, pool_region, True)
                 if points is None:
-                    if verbose:
-                        print("      no route for %s (%s -> %s)"
-                              % (flow["id"], flow["src"], flow["tgt"]))
                     continue
                 routes[flow["id"]] = points
                 router.reserve(points)
-            offenders = shape_crossings(routes, geometry, by_id, boundary_of)
-            if offenders:
-                # a line through an activity is a fault, not a tidiness problem:
-                # the flow that does it is one the earlier ones boxed in, so it
-                # is routed first this time
-                ahead = [f for f in sorted(routable, key=key) if f["id"] in offenders]
-                rest = [f for f in sorted(routable, key=key) if f["id"] not in offenders]
-                router = arms()
-                routes = {}
-                for flow in ahead + rest:
-                    points = route_one(router, flow, geometry, make_region, pool_region, strict)
-                    if points is None:
-                        continue
-                    routes[flow["id"]] = points
-                    router.reserve(points)
-            crossings = count_crossings(routes)
-            across_boxes = len(shape_crossings(routes, geometry, by_id, boundary_of, strict=True))
-            if verbose:
-                print("      %-16s %-6s %2d crossings, %d of %d routed, %d across a box"
-                      % (name, "strict" if strict else "shared", crossings,
-                         len(routes), len(routable), across_boxes))
-            if best is None or ((across_boxes, crossings, -len(routes))
-                                < (best[0], best[1], -len(best[2]))):
-                best = (across_boxes, crossings, routes)
-    routes = best[2]
+        score = route_score(routes, geometry, by_id, boundary_of)
+        if verbose:
+            print("      %-16s %2d shared lines, %2d crossings, %d of %d routed, %d across a box"
+                  % (name, score[1], score[2], len(routes), len(routable), score[0]))
+        if best is None or score < best[0]:
+            best = (score, routes)
+    routes = best[1]
+
+    # The choice above only picks the better of the two orders; it does not fix
+    # the flaws both of them share. A flow that had to lie along another one, or
+    # cut a corner through an activity, is worth another route now that the rest
+    # of the diagram is fixed.
+    routes = repair_routes(arms(), routes, routable, geometry, make_region,
+                           pool_region, by_id, boundary_of,
+                           lambda current: layout_offenders(current, geometry, by_id,
+                                                           boundary_of),
+                           rounds=6, verbose=verbose)
 
     # flow labels beside their flow, near the branch they belong to
     for flow in model.flows.values():

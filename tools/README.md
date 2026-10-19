@@ -19,7 +19,7 @@ install for any of them.
 | Script | What it does | Needs |
 |---|---|---|
 | `bpmn_render.py` | The library the others share: reads a model's diagram interchange and draws it, and provides the geometry checks (`layout_problems`) that the layout and export checks measure against. Not run on its own. | Pillow |
-| `relayout_hprtas_bpmn.py` | Redraws the diagram interchange of the models from their own content - one column per step, a lane per row, flows routed round what is already drawn, a text annotation in a band under the lanes where the model has one, and an activity's name inside its box in the models named by `NAMES_INSIDE` (the strategic view, which has to read as one picture) rather than under it - and leaves every other byte of the file alone, so a re-layout diffs as geometry. Pass model paths, or nothing for all of them. | Pillow |
+| `relayout_hprtas_bpmn.py` | Redraws the diagram interchange of the models from their own content - one column per step, a lane per row, flows routed round what is already drawn with a free lattice cell kept beside every line, a text annotation in a band under the lanes where the model has one, and an activity's name inside its box in the models named by `NAMES_INSIDE` (the strategic view, which has to read as one picture) rather than under it - and leaves every other byte of the file alone, so a re-layout diffs as geometry. Pass model paths, or nothing for all of them. | Pillow |
 | `export_hprtas_bpmn_pdf.py` | Writes `models/exports/<model>.pdf` and `.png` for every model, one page sized to the diagram so the labels stay readable, draws the model's text annotations and gives each PDF a fixed creation date so that exporting the same model twice produces the same bytes. | Pillow |
 | `verify_hprtas_bpmn_bindings.py` | The static contract check, and the one to run before committing a model: every service task names a job type a worker registers, every user task is a Camunda user task with a form that resolves, every form is bound, every worker error code is caught, and the variable contract closes in both directions. | - |
 | `verify_hprtas_bpmn_layout.py` | The layout checks: no element or label overlaps another, nothing is drawn outside its lane or the canvas, a name drawn inside its shape fits there, and the BPMN rules the lectures set out hold. Reports the crossings that the routing could not avoid. | Pillow |
@@ -53,9 +53,10 @@ The definitions of done these checks serve are in `../docs/agile/definition-of-d
 The order that works is: edit the model, `relayout_hprtas_bpmn.py` to redraw it,
 `verify_hprtas_bpmn_layout.py` and `verify_hprtas_bpmn_bindings.py` to check it, then
 `export_hprtas_bpmn_pdf.py` to regenerate the exports that are committed with it. A re-layout is
-slow - it routes every flow and tries four orderings - so it is worth running it once on the models
-you changed rather than on all of them. The export is reproducible: the same model produces the
-same PDF bytes, so re-exporting the models you did not change is a no-op in `git status`.
+slow - it routes every flow in two orderings, keeps a separation halo and then repairs the few
+flows that still share a line - so it is worth running it once on the models you changed rather
+than on all of them. The export is reproducible: the same model produces the same PDF bytes, so
+re-exporting the models you did not change is a no-op in `git status`.
 
 The `.bpmn` files are generated in the sense that their diagram interchange is: a hand-edited
 diagram is overwritten by the next re-layout. Edit the model, not the drawing.

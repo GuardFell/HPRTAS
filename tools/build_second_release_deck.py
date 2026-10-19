@@ -305,9 +305,8 @@ bullet_slide(
       "and the instance completes (scenario 8).", 0),
      ("DEF-15 closed: an empty optional list is not a problem; an empty required one still is. "
       "Found by driving the reschedule, whose whole point is a second attempt.", 0),
-     ("Still open and recorded, not hidden: one condition sits on an activity's only outgoing flow "
-      "(DEF-14), so it is documentation of intent rather than a guard, and no user is authenticated "
-      "(DEF-07) or has submitted a form (DEF-08).", 0)],
+     ("Still open and recorded, not hidden: no user is authenticated (DEF-07) or has submitted a "
+      "form (DEF-08); the separation of duties stays structural, and every document says so.", 0)],
     size=11.6, gap=8)
 
 # ---------------------------------------------------------------- slide 9, response 1
@@ -383,8 +382,6 @@ table_slide(
       "screen-reader pass",
       "Each changes a variable contract or needs a deployed Tasklist with a user. Proposed with "
       "owners rather than done silently", "docs/agile/form-field-burden.md"],
-     ["affectsCharge as a guard", "A condition on an activity's only outgoing flow is never "
-      "evaluated by Camunda; enforcing it needs a gateway", "DEF-14"],
      ["GP registry validation; multi-instance cardinality; a GP-side rejection",
       "Decisions not to adopt, each with its reason: there is no primary-care registry in the case, "
       "no user task iterates a collection, and the case gives the clinical decision to the hospital",
@@ -507,7 +504,7 @@ bullet_slide(
       "docs/planning/exports/plan-evaluation.docx.", 0),
      ("The requirements and their traceability: docs/requirements/requirements.md.", 0),
      ("The tests: tests/test-plan.md — criteria (3), scenarios (4), the execution record (5), "
-      "defects and limitations (6) — and the runs in tests/evidence/, including the three records "
+      "defects and limitations (6) — and the runs in tests/evidence/, including the four records "
       "of 2026-10-15.", 0),
      ("The response to the feedback: docs/agile/response-to-feedback.md.", 0),
      ("The demonstration: docs/agile/demonstration-script.md — the flow, the commit and the limits.", 0),

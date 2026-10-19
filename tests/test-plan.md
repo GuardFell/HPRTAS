@@ -289,11 +289,11 @@ when this table was last written. The re-run above covers the refund that `DEF-1
 enquiry and cancellation paths that the forms unblocked, and the rows in section 6 name the version
 each is now proved at.
 
-What the re-run still does not cover is unchanged: `TC-13` and `TC-16` have still never been run,
-the user-task variables are still supplied with the completion call rather than by a
-signed-in user (`DEF-08`), role-based access cannot be exercised at all (`DEF-07`), and the one
-condition `DEF-14` leaves on an activity's only outgoing flow is still documentation of intent
-rather than a guard.
+What that re-run did not cover, and where it stands now: `TC-13` and `TC-16` were not run at that
+point - both were driven on 15 October at `378b319` - the user-task variables are supplied with the
+completion call rather than by a signed-in user (`DEF-08`), and role-based access cannot be exercised
+(`DEF-07`); the last two remain open. The condition `DEF-14` then left on an activity's only outgoing
+flow was documentation of intent rather than a guard; it now decides at a gateway (2026-10-19).
 
 ### Re-run at `2c3c2eb`, 2026-09-28
 

@@ -9,7 +9,9 @@ checklist that applies to every task regardless of what it produces.
 it belongs to and a path, commit or artefact in this repository that demonstrates it.
 
 `demonstration-script.md` is the demonstration of the delivered system: what it shows, the commit it
-shows it at, and what it does not demonstrate. `response-to-feedback.md` answers the first review's
+shows it at, and what it does not demonstrate. `sprint-reviews.md` records the two marked sprint
+reviews, each against the version it assessed, with the snapshot tag that keeps that version.
+`response-to-feedback.md` answers the first review's
 feedback point by point: the decision, the action, the evidence and the outcome for each, and the
 points that are outstanding with the reason they are. `form-field-burden.md` is the review of what
 the forms ask a clinician to record.
